@@ -2,9 +2,9 @@ import { StudentStrength, fetchStudentStrengthData, fetchStudentsData } from './
 
 // Cache configuration
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
-const STUDENT_STRENGTH_CACHE_KEY = 'student_strength_data_cache';
-const ALUMNI_FORM_CACHE_KEY = 'alumni_form_data_cache';
-const CACHE_TIMESTAMP_KEY = 'analytics_data_cache_timestamp';
+const STUDENT_STRENGTH_CACHE_KEY = 'student_strength_data_cache_v2';
+const ALUMNI_FORM_CACHE_KEY = 'alumni_form_data_cache_v2';
+const CACHE_TIMESTAMP_KEY = 'analytics_data_cache_timestamp_v2';
 
 interface AnalyticsCacheData {
   studentStrength: StudentStrength[];

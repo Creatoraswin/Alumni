@@ -41,7 +41,7 @@ const DetailedAnalytics = () => {
         console.log('Sample student strength data:', data.studentStrength.slice(0, 3));
 
         // Extract and log all unique passout years
-        const allYears = Array.from(new Set(data.studentStrength.map(s => s.passout).filter(Boolean))).sort();
+        const allYears = Array.from(new Set(data.studentStrength.map(s => s.passout_year).filter(Boolean))).sort();
         console.log('All unique passout years found:', allYears);
 
         setStudentStrengthData(data.studentStrength);
@@ -60,15 +60,15 @@ const DetailedAnalytics = () => {
   // Transform student strength data to match the existing structure
   const transformedStudentStrengthData = useMemo(() => {
     return studentStrengthData
-      .filter(item => item["Registration No."] && item["Registration No."].toString().trim() !== "")
+      .filter(item => item.registration_no && item.registration_no.toString().trim() !== "")
       .map(item => ({
-        registrationNo: item["Registration No."] ? item["Registration No."].toString().trim() : "",
-        school: item["Program"], // Mapping Program to school
-        department: item["Branch"], // Mapping Branch to department
-        programme: item["Program"], // Keeping Program as programme
-        passout: item["passout"], // Adding passout year
-        name: item["Name of the Student"], // Adding student name
-        batch: item["Batch"] // Adding batch
+        registrationNo: item.registration_no ? item.registration_no.toString().trim() : "",
+        school: item.school || "", 
+        department: item.branch || "", 
+        programme: item.program || "", 
+        passout: item.passout_year ? item.passout_year.toString() : "", 
+        name: item.name || "", 
+        batch: item.batch || "" 
       }))
       .filter(item => selectedYear === "all" || item.passout === selectedYear);
   }, [studentStrengthData, selectedYear]);
@@ -244,6 +244,41 @@ const DetailedAnalytics = () => {
     }));
   }, [transformedStudentStrengthData, alumniFormData]);
 
+  // Prepare data for charts - School-wise
+  const schoolWiseData = useMemo(() => {
+    // Count students by school
+    const schoolCounts = transformedStudentStrengthData.reduce((acc, student) => {
+      const school = student.school || "Unknown";
+      acc[school] = (acc[school] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    // Get all registration numbers from alumni form data
+    const alumniRegistrations = new Set(
+      alumniFormData
+        .filter(student => student.registrationNo && student.registrationNo.toString().trim() !== "")
+        .map(student => String(student.registrationNo).trim())
+    );
+
+    // Count registered students by school
+    const registeredBySchool = transformedStudentStrengthData.reduce((acc, student) => {
+      const normalizedRegNo = String(student.registrationNo).trim();
+      if (alumniRegistrations.has(normalizedRegNo)) {
+        const school = student.school || "Unknown";
+        acc[school] = (acc[school] || 0) + 1;
+      }
+      return acc;
+    }, {} as Record<string, number>);
+
+    // Combine data
+    return Object.keys(schoolCounts).map(school => ({
+      name: school,
+      total: schoolCounts[school],
+      registered: registeredBySchool[school] || 0,
+      notRegistered: schoolCounts[school] - (registeredBySchool[school] || 0)
+    }));
+  }, [transformedStudentStrengthData, alumniFormData]);
+
   // Prepare data for charts - Passout Year-wise
   const passoutYearWiseData = useMemo(() => {
     // Count students by passout year
@@ -350,10 +385,10 @@ const DetailedAnalytics = () => {
             <SelectContent position="popper" className="z-50 max-h-[300px] overflow-y-auto">
               <SelectItem value="all">All Years</SelectItem>
               {(() => {
-                const years = Array.from(new Set(studentStrengthData.map(s => s.passout).filter(Boolean))).sort();
+                const years = Array.from(new Set(studentStrengthData.map(s => s.passout_year).filter(Boolean))).sort();
                 console.log('Available years in dropdown:', years);
                 return years.map(year => (
-                  <SelectItem key={year} value={year}>{year}</SelectItem>
+                  <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
                 ));
               })()}
             </SelectContent>
@@ -449,19 +484,19 @@ const DetailedAnalytics = () => {
           </CardContent>
         </Card>
 
-        {/* Program-wise Analysis Chart */}
+        {/* School-wise Analysis Chart */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Building className="h-5 w-5" />
-              Program-wise Analysis
+              School-wise Analysis
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
-                  data={programWiseData}
+                  data={schoolWiseData}
                   margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" />
@@ -482,12 +517,12 @@ const DetailedAnalytics = () => {
         </Card>
       </div>
 
-      {/* Branch-wise Analysis Table */}
+      {/* Department-wise Analysis Chart */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Building className="h-5 w-5" />
-            Branch-wise Analysis
+            Department-wise Analysis
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -496,7 +531,7 @@ const DetailedAnalytics = () => {
               <table className="w-full">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Branch</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Students</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Registered</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Not Registered</th>
@@ -560,7 +595,96 @@ const DetailedAnalytics = () => {
                   ) : (
                     <tr>
                       <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
-                        No branch data available
+                        No department data available
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Program-wise Analysis Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Building className="h-5 w-5" />
+            Program-wise Analysis
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-md border">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Program</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Students</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Registered</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Not Registered</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Registration Rate</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {programWiseData.length > 0 ? (
+                    <>
+                      {programWiseData.map((program, index) => (
+                        <tr key={index} className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                          <td className="px-4 py-3 text-sm font-medium text-gray-900">{program.name}</td>
+                          <td className="px-4 py-3 text-sm text-gray-900">{program.total}</td>
+                          <td className="px-4 py-3 text-sm text-green-600">
+                            <div className="flex items-center">
+                              <CheckCircle className="h-4 w-4 mr-1" />
+                              {program.registered}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-red-600">
+                            <div className="flex items-center">
+                              <XCircle className="h-4 w-4 mr-1" />
+                              {program.notRegistered}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-sm">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                              {program.total > 0 ? ((program.registered / program.total) * 100).toFixed(1) : "0.0"}%
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                      {/* Totals Row */}
+                      <tr className="bg-gray-100 font-bold">
+                        <td className="px-4 py-3 text-sm text-gray-900">TOTAL</td>
+                        <td className="px-4 py-3 text-sm text-gray-900">
+                          {programWiseData.reduce((sum, program) => sum + program.total, 0)}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-green-600">
+                          <div className="flex items-center">
+                            <CheckCircle className="h-4 w-4 mr-1" />
+                            {programWiseData.reduce((sum, program) => sum + program.registered, 0)}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-red-600">
+                          <div className="flex items-center">
+                            <XCircle className="h-4 w-4 mr-1" />
+                            {programWiseData.reduce((sum, program) => sum + program.notRegistered, 0)}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            {programWiseData.reduce((sum, program) => sum + program.total, 0) > 0
+                              ? ((programWiseData.reduce((sum, program) => sum + program.registered, 0) /
+                                programWiseData.reduce((sum, program) => sum + program.total, 0)) * 100).toFixed(1)
+                              : "0.0"}%
+                          </span>
+                        </td>
+                      </tr>
+                    </>
+                  ) : (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
+                        No program data available
                       </td>
                     </tr>
                   )}

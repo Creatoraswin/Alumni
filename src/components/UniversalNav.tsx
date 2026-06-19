@@ -306,6 +306,22 @@ const UniversalNav = ({
                     Academic
                   </button>
                 )}
+                {userRole === "admin" && (
+                  <button
+                    className={`block w-full text-left px-4 py-2 text-sm ${
+                      activeTab === "student-strength" 
+                        ? "bg-red-600 text-white" 
+                        : "text-gray-700 hover:bg-gray-100"
+                    }`}
+                    onClick={() => {
+                      router.push("/admin/student-strength");
+                      setIsAlumniCornerOpen(false);
+                      setIsMenuOpen(false);
+                    }}
+                  >
+                    Student Strength
+                  </button>
+                )}
               </div>
             )}
           </div>
