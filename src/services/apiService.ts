@@ -49,12 +49,15 @@ export interface StudentStrength {
   "Program"?: string;
   "Branch"?: string;
   "passout"?: string;
+  id?: string;
   registration_no?: string;
   name?: string;
   batch?: string;
+  school?: string;
   program?: string;
   branch?: string;
-  passout_year?: number;
+  department?: string;
+  passout_year?: number | string;
 }
 
 export interface AlumniSpotlightItem {
@@ -92,10 +95,11 @@ export interface AlumniMeetItem {
   id?: number;
   date: string;
   place: string;
-  description: string;
+  description?: string;
   bannerPhotoUrl: string;
   galleryLink: string;
   reportUrl?: string;
+  report?: string;
   rowIndex?: number;
 }
 
@@ -555,16 +559,7 @@ export const deleteAcademicInfo = async (id: number) => {
 // Student Strength API Methods
 // ==========================================
 
-export interface StudentStrength {
-  id?: string;
-  registration_no: string;
-  name: string;
-  batch?: string;
-  school?: string;
-  program?: string;
-  branch?: string;
-  passout_year?: string | number;
-}
+
 
 export const fetchStudentStrength = async (): Promise<StudentStrength[]> => {
   try {

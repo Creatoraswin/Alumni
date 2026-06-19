@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Search, Building, Users, Briefcase, CheckCircle, XCircle, GraduationCap } from "lucide-react";
 import { useAdminData } from "@/components/AdminLayout";
+import { useAuth } from "@/contexts/useAuth";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LabelList } from "recharts";
 import { fetchStudentStrengthData, fetchStudentsData } from "@/services/apiService";
 import { StudentStrength } from "@/services/apiService";
@@ -17,9 +18,12 @@ const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'
 
 const DetailedAnalytics = () => {
   const { students } = useAdminData();
+  const { isLoggedIn, userRole, currentDepartmentUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedProgramme, setSelectedProgramme] = useState("all");
   const [selectedDepartment, setSelectedDepartment] = useState("all");
+  const [selectedGlobalSchool, setSelectedGlobalSchool] = useState("all");
+  const [selectedGlobalDepartment, setSelectedGlobalDepartment] = useState("all");
   const [selectedYear, setSelectedYear] = useState("all");
   const [studentStrengthData, setStudentStrengthData] = useState<StudentStrength[]>([]);
   const [alumniFormData, setAlumniFormData] = useState<any[]>([]); // Form Responses 1 data
@@ -57,6 +61,22 @@ const DetailedAnalytics = () => {
     fetchData();
   }, []);
 
+  // Set default global filter values based on user role when loaded
+  useEffect(() => {
+    if (userRole === "school" && currentDepartmentUser && currentDepartmentUser.department) {
+      setSelectedGlobalSchool(currentDepartmentUser.department);
+    } else if (userRole === "department" && currentDepartmentUser && currentDepartmentUser.department) {
+      setSelectedGlobalDepartment(currentDepartmentUser.department);
+      // Also determine and set their school if possible from data
+      const matchedRecord = studentStrengthData.find(
+        item => item.branch?.toLowerCase() === currentDepartmentUser.department.toLowerCase()
+      );
+      if (matchedRecord && matchedRecord.school) {
+        setSelectedGlobalSchool(matchedRecord.school);
+      }
+    }
+  }, [userRole, currentDepartmentUser, studentStrengthData]);
+
   // Transform student strength data to match the existing structure
   const transformedStudentStrengthData = useMemo(() => {
     return studentStrengthData
@@ -70,8 +90,70 @@ const DetailedAnalytics = () => {
         name: item.name || "", 
         batch: item.batch || "" 
       }))
-      .filter(item => selectedYear === "all" || item.passout === selectedYear);
-  }, [studentStrengthData, selectedYear]);
+      // Role-based access control
+      .filter(item => {
+        if (userRole === "department" && currentDepartmentUser && currentDepartmentUser.department) {
+          return item.department.trim().toLowerCase() === currentDepartmentUser.department.trim().toLowerCase();
+        }
+        if (userRole === "school" && currentDepartmentUser && currentDepartmentUser.department) {
+          return item.school.trim().toLowerCase() === currentDepartmentUser.department.trim().toLowerCase();
+        }
+        return true;
+      })
+      .filter(item => selectedYear === "all" || item.passout.trim() === selectedYear.trim())
+      .filter(item => selectedGlobalSchool === "all" || item.school.trim().toLowerCase() === selectedGlobalSchool.trim().toLowerCase())
+      .filter(item => selectedGlobalDepartment === "all" || item.department.trim().toLowerCase() === selectedGlobalDepartment.trim().toLowerCase());
+  }, [studentStrengthData, selectedYear, selectedGlobalSchool, selectedGlobalDepartment, userRole, currentDepartmentUser]);
+
+  // Get unique global schools and departments from base data for the global filters
+  const globalSchools = useMemo(() => {
+    const schools = new Set(
+      studentStrengthData
+        .filter(student => {
+          if (userRole === "department" && currentDepartmentUser && currentDepartmentUser.department) {
+            return student.branch?.trim().toLowerCase() === currentDepartmentUser.department.trim().toLowerCase();
+          }
+          if (userRole === "school" && currentDepartmentUser && currentDepartmentUser.department) {
+            return student.school?.trim().toLowerCase() === currentDepartmentUser.department.trim().toLowerCase();
+          }
+          return true;
+        })
+        .map(student => student.school)
+        .filter(Boolean)
+    );
+    return Array.from(schools).sort();
+  }, [studentStrengthData, userRole, currentDepartmentUser]);
+
+  const globalDepartments = useMemo(() => {
+    const departments = new Set(
+      studentStrengthData
+        .filter(student => {
+          if (userRole === "department" && currentDepartmentUser && currentDepartmentUser.department) {
+            return student.branch?.trim().toLowerCase() === currentDepartmentUser.department.trim().toLowerCase();
+          }
+          if (userRole === "school" && currentDepartmentUser && currentDepartmentUser.department) {
+            return student.school?.trim().toLowerCase() === currentDepartmentUser.department.trim().toLowerCase();
+          }
+          return true;
+        })
+        .map(student => student.branch || student.department)
+        .filter(Boolean)
+    );
+    return Array.from(departments).sort();
+  }, [studentStrengthData, userRole, currentDepartmentUser]);
+
+  // Filter alumni form data based on user role
+  const filteredAlumniFormData = useMemo(() => {
+    return alumniFormData.filter(alumni => {
+      if (userRole === "department" && currentDepartmentUser && currentDepartmentUser.department) {
+        return alumni.department && alumni.department.trim().toLowerCase() === currentDepartmentUser.department.trim().toLowerCase();
+      }
+      if (userRole === "school" && currentDepartmentUser && currentDepartmentUser.department) {
+        return alumni.school && alumni.school.trim().toLowerCase() === currentDepartmentUser.department.trim().toLowerCase();
+      }
+      return true;
+    });
+  }, [alumniFormData, userRole, currentDepartmentUser]);
 
   // Get unique programmes and departments for filters
   const uniqueProgrammes = useMemo(() => {
@@ -88,11 +170,11 @@ const DetailedAnalytics = () => {
   const comparisonData = useMemo(() => {
     // Debug: Log the data for troubleshooting
     console.log('Student Strength Data Sample:', transformedStudentStrengthData.slice(0, 3));
-    console.log('Alumni Form Data Sample:', alumniFormData.slice(0, 3));
+    console.log('Alumni Form Data Sample:', filteredAlumniFormData.slice(0, 3));
 
     // Get all registration numbers from alumni form data with normalization
     const alumniRegistrations = new Set(
-      alumniFormData
+      filteredAlumniFormData
         .filter(student => student.registrationNo && student.registrationNo.toString().trim() !== "")
         .map(student => {
           // Normalize registration number
@@ -143,7 +225,7 @@ const DetailedAnalytics = () => {
       })
     );
 
-    const alumniNotInStudentStrength = alumniFormData.filter(alumni => {
+    const alumniNotInStudentStrength = filteredAlumniFormData.filter(alumni => {
       if (!alumni.registrationNo || alumni.registrationNo.toString().trim() === "") return false;
 
       const normalizedRegNo = String(alumni.registrationNo).trim();
@@ -162,9 +244,9 @@ const DetailedAnalytics = () => {
       notRegisteredPercentage: ((notRegisteredInAlumni.length / transformedStudentStrengthData.length) * 100).toFixed(1),
       notRegisteredDetails: notRegisteredInAlumni,
       alumniNotInStudentStrength: alumniNotInStudentStrength,
-      totalAlumniRegistered: alumniFormData.filter(a => a.registrationNo && a.registrationNo.toString().trim() !== "").length
+      totalAlumniRegistered: filteredAlumniFormData.filter(a => a.registrationNo && a.registrationNo.toString().trim() !== "").length
     };
-  }, [alumniFormData, transformedStudentStrengthData]);
+  }, [filteredAlumniFormData, transformedStudentStrengthData]);
 
   // Prepare data for charts - Program-wise
   const programWiseData = useMemo(() => {
@@ -177,7 +259,7 @@ const DetailedAnalytics = () => {
 
     // Get all registration numbers from alumni form data
     const alumniRegistrations = new Set(
-      alumniFormData
+      filteredAlumniFormData
         .filter(student => student.registrationNo && student.registrationNo.toString().trim() !== "")
         .map(student => {
           return String(student.registrationNo).trim();
@@ -203,7 +285,7 @@ const DetailedAnalytics = () => {
       registered: registeredByProgram[program] || 0,
       notRegistered: programCounts[program] - (registeredByProgram[program] || 0)
     }));
-  }, [transformedStudentStrengthData, alumniFormData]);
+  }, [transformedStudentStrengthData, filteredAlumniFormData]);
 
   // Prepare data for charts - Branch-wise
   const branchWiseData = useMemo(() => {
@@ -216,7 +298,7 @@ const DetailedAnalytics = () => {
 
     // Get all registration numbers from alumni form data
     const alumniRegistrations = new Set(
-      alumniFormData
+      filteredAlumniFormData
         .filter(student => student.registrationNo && student.registrationNo.toString().trim() !== "")
         .map(student => {
           return String(student.registrationNo).trim();
@@ -242,7 +324,7 @@ const DetailedAnalytics = () => {
       registered: registeredByBranch[branch] || 0,
       notRegistered: branchCounts[branch] - (registeredByBranch[branch] || 0)
     }));
-  }, [transformedStudentStrengthData, alumniFormData]);
+  }, [transformedStudentStrengthData, filteredAlumniFormData]);
 
   // Prepare data for charts - School-wise
   const schoolWiseData = useMemo(() => {
@@ -255,7 +337,7 @@ const DetailedAnalytics = () => {
 
     // Get all registration numbers from alumni form data
     const alumniRegistrations = new Set(
-      alumniFormData
+      filteredAlumniFormData
         .filter(student => student.registrationNo && student.registrationNo.toString().trim() !== "")
         .map(student => String(student.registrationNo).trim())
     );
@@ -277,7 +359,7 @@ const DetailedAnalytics = () => {
       registered: registeredBySchool[school] || 0,
       notRegistered: schoolCounts[school] - (registeredBySchool[school] || 0)
     }));
-  }, [transformedStudentStrengthData, alumniFormData]);
+  }, [transformedStudentStrengthData, filteredAlumniFormData]);
 
   // Prepare data for charts - Passout Year-wise
   const passoutYearWiseData = useMemo(() => {
@@ -290,7 +372,7 @@ const DetailedAnalytics = () => {
 
     // Get all registration numbers from alumni form data
     const alumniRegistrations = new Set(
-      alumniFormData
+      filteredAlumniFormData
         .filter(student => student.registrationNo && student.registrationNo.toString().trim() !== "")
         .map(student => {
           return String(student.registrationNo).trim();
@@ -323,7 +405,7 @@ const DetailedAnalytics = () => {
         if (b.name === "Unknown") return -1;
         return a.name.localeCompare(b.name);
       });
-  }, [transformedStudentStrengthData, alumniFormData]);
+  }, [transformedStudentStrengthData, filteredAlumniFormData]);
 
   // Filter not registered details based on search and filters
   const filteredNotRegisteredDetails = useMemo(() => {
@@ -376,23 +458,60 @@ const DetailedAnalytics = () => {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Detailed Analytics</h1>
           <p className="text-gray-600">Comprehensive comparison between student strength and alumni data</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Label htmlFor="year-filter" className="text-sm font-medium">Year:</Label>
-          <Select value={selectedYear} onValueChange={setSelectedYear}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Select Year" />
-            </SelectTrigger>
-            <SelectContent position="popper" className="z-50 max-h-[300px] overflow-y-auto">
-              <SelectItem value="all">All Years</SelectItem>
-              {(() => {
-                const years = Array.from(new Set(studentStrengthData.map(s => s.passout_year).filter(Boolean))).sort();
-                console.log('Available years in dropdown:', years);
-                return years.map(year => (
-                  <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
-                ));
-              })()}
-            </SelectContent>
-          </Select>
+        <div className="flex flex-wrap items-center gap-2 mt-4 md:mt-0 justify-center md:justify-end">
+          {/* School filter: Show only for admin/alumni-manager/cadmin */}
+          {(userRole === "admin" || userRole === "alumni-manager" || userRole === "cadmin") && (
+            <div className="flex items-center gap-2">
+              <Label htmlFor="school-filter" className="text-sm font-medium">School:</Label>
+              <Select value={selectedGlobalSchool} onValueChange={setSelectedGlobalSchool}>
+                <SelectTrigger className="w-[140px] sm:w-[160px]">
+                  <SelectValue placeholder="Select School" />
+                </SelectTrigger>
+                <SelectContent position="popper" className="z-50 max-h-[300px] overflow-y-auto">
+                  <SelectItem value="all">All Schools</SelectItem>
+                  {globalSchools.map(school => (
+                    <SelectItem key={school} value={school as string}>{school as string}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          
+          {/* Department filter: Show for admin/alumni-manager/cadmin/school */}
+          {(userRole === "admin" || userRole === "alumni-manager" || userRole === "cadmin" || userRole === "school") && (
+            <div className="flex items-center gap-2">
+              <Label htmlFor="dept-filter" className="text-sm font-medium">Department:</Label>
+              <Select value={selectedGlobalDepartment} onValueChange={setSelectedGlobalDepartment}>
+                <SelectTrigger className="w-[140px] sm:w-[160px]">
+                  <SelectValue placeholder="Select Department" />
+                </SelectTrigger>
+                <SelectContent position="popper" className="z-50 max-h-[300px] overflow-y-auto">
+                  <SelectItem value="all">All Departments</SelectItem>
+                  {globalDepartments.map(dept => (
+                    <SelectItem key={dept} value={dept as string}>{dept as string}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          
+          <div className="flex items-center gap-2">
+            <Label htmlFor="year-filter" className="text-sm font-medium">Year:</Label>
+            <Select value={selectedYear} onValueChange={setSelectedYear}>
+              <SelectTrigger className="w-[140px] sm:w-[160px]">
+                <SelectValue placeholder="Select Year" />
+              </SelectTrigger>
+              <SelectContent position="popper" className="z-50 max-h-[300px] overflow-y-auto">
+                <SelectItem value="all">All Years</SelectItem>
+                {(() => {
+                  const years = Array.from(new Set(studentStrengthData.map(s => s.passout_year).filter(Boolean))).sort();
+                  return years.map(year => (
+                    <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                  ));
+                })()}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 
@@ -451,8 +570,10 @@ const DetailedAnalytics = () => {
 
 
       {/* Row with Passout Year and Branch-wise Analysis side-by-side */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Passout Year-wise Chart (Duplicate for side-by-side layout) */}
+      <div className={`grid grid-cols-1 ${
+        (userRole === "admin" || userRole === "alumni-manager" || userRole === "cadmin") ? "lg:grid-cols-2" : ""
+      } gap-6`}>
+        {/* Passout Year-wise Chart */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -485,36 +606,38 @@ const DetailedAnalytics = () => {
         </Card>
 
         {/* School-wise Analysis Chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Building className="h-5 w-5" />
-              School-wise Analysis
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={schoolWiseData}
-                  margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" angle={-45} textAnchor="end" height={60} />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="registered" name="Registered" fill="#10B981">
-                    <LabelList dataKey="registered" position="top" style={{ fontSize: '12px', fontWeight: 'bold' }} />
-                  </Bar>
-                  <Bar dataKey="notRegistered" name="Not Registered" fill="#EF4444">
-                    <LabelList dataKey="notRegistered" position="top" style={{ fontSize: '12px', fontWeight: 'bold' }} />
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
+        {(userRole === "admin" || userRole === "alumni-manager" || userRole === "cadmin") && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Building className="h-5 w-5" />
+                School-wise Analysis
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={schoolWiseData}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" angle={-45} textAnchor="end" height={60} />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="registered" name="Registered" fill="#10B981">
+                      <LabelList dataKey="registered" position="top" style={{ fontSize: '12px', fontWeight: 'bold' }} />
+                    </Bar>
+                    <Bar dataKey="notRegistered" name="Not Registered" fill="#EF4444">
+                      <LabelList dataKey="notRegistered" position="top" style={{ fontSize: '12px', fontWeight: 'bold' }} />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Department-wise Analysis Chart */}

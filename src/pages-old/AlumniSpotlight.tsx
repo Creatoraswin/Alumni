@@ -23,7 +23,7 @@ const AlumniSpotlight: React.FC = () => {
   const queryClient = useQueryClient();
   const { data: spotlights = [], isLoading, isFetching, isError, error, refetch } = useQuery({
     queryKey: ['alumniSpotlight'],
-    queryFn: fetchAlumniSpotlight,
+    queryFn: () => fetchAlumniSpotlight(),
     staleTime: 1000 * 60 * 5, // 5 minutes for fresh data
     gcTime: 1000 * 60 * 30, // 30 minutes for cache retention
     refetchOnWindowFocus: false,
@@ -293,6 +293,10 @@ const AlumniSpotlight: React.FC = () => {
       : spotlights.filter(spotlight => spotlight.status === 'Approved');
     
     return filteredSpotlights.filter(spotlight => {
+      // Role-based access control
+      if (userRole === "department" && currentDepartmentUser && spotlight.department !== currentDepartmentUser.department) return false;
+      if (userRole === "school" && currentDepartmentUser && spotlight.school !== currentDepartmentUser.department) return false;
+
       const matchesSearch = !searchTerm || 
         spotlight.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         spotlight.department.toLowerCase().includes(searchTerm.toLowerCase()) ||

@@ -39,7 +39,7 @@ const UniversalNav = ({
   const [isAnalyticsDropdownOpen, setIsAnalyticsDropdownOpen] = useState(false);
 
   // Determine active tab based on path
-  const getActiveTab = (): "home" | "alumni" | "news" | "alumni-talks" | "alumni-meets" | "alumni-spotlight" | "youtube" | "profile" | "analytics" | "detailed-analytics" | "alumni-management" | "approval" | "feedback" | "dashboard" | "academic" => {
+  const getActiveTab = (): "home" | "alumni" | "news" | "alumni-talks" | "alumni-meets" | "alumni-spotlight" | "youtube" | "profile" | "analytics" | "detailed-analytics" | "alumni-management" | "approval" | "feedback" | "dashboard" | "academic" | "student-strength" => {
     if (pathname === "/") return "home";
     if (pathname === "/alumni-directory") return "alumni";
     if (pathname === "/news") return "news";
@@ -56,6 +56,7 @@ const UniversalNav = ({
       if (pathname.includes("/detailed-analytics")) return "detailed-analytics";
       if (pathname.includes("/analytics")) return "analytics";
       if (pathname.includes("/alumni-management")) return "alumni-management";
+      if (pathname.includes("/student-strength")) return "student-strength";
       if (pathname.includes("/approval")) return "approval";
       if (pathname.includes("/feedback")) return "feedback";
       if (pathname.includes("/academic")) return "academic";
@@ -364,18 +365,69 @@ const UniversalNav = ({
             <Users className="w-5 h-5" />
             <span className="hidden md:inline ml-1">Alumni Management</span>
           </button>
-          <button
-            className={`flex items-center justify-center px-3 py-2 rounded-md transition-all text-sm font-semibold focus:outline-none ${
-              activeTab === "analytics" 
-                ? "bg-red-600 text-white shadow-lg" 
-                : "text-muted-foreground hover:text-red-600 hover:shadow-sm hover:scale-105"
-            }`}
-            onClick={() => router.push(userRole === "school" ? "/school/analytics" : "/department/analytics")}
-            title="Analytics"
-          >
-            <BarChart2 className="w-5 h-5" />
-            <span className="hidden md:inline ml-1">Analytics</span>
-          </button>
+          <div className="relative">
+            <button
+              className={`flex items-center justify-center px-3 py-2 rounded-md transition-all text-sm font-semibold focus:outline-none ${
+                (activeTab === "analytics" || activeTab === "detailed-analytics") 
+                  ? "bg-red-600 text-white shadow-lg" 
+                  : "text-muted-foreground hover:text-red-600 hover:shadow-sm hover:scale-105"
+              }`}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsAnalyticsDropdownOpen(!isAnalyticsDropdownOpen);
+              }}
+              title="Analytics"
+            >
+              <BarChart2 className="w-5 h-5" />
+              <span className="hidden md:inline ml-1">Analytics</span>
+              <svg 
+                className={`ml-1 w-4 h-4 transition-transform ${isAnalyticsDropdownOpen ? 'rotate-180' : ''}`} 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            
+            {/* Analytics dropdown */}
+            {isAnalyticsDropdownOpen && (
+              <div 
+                id="analytics-dropdown-dept-school"
+                className="absolute left-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  className={`block w-full text-left px-4 py-2 text-sm ${
+                    activeTab === "analytics" 
+                      ? "bg-red-600 text-white" 
+                      : "text-gray-700 hover:bg-gray-100"
+                  }`}
+                  onClick={() => {
+                    router.push(userRole === "school" ? "/school/analytics" : "/department/analytics");
+                    setIsAnalyticsDropdownOpen(false);
+                    setIsMenuOpen(false);
+                  }}
+                >
+                  Basic Analytics
+                </button>
+                <button
+                  className={`block w-full text-left px-4 py-2 text-sm ${
+                    activeTab === "detailed-analytics" 
+                      ? "bg-red-600 text-white" 
+                      : "text-gray-700 hover:bg-gray-100"
+                  }`}
+                  onClick={() => {
+                    router.push(userRole === "school" ? "/school/detailed-analytics" : "/department/detailed-analytics");
+                    setIsAnalyticsDropdownOpen(false);
+                    setIsMenuOpen(false);
+                  }}
+                >
+                  Detailed Analytics
+                </button>
+              </div>
+            )}
+          </div>
           {/* Alumni Corner dropdown */}
           <div className="relative">
             <button
@@ -828,7 +880,18 @@ const UniversalNav = ({
             onClick={() => handleNavigation(userRole === "school" ? "/school/analytics" : "/department/analytics")}
           >
             <BarChart2 className="w-5 h-5 mr-3" />
-            <span>Analytics</span>
+            <span>Basic Analytics</span>
+          </button>
+          <button
+            className={`flex items-center w-full p-3 rounded-lg transition-colors ${
+              activeTab === "detailed-analytics" 
+                ? "bg-red-600 text-white shadow-lg" 
+                : "hover:bg-secondary/50"
+            }`}
+            onClick={() => handleNavigation(userRole === "school" ? "/school/detailed-analytics" : "/department/detailed-analytics")}
+          >
+            <BarChart2 className="w-5 h-5 mr-3" />
+            <span>Detailed Analytics</span>
           </button>
           {/* Alumni Talks link */}
           <button

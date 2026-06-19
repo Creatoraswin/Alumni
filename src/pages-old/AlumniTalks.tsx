@@ -285,6 +285,10 @@ const AlumniTalks: React.FC = () => {
 
     const term = searchTerm.trim().toLowerCase();
     const filtered = talks.filter(t => {
+      // Role-based access control
+      if (userRole === "department" && currentDepartmentUser && t.department !== currentDepartmentUser.department) return false;
+      if (userRole === "school" && currentDepartmentUser && t.school !== currentDepartmentUser.department) return false;
+
       if (selectedSchool !== 'all' && t.school !== selectedSchool) return false;
       if (selectedDepartment !== 'all' && t.department !== selectedDepartment) return false;
       if (selectedYear !== 'all') {
