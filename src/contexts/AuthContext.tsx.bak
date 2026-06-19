@@ -1,0 +1,159 @@
+export const AuthProvider = ({ children }: AuthProviderProps) => {
+  // Initialize state from localStorage if available
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    return localStorage.getItem('isLoggedIn') === 'true';
+  });
+  
+  const [userRole, setUserRole] = useState<"student" | "admin" | "department" | "school" | "alumni-manager" | "cadmin" | null>(() => {
+    const storedRole = localStorage.getItem('userRole');
+    if (storedRole === 'student' || storedRole === 'admin' || storedRole === 'department' || storedRole === 'school' || storedRole === 'alumni-manager' || storedRole === 'cadmin') {
+      return storedRole;
+    }
+    return null;
+  });
+  
+  const [currentStudent, setCurrentStudent] = useState<Student | null>(() => {
+    const storedStudent = localStorage.getItem('currentStudent');
+    return storedStudent ? JSON.parse(storedStudent) : null;
+  });
+  
+  const [currentDepartmentUser, setCurrentDepartmentUser] = useState<DepartmentUser | null>(() => {
+    const storedDepartmentUser = localStorage.getItem('currentDepartmentUser');
+    return storedDepartmentUser ? JSON.parse(storedDepartmentUser) : null;
+  });
+  
+  const [students, setStudents] = useState<Student[]>(() => {
+    // Try to get cached data immediately for faster initial render
+    const cachedData = dataCache.getCachedData();
+    return cachedData || [];
+  });
+  const [loading, setLoading] = useState(() => {
+    // If we have cached data, don't show loading initially
+    return !dataCache.hasValidCache();
+  });
+  const [dataLoaded, setDataLoaded] = useState(() => {
+    return dataCache.hasValidCache();
+  });
+
+  useEffect(() => {
+    const loadStudents = async () => {
+      try {
+        // If we already have cached data, we're not loading
+        if (dataCache.hasValidCache()) {
+          const cachedData = dataCache.getCachedData()!;
+          setStudents(cachedData);
+          setLoading(false);
+          setDataLoaded(true);
+          return;
+        }
+
+        setLoading(true);
+        
+        // Use cache service to get data
+        // For the main student list, we want all students including unapproved ones
+        // The individual components will filter as needed
+        const data = await dataCache.getData(() => fetchStudentsData(true)); // Pass true to get all students
+        setStudents(data);
+        setDataLoaded(true);
+      } catch (error) {
+        // Keep any existing cached data in case of error
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadStudents();
+  }, []);
+
+  const login = (role: "student" | "admin" | "department" | "school" | "alumni-manager" | "cadmin", student?: Student, departmentUser?: DepartmentUser) => {
+    // Default to student role if not specified
+    if (!role) {
+      role = "student";
+    }
+    
+    // Store login info in localStorage for persistence
+    localStorage.setItem('isLoggedIn', 'true');
+    localStorage.setItem('userRole', role);
+    
+    setIsLoggedIn(true);
+    setUserRole(role);
+    
+    if (role === "student" && student) {
+      setCurrentStudent(student);
+      setCurrentDepartmentUser(null);
+      localStorage.setItem('currentStudent', JSON.stringify(student));
+      localStorage.removeItem('currentDepartmentUser');
+    } else if (role === "admin" || role === "cadmin") {
+      setCurrentStudent(null);
+      setCurrentDepartmentUser(null);
+      localStorage.removeItem('currentStudent');
+      localStorage.removeItem('currentDepartmentUser');
+    } else if ((role === "department" || role === "school" || role === "alumni-manager") && departmentUser) {
+      setCurrentStudent(null);
+      setCurrentDepartmentUser(departmentUser);
+      localStorage.removeItem('currentStudent');
+      localStorage.setItem('currentDepartmentUser', JSON.stringify(departmentUser));
+    }
+  };
+
+  const logout = () => {
+    // Clear localStorage
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('currentStudent');
+    localStorage.removeItem('currentDepartmentUser');
+    
+    // Update state
+    setIsLoggedIn(false);
+    setUserRole(null);
+    setCurrentStudent(null);
+    setCurrentDepartmentUser(null);
+  };
+
+  // Implementation of the AuthContextType interface functions
+  const handleLogin = (role: "student" | "admin" | "department" | "school" | "alumni-manager" | "cadmin", student?: Student, departmentUser?: DepartmentUser) => {
+    login(role, student, departmentUser);
+  };
+
+  const handleLogout = () => {
+    logout();
+  };
+
+  return (
+    <AuthContext.Provider
+      value={{
+        isLoggedIn,
+        userRole,
+        currentStudent,
+        currentDepartmentUser,
+        setCurrentStudent,
+        setCurrentDepartmentUser,
+        students,
+        setStudents: (newStudents: Student[]) => {
+          setStudents(newStudents);
+          // Update cache when students data changes
+          dataCache.cacheData(newStudents);
+        },
+        loading,
+        dataLoaded,
+        refreshData: async (forceRefresh = false) => {
+          try {
+            setLoading(true);
+            const data = await dataCache.getData(() => fetchStudentsData(true), forceRefresh); // Pass true to get all students
+            setStudents(data);
+            setDataLoaded(true);
+            return data;
+          } finally {
+            setLoading(false);
+          }
+        },
+        login,
+        logout,
+        onLoginClick: handleLogin,
+        onLogout: handleLogout,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+};

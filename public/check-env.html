@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Environment Variable Checker</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #1e1e1e; color: #00ff00; }
+        .success { color: #00ff00; }
+        .error { color: #ff0000; }
+        .warning { color: #ffaa00; }
+        pre { background: #000; padding: 10px; border: 1px solid #333; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Environment Variable Debug Tool</h1>
+    <div id="results"></div>
+    
+    <script type="module">
+        const results = document.getElementById('results');
+        
+        function log(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = type;
+            div.innerHTML = message;
+            results.appendChild(div);
+        }
+        
+        // Check environment variables
+        log('<h2>Environment Variables:</h2>');
+        
+        const apiUrl = import.meta.env.VITE_API_URL;
+        const apiKey = import.meta.env.VITE_API_KEY;
+        
+        log(`<pre>VITE_API_URL: ${apiUrl || '<span class="error">NOT FOUND</span>'}</pre>`);
+        log(`<pre>VITE_API_KEY: ${apiKey ? '<span class="success">***LOADED***</span>' : '<span class="error">NOT FOUND</span>'}</pre>`);
+        
+        if (apiKey) {
+            log(`<pre>API Key Value: ${apiKey}</pre>`, 'success');
+        } else {
+            log('<h3 class="error">❌ API KEY IS MISSING!</h3>', 'error');
+            log('<p class="error">Add VITE_API_KEY to your .env.local file</p>', 'error');
+        }
+        
+        // Check all VITE_ variables
+        log('<h2>All VITE_ Environment Variables:</h2>');
+        const allEnv = import.meta.env;
+        const pre = document.createElement('pre');
+        pre.textContent = JSON.stringify(allEnv, null, 2);
+        results.appendChild(pre);
+    </script>
+</body>
+</html>

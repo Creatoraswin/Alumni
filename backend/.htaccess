@@ -1,0 +1,21 @@
+# Enable rewrite engine
+RewriteEngine On
+
+# CORS headers are handled by PHP Response class to support dynamic origins
+# Do not set CORS headers here - let PHP handle it dynamically
+
+# Protect sensitive files
+<FilesMatch "^(config|database)\.php$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Enable error reporting (disable in production)
+php_flag display_errors On
+php_value error_reporting E_ALL
+
+# Set max upload size
+php_value upload_max_filesize 10M
+php_value post_max_size 10M
+php_value max_execution_time 300
+php_value max_input_time 300

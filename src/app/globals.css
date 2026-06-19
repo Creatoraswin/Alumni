@@ -1,0 +1,493 @@
+@import "tailwindcss";
+@config "../../tailwind.config.ts";
+
+/* CUTMAP Alumni Portal Custom Colors - Enhanced Professional Design */
+:root {
+  /* Brand Color Palette */
+  --color-primary: #A21035;    /* Deep Red - Primary brand color */
+  --color-white: #FFFFFF;      /* Pure White - Clean backgrounds */
+  --color-gold: #340000;       /* Warm Gold - Accent and highlights */
+  --color-dark: #3C3C3C;       /* Charcoal - Text and contrast */
+  --color-blue: #d8e2f3;       /* Professional Blue - Secondary accent */
+  
+  /* Extended palette for depth */
+  --color-primary-light: #C41E3A;
+  --color-primary-dark: #7A0C26;
+  --color-gold-light: #FDE68A;
+  --color-gold-dark: #370000;
+  --color-blue-light: #60A5FA;
+  --color-blue-dark: #1D4ED8;
+  --color-gray-50: #F9FAFB;
+  --color-gray-100: #F3F4F6;
+  --color-gray-200: #E5E7EB;
+  --color-gray-300: #D1D5DB;
+  --color-gray-400: #9CA3AF;
+  --color-gray-500: #6B7280;
+  --color-gray-600: #4B5563;
+  --color-gray-700: #374151;
+  --color-gray-800: #1F2937;
+  --color-gray-900: #111827;
+}
+
+@layer base {
+  :root {
+    /* Base surfaces with enhanced contrast */
+    --background: 0 0% 99%;       /* Almost white for clean look */
+    --foreground: 0 0% 15%;       /* Dark charcoal for text */
+
+    --card: 0 0% 100%;            /* Pure white cards */
+    --card-foreground: 0 0% 15%;
+
+    --popover: 0 0% 100%;         /* Pure white popovers */
+    --popover-foreground: 0 0% 15%;
+
+    /* Brand primary - Deep Red */
+    --primary: 345 82% 38%;       /* #A21035 */
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary - Warm Gold */
+    --secondary: 45 85% 72%;      /* #FAD277 */
+    --secondary-foreground: 0 0% 15%;
+
+    /* Muted surfaces */
+    --muted: 210 40% 98%;         /* Very light gray */
+    --muted-foreground: 215 13% 45%;
+
+  /* Accent - Professional Blue */
+  --accent: rgb(95, 0, 0);       /* Professional Blue */
+  --accent-foreground: 0 0% 100%;
+
+    /* Destructive */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Controls and borders */
+    --border: 220 13% 91%;        /* Light gray borders */
+    --input: 220 13% 91%;
+    --ring: 345 82% 38%;          /* Primary color for focus rings */
+
+    --radius: 0.75rem;            /* Slightly larger radius for modern look */
+
+    /* Sidebar tokens */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 0 0% 15%;
+    --sidebar-primary: 345 82% 38%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 45 85% 72%;
+    --sidebar-accent-foreground: 0 0% 15%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 345 82% 38%;
+
+    /* Custom accent colors */
+    --accent-gold: 45 85% 72%;    /* #FAD277 */
+    --accent-blue: 210 100% 50%;  /* #3B82F6 */
+    --accent-primary: 345 82% 38%; /* #A21035 */
+    
+    /* School-specific colors */
+    --school-engineering: 220 100% 50%;    /* Blue for SoET */
+    --school-paramedical: 160 100% 40%;    /* Green for SoPAHS */
+    --school-management: 280 100% 50%;     /* Purple for SoM */
+    --school-agriculture: 120 100% 40%;   /* Green for SoCSA */
+  }
+
+  .dark {
+    --background: 222 84% 5%;     /* Very dark background */
+    --foreground: 210 40% 98%;
+
+    --card: 222 84% 8%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222 84% 8%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 345 82% 45%;       /* Slightly lighter primary in dark mode */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 45 85% 65%;      /* Adjusted gold for dark mode */
+    --secondary-foreground: 222 84% 5%;
+
+    --muted: 217 32% 17%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 210 100% 60%;       /* Adjusted blue for dark mode */
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217 32% 17%;
+    --input: 217 32% 17%;
+    --ring: 345 82% 45%;
+
+    --sidebar-background: 222 84% 5%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 345 82% 45%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 45 85% 65%;
+    --sidebar-accent-foreground: 222 84% 5%;
+    --sidebar-border: 217 32% 17%;
+    --sidebar-ring: 345 82% 45%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Enhanced typography */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold tracking-tight;
+    line-height: 1.2;
+  }
+
+  h1 { @apply text-3xl md:text-4xl; }
+  h2 { @apply text-2xl md:text-3xl; }
+  h3 { @apply text-xl md:text-2xl; }
+  h4 { @apply text-lg md:text-xl; }
+
+  p {
+    line-height: 1.6;
+  }
+}
+
+/* Custom gradient backgrounds */
+.gradient-primary {
+  background: linear-gradient(135deg, #A21035 0%, #C41E3A 100%);
+}
+
+.gradient-secondary {
+  background: linear-gradient(135deg, #FAD277 0%, #FDE68A 100%);
+}
+
+.gradient-accent {
+  background: linear-gradient(135deg, #FEB3C8 0%, #FECACA 100%);
+}
+
+.gradient-hero {
+  background: linear-gradient(135deg, #A21035 0%, #FAD277 50%, #FEB3C8 100%);
+}
+
+.gradient-card {
+  background: linear-gradient(145deg, #FFFFFF 0%, #F9FAFB 100%);
+}
+
+/* Enhanced shadows */
+.shadow-elegant {
+  box-shadow: 0 10px 25px -3px rgba(162, 16, 53, 0.1), 0 4px 6px -2px rgba(162, 16, 53, 0.05);
+}
+
+.shadow-soft {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.shadow-glow {
+  box-shadow: 0 0 20px rgba(162, 16, 53, 0.15);
+}
+
+/* Glass morphism effects */
+.glass {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.glass-dark {
+  background: rgba(60, 60, 60, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Enhanced animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse-soft {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.6s ease-out;
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 2s ease-in-out infinite;
+}
+
+/* Hover effects */
+.hover-lift {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 25px -5px rgba(162, 16, 53, 0.1), 0 10px 10px -5px rgba(162, 16, 53, 0.04);
+}
+
+/* Custom scrollbars */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #F3F4F6;
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #A21035, #FAD277);
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #C41E3A, #F59E0B);
+}
+
+/* Auto-scroll animation for alumni cards */
+@keyframes scroll-rtl {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(calc(-296px * var(--cards-count)));
+  }
+}
+
+@keyframes scroll-ltr {
+  0% {
+    transform: translateX(calc(-296px * var(--cards-count)));
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.animate-scroll-rtl {
+  animation: scroll-rtl var(--scroll-duration, 40s) linear infinite;
+}
+
+.animate-scroll-ltr {
+  animation: scroll-ltr var(--scroll-duration, 40s) linear infinite;
+}
+
+.animate-scroll-rtl:hover,
+.animate-scroll-ltr:hover {
+  animation-play-state: paused;
+}
+
+/* Hide scrollbar for manual scrolling rows */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Enhanced button styles */
+.btn-primary {
+  background: linear-gradient(135deg, #A21035 0%, #C41E3A 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(162, 16, 53, 0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(162, 16, 53, 0.4);
+}
+
+.btn-secondary {
+  background: linear-gradient(135deg, #FAD277 0%, #FDE68A 100%);
+  color: #3C3C3C;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(250, 210, 119, 0.3);
+}
+
+.btn-secondary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(250, 210, 119, 0.4);
+}
+
+/* Enhanced form inputs */
+.input-enhanced {
+  border: 2px solid #E5E7EB;
+  border-radius: 12px;
+  padding: 12px 16px;
+  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.input-enhanced:focus {
+  border-color: #A21035;
+  box-shadow: 0 0 0 3px rgba(162, 16, 53, 0.1);
+  outline: none;
+}
+
+/* Card enhancements */
+.card-enhanced {
+  background: linear-gradient(145deg, #FFFFFF 0%, #F9FAFB 100%);
+  border: 1px solid rgba(162, 16, 53, 0.1);
+  border-radius: 16px;
+  box-shadow: 0 10px 25px -3px rgba(162, 16, 53, 0.1), 0 4px 6px -2px rgba(162, 16, 53, 0.05);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-enhanced:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 25px -5px rgba(162, 16, 53, 0.15), 0 10px 10px -5px rgba(162, 16, 53, 0.1);
+  border-color: rgba(162, 16, 53, 0.2);
+}
+
+/* Text gradients */
+.text-gradient-primary {
+  background: linear-gradient(135deg, #A21035 0%, #C41E3A 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-gold {
+  background: linear-gradient(135deg, #FAD277 0%, #F59E0B 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-rainbow {
+  background: linear-gradient(135deg, #A21035 0%, #FAD277 50%, #FEB3C8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Responsive adjustments for alumni cards */
+@media (max-width: 640px) {
+  .mobile-card {
+    min-width: 200px !important;
+    width: 200px !important;
+  }
+  
+  .mobile-card .robust-image {
+    width: 80px !important;
+    height: 96px !important;
+  }
+}
+
+/* Navigation button adjustments for mobile */
+@media (max-width: 640px) {
+  .nav-button-mobile {
+    display: flex !important;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 20;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(8px);
+    border: 2px solid #FAD277;
+    color: #A21035;
+    box-shadow: 0 8px 25px rgba(162, 16, 53, 0.15);
+    border-radius: 12px;
+  }
+  
+  .nav-button-mobile:hover {
+    background: #FAD277;
+    color: #3C3C3C;
+    transform: translateY(-50%) scale(1.05);
+  }
+}
+
+/* Loading animations */
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+.shimmer {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200px 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Enhanced focus styles */
+.focus-enhanced:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(162, 16, 53, 0.2);
+  border-color: #A21035;
+}
+
+/* Status indicators */
+.status-approved {
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  color: white;
+}
+
+.status-pending {
+  background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+  color: white;
+}
+
+.status-rejected {
+  background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+  color: white;
+}
+
+/* Professional spacing system */
+.space-section { @apply py-16 md:py-24; }
+.space-component { @apply py-8 md:py-12; }
+.space-element { @apply py-4 md:py-6; }
+
+/* Enhanced typography scale */
+.text-hero { @apply text-4xl md:text-6xl font-bold; }
+.text-title { @apply text-2xl md:text-4xl font-bold; }
+.text-subtitle { @apply text-lg md:text-2xl font-semibold; }
+.text-body { @apply text-base md:text-lg; }
+.text-caption { @apply text-sm md:text-base; }
+.text-micro { @apply text-xs md:text-sm; }

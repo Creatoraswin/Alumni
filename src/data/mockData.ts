@@ -1,0 +1,107 @@
+
+export const mockStudents = [
+  {
+    id: "1",
+    name: "John Smith",
+    email: "john.smith@example.com",
+    phone: "+1-555-0123",
+    department: "cse",
+    graduationYear: "2023",
+    currentJob: "Software Engineer at Google",
+    location: "Mountain View, CA",
+    bio: "Passionate full-stack developer with expertise in React, Node.js, and cloud technologies. Love solving complex problems and building scalable applications.",
+    photoUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
+    skills: ["React", "Node.js", "TypeScript", "AWS", "Docker"]
+  },
+  {
+    id: "2",
+    name: "Sarah Johnson",
+    email: "sarah.johnson@example.com",
+    phone: "+1-555-0124",
+    department: "ece",
+    graduationYear: "2023",
+    currentJob: "Hardware Engineer at Apple",
+    location: "Cupertino, CA",
+    bio: "Electronics engineer specializing in mobile device hardware design and signal processing. Currently working on next-generation iPhone components.",
+    photoUrl: "https://images.unsplash.com/photo-1494790108755-2616b612b47c?w=150&h=150&fit=crop&crop=face",
+    skills: ["Circuit Design", "Signal Processing", "PCB Design", "MATLAB", "Verilog"]
+  },
+  {
+    id: "3",
+    name: "Mike Davis",
+    email: "mike.davis@example.com",
+    phone: "+1-555-0125",
+    department: "me",
+    graduationYear: "2022",
+    currentJob: "Mechanical Engineer at Tesla",
+    location: "Austin, TX",
+    bio: "Mechanical engineer focused on automotive design and manufacturing processes. Working on innovative solutions for electric vehicle production.",
+    photoUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
+    skills: ["CAD", "SolidWorks", "Manufacturing", "Automotive", "3D Printing"]
+  },
+  {
+    id: "4",
+    name: "Emily Chen",
+    email: "emily.chen@example.com",
+    phone: "+1-555-0126",
+    department: "cse",
+    graduationYear: "2022",
+    currentJob: "Data Scientist at Netflix",
+    location: "Los Gatos, CA",
+    bio: "Data scientist with a passion for machine learning and analytics. Currently working on recommendation algorithms and user behavior analysis.",
+    photoUrl: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face",
+    skills: ["Python", "Machine Learning", "TensorFlow", "SQL", "Statistics"]
+  },
+  {
+    id: "5",
+    name: "David Wilson",
+    email: "david.wilson@example.com",
+    phone: "+1-555-0127",
+    department: "ce",
+    graduationYear: "2021",
+    currentJob: "Civil Engineer at Bechtel",
+    location: "San Francisco, CA",
+    bio: "Civil engineer specializing in infrastructure projects and sustainable construction. Currently managing large-scale urban development projects.",
+    photoUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face",
+    skills: ["AutoCAD", "Project Management", "Structural Analysis", "LEED", "Construction"]
+  },
+  {
+    id: "6",
+    name: "Lisa Rodriguez",
+    email: "lisa.rodriguez@example.com",
+    phone: "+1-555-0128",
+    department: "mba",
+    graduationYear: "2021",
+    currentJob: "Product Manager at Microsoft",
+    location: "Seattle, WA",
+    bio: "MBA graduate with focus on product strategy and business development. Leading cross-functional teams to deliver innovative software solutions.",
+    photoUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=face",
+    skills: ["Product Management", "Strategy", "Analytics", "Leadership", "Agile"]
+  },
+  {
+    id: "7",
+    name: "Alex Kumar",
+    email: "alex.kumar@example.com",
+    phone: "+1-555-0129",
+    department: "ece",
+    graduationYear: "2020",
+    currentJob: "Senior Software Engineer at Amazon",
+    location: "Seattle, WA",
+    bio: "Senior software engineer with expertise in distributed systems and cloud architecture. Building scalable solutions for millions of users.",
+    photoUrl: "https://images.unsplash.com/photo-1507591064344-4c6ce005b128?w=150&h=150&fit=crop&crop=face",
+    skills: ["Java", "AWS", "Microservices", "Kubernetes", "System Design"]
+  },
+  {
+    id: "8",
+    name: "Jessica Brown",
+    email: "jessica.brown@example.com",
+    phone: "+1-555-0130",
+    department: "cse",
+    graduationYear: "2020",
+    currentJob: "Tech Lead at Spotify",
+    location: "New York, NY",
+    bio: "Technical leader passionate about music technology and user experience. Leading the development of innovative features for music streaming.",
+    photoUrl: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=150&h=150&fit=crop&crop=face",
+    skills: ["JavaScript", "React", "GraphQL", "iOS", "Team Leadership"]
+  }
+];

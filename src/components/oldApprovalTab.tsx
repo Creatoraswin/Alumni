@@ -1,0 +1,957 @@
+"use client";
+
+import React, { useState } from "react";
+
+// UI Components
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "@/components/ui/use-toast";
+import { Badge } from "@/components/ui/badge";
+
+// Icons
+import { Check, Trash2, Search, Loader2, Edit, Save } from "lucide-react";
+
+// Local Components
+import { useAdminData } from "@/components/AdminLayout";
+import { useAuth } from "@/contexts/useAuth"; // Import useAuth to access refreshData
+import FilterSection from "./FilterSection";
+import RobustImage from "./RobustImage";
+import CustomDatePicker from "./CustomDatePicker";
+
+// Services and Types
+import { Student, updateStudentData, fetchStudentsData, deleteStudentData, getDirectImageUrl } from "@/services/apiService";
+import { UserRole } from "@/contexts/auth-context";
+
+// Date utilities
+import { formatDateForDisplay, formatDateForSubmission } from "@/lib/dateUtils";
+
+interface ApprovalTabProps {
+  students: Student[];
+  onStudentUpdate: (student: Student) => void;
+  userRole?: UserRole;
+  currentStudent?: Student | null;
+}
+
+// Helper function to determine student's current status
+const getCurrentStatus = (student: Student): { label: string; variant: "default" | "secondary" | "destructive" | "outline" } => {
+  // First check if student already has a currentJob value
+  if (student.currentJob) {
+    if (student.currentJob.toLowerCase() === "higher study") {
+      return { label: "Higher Studies", variant: "secondary" };
+    } else if (student.currentJob.toLowerCase() === "job") {
+      return { label: "Job", variant: "default" };
+    } else if (student.currentJob.toLowerCase() !== "na") {
+      // If it's something else but not NA, use that value
+      return { label: student.currentJob, variant: "default" };
+    }
+  }
+  
+  // If no currentJob or it's NA, compute based on fields
+  // Check for Higher Studies Information
+  const hasHigherStudies = 
+    student.universityName && 
+    student.universityName !== "NA" && 
+    student.universityName.trim() !== "" &&
+    student.areaOfStudy && 
+    student.areaOfStudy !== "NA" && 
+    student.areaOfStudy.trim() !== "" &&
+    student.location && 
+    student.location !== "NA" && 
+    student.location.trim() !== "";
+
+  // Check for Professional Information
+  const hasProfessionalInfo = 
+    (student.organisation && 
+     student.organisation !== "NA" && 
+     student.organisation.trim() !== "") ||
+    (student.designation && 
+     student.designation !== "NA" && 
+     student.designation.trim() !== "");
+
+  if (hasHigherStudies) {
+    return { label: "Higher Studies", variant: "secondary" };
+  } else if (hasProfessionalInfo) {
+    return { label: "Job", variant: "default" };
+  } else {
+    return { label: "NA", variant: "destructive" };
+  }
+};
+
+const ApprovalTab = (props: ApprovalTabProps) => {
+  const adminData = useAdminData();
+  const authContext = useAuth(); // Get auth context to access refreshData
+  const isAdmin = props.userRole === "admin" || props.userRole === "alumni-manager";
+  const students = props.students ?? (isAdmin ? adminData.students : []);
+  const onStudentUpdate = props.onStudentUpdate ?? (isAdmin ? (updatedStudent: Student) => adminData.setStudents(prev => prev.map(s => s.id === updatedStudent.id ? updatedStudent : s)) : undefined);
+  
+  const [searchTerm, setSearchTerm] = useState("");
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [processingId, setProcessingId] = useState<string | null>(null);
+  const [selectedYear, setSelectedYear] = useState("all");
+  const [selectedSchool, setSelectedSchool] = useState("all");
+  const [selectedProgramme, setSelectedProgramme] = useState("all");
+  
+  // Edit functionality state
+  const [editingStudent, setEditingStudent] = useState<string | null>(null);
+  const [editedData, setEditedData] = useState<Partial<Student>>({});
+  const [saving, setSaving] = useState(false);
+
+  // Use centralized date utility functions for consistent date handling
+
+  // Filter students with empty or 'Pending' Status field
+  const pendingApprovalStudents = students.filter(student => {
+    // More robust checking for pending status
+    const status = student.Status;
+    
+    // Handle different possible values - check for all variations that might indicate pending status
+    if (status === undefined || status === null) {
+      return true;
+    }
+    
+    if (typeof status === 'string') {
+      const trimmedStatus = status.trim().toLowerCase();
+      
+      // Check for empty string or pending status
+      // Include students with empty status, 'pending', 'pending approval', 'under review' as pending
+      // Exclude students with 'approved' or 'rejected' status
+      const isApproved = trimmedStatus === 'approved';
+      const isRejected = trimmedStatus === 'rejected';
+      const isPending = !isApproved && !isRejected;
+                       
+      return isPending;
+    }
+    
+    // For any other type, treat as pending (to be safe)
+    return true;
+  });
+
+  // Filter students based on search term and other filters
+  const filteredStudents = pendingApprovalStudents.filter(student => {
+    const search = searchTerm.toLowerCase();
+    const matchesYear = selectedYear === "all" || student.graduationYear === selectedYear;
+    const matchesSchool = selectedSchool === "all" || student.school === selectedSchool;
+    const matchesProgramme = selectedProgramme === "all" || student.programme === selectedProgramme;
+    
+    const matchesSearch = search === "" ||
+      (typeof student.registrationNo === 'string' && student.registrationNo.toLowerCase().includes(search)) ||
+      (typeof student.name === 'string' && student.name.toLowerCase().includes(search)) ||
+      (typeof student.email === 'string' && student.email.toLowerCase().includes(search)) ||
+      (typeof student.school === 'string' && student.school.toLowerCase().includes(search)) ||
+      (typeof student.department === 'string' && student.department.toLowerCase().includes(search)) ||
+      (typeof student.programme === 'string' && student.programme.toLowerCase().includes(search)) ||
+      (typeof student.currentPosition === 'string' && student.currentPosition.toLowerCase().includes(search)) ||
+      (typeof student.organisation === 'string' && student.organisation.toLowerCase().includes(search));
+    
+    const result = matchesYear && matchesSchool && matchesProgramme && matchesSearch;
+    
+    return result;
+  });
+
+  // Sort students: Job/Higher study students first, then "NA" students at bottom, finally by Timestamp
+  const sortedStudents = [...filteredStudents].sort((a, b) => {
+    // Helper function to check if student has complete job information
+    const hasCompleteJobInfo = (student: Student) => {
+      const hasOrganisation = student.organisation && 
+        student.organisation !== "Not specified" && 
+        student.organisation !== "NA" &&
+        student.organisation.trim() !== "";
+      
+      const hasPosition = (student.currentPosition && 
+        student.currentPosition !== "Not specified" && 
+        student.currentPosition !== "NA" &&
+        student.currentPosition.trim() !== "") ||
+        (student.designation && 
+        student.designation !== "Not specified" && 
+        student.designation !== "NA" &&
+        student.designation.trim() !== "");
+      
+      return hasOrganisation && hasPosition;
+    };
+
+    // Helper function to check if student has complete higher studies information
+    const hasCompleteStudiesInfo = (student: Student) => {
+      return (student.areaOfStudy && 
+        student.areaOfStudy !== "Not specified" && 
+        student.areaOfStudy !== "NA") &&
+        (student.universityName &&
+        student.universityName !== "Not specified" &&
+        student.universityName !== "NA");
+    };
+
+    // Check completion status for both students
+    const aHasJob = hasCompleteJobInfo(a);
+    const aHasStudies = hasCompleteStudiesInfo(a);
+    const aIsComplete = aHasJob || aHasStudies;
+
+    const bHasJob = hasCompleteJobInfo(b);
+    const bHasStudies = hasCompleteStudiesInfo(b);
+    const bIsComplete = bHasJob || bHasStudies;
+
+    // Primary sort: Complete info (job or studies) vs incomplete
+    if (aIsComplete && !bIsComplete) return -1;
+    if (!aIsComplete && bIsComplete) return 1;
+
+    // Secondary sort: Within same completion status, prioritize job over studies
+    if (aIsComplete && bIsComplete) {
+      if (aHasJob && !bHasJob) return -1;
+      if (!aHasJob && bHasJob) return 1;
+    }
+
+    // Tertiary sort: Timestamp (latest first)
+    const dateA = a.Timestamp ? new Date(a.Timestamp) : new Date(0);
+    const dateB = b.Timestamp ? new Date(b.Timestamp) : new Date(0);
+    return dateB.getTime() - dateA.getTime();
+  });
+
+  // Handle edit student
+  const handleEditStudent = (studentId: string) => {
+    // Block edit functionality for non-admin roles
+    if (!isAdmin) {
+      toast({
+        title: "Access Denied",
+        description: "You don't have permission to edit alumni records.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const student = students.find(s => s.id === studentId);
+    if (student) {
+      setEditingStudent(studentId);
+      setEditedData(student);
+    } else {
+      toast({
+        title: "Error",
+        description: "Student not found.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Handle save student
+  const handleSaveStudent = async () => {
+    try {
+      setSaving(true);
+      setSuccessMessage(null); // Clear previous success messages
+      if (!editedData || !editedData.registrationNo) {
+        toast({
+          title: "Error",
+          description: "Missing student registration number.",
+          variant: "destructive",
+        });
+        setSaving(false);
+        return;
+      }
+      
+      toast({
+        title: "Saving changes...",
+        description: "Please wait while we update the alumni details.",
+      });
+      
+      // Compute the student's current status
+      const computedStatus = getCurrentStatus(editedData as Student).label;
+      // Map "Higher Studies" to "Higher study" to match the SignUp form
+      const statusForSheet = computedStatus === "Higher Studies" ? "Higher study" : computedStatus;
+      
+      // Construct a full payload with all required Student fields
+      const fullPayload: Student = {
+        id: editedData.id || "",
+        registrationNo: editedData.registrationNo || "",
+        name: editedData.name || "",
+        email: editedData.email || "",
+        phone: editedData.phone || "",
+        school: editedData.school || "",
+        programme: editedData.programme || "",
+        graduationYear: editedData.graduationYear || "",
+        designation: editedData.designation || "",
+        currentPosition: statusForSheet, // Use computed status
+        currentDesignation: editedData.currentDesignation || editedData.designation || "",
+        organisation: editedData.organisation || "",
+        placeOfWork: editedData.placeOfWork || "",
+        areaOfInterest: editedData.areaOfInterest || "",
+        location: editedData.location || "",
+        universityName: editedData.universityName || "",
+        areaOfStudy: editedData.areaOfStudy || "",
+        dob: formatDateForSubmission(editedData.dob || ""),
+        linkedinId: editedData.linkedinId || "",
+        photoUrl: editedData.photoUrl || "",
+        address: editedData.address || "",
+        feedback: editedData.feedback || "",
+        department: editedData.department || "",
+        skills: Array.isArray(editedData.skills) ? editedData.skills : (editedData.skills ? [editedData.skills] : []),
+        Timestamp: editedData.Timestamp || new Date().toISOString(),
+        currentJob: statusForSheet, // Also update currentJob for consistency
+        currentjob: statusForSheet // Also update currentjob for consistency
+      };
+      
+      await updateStudentData(fullPayload, "admin");
+      
+      // Force refresh all students from backend with showAll=true to get fresh data
+      if (authContext && typeof authContext.refreshData === 'function') {
+        await authContext.refreshData(true); // Force refresh
+      } else {
+        // Fallback to direct fetch if refreshData is not available
+        const freshStudents = await fetchStudentsData(true);
+        if (isAdmin && adminData.setStudents) {
+          adminData.setStudents(freshStudents);
+        }
+      }
+      
+      setSuccessMessage("Alumni data updated successfully!");
+      if (onStudentUpdate) {
+        onStudentUpdate(fullPayload);
+      }
+      
+      setTimeout(() => setSuccessMessage(null), 3000);
+      setEditingStudent(null);
+      setEditedData({});
+      
+      toast({
+        title: "Alumni updated!",
+        description: "The changes have been saved and are now visible.",
+      });
+    } catch (error) {
+      const errMsg = error instanceof Error ? error.message : "Failed to update alumni data.";
+      toast({
+        title: "Error",
+        description: errMsg,
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingStudent(null);
+    setEditedData({});
+  };
+
+  // Handle approve student
+  const handleApproveStudent = async (studentId: string) => {
+    try {
+      setProcessingId(studentId);
+      const student = students.find(s => s.id === studentId);
+      if (!student) {
+        toast({
+          title: "Error",
+          description: "Student not found.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Compute the student's current status
+      const computedStatus = getCurrentStatus(student).label;
+      // Map "Higher Studies" to "Higher study" to match the SignUp form
+      const statusForSheet = computedStatus === "Higher Studies" ? "Higher study" : computedStatus;
+
+      // Create minimal update with Status field and computed currentPosition
+      const updatedStudent: Partial<Student> = {
+        registrationNo: student.registrationNo,
+        Status: "Approved",
+        currentPosition: statusForSheet, // Include computed status
+        currentJob: statusForSheet, // Also update currentJob for consistency
+        currentjob: statusForSheet // Also update currentjob for consistency
+      };
+
+      await updateStudentData(updatedStudent as Student, "admin");
+      
+      // Force refresh all students from backend with showAll=true to get fresh data
+      // Clear the cache first to ensure we get fresh data
+      if (authContext && typeof authContext.refreshData === 'function') {
+        await authContext.refreshData(true); // Force refresh
+      } else {
+        // Fallback to direct fetch if refreshData is not available
+        const freshStudents = await fetchStudentsData(true);
+        if (isAdmin && adminData.setStudents) {
+          adminData.setStudents(freshStudents);
+        }
+      }
+      
+      setSuccessMessage(`${student.name} has been approved successfully!`);
+      if (onStudentUpdate) {
+        onStudentUpdate(updatedStudent as Student);
+      }
+      
+      toast({
+        title: "Student Approved",
+        description: `${student.name} has been approved successfully.`,
+      });
+    } catch (error) {
+      const errMsg = error instanceof Error ? error.message : "Failed to approve student.";
+      toast({
+        title: "Error",
+        description: errMsg,
+        variant: "destructive",
+      });
+    } finally {
+      setProcessingId(null);
+      setTimeout(() => setSuccessMessage(null), 3000);
+    }
+  };
+
+  // Handle delete student
+  const handleDeleteStudent = async (studentId: string) => {
+    try {
+      setProcessingId(studentId);
+      const student = students.find(s => s.id === studentId);
+      if (!student) {
+        toast({
+          title: "Error",
+          description: "Student not found.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      await deleteStudentData(student);
+
+      // Re-fresh the entire student list
+      // Force refresh all students from backend with showAll=true to get fresh data
+      if (authContext && typeof authContext.refreshData === 'function') {
+        await authContext.refreshData(true); // Force refresh
+      } else {
+        // Fallback to direct fetch if refreshData is not available
+        const freshStudents = await fetchStudentsData(true);
+        if (isAdmin && adminData.setStudents) {
+          adminData.setStudents(freshStudents);
+        }
+      }
+      
+      // Trigger parent update if needed
+      if (onStudentUpdate) {
+        onStudentUpdate({ ...student, _delete: true });
+      }
+
+      toast({ 
+        title: "Student Deleted", 
+        description: `${student.name} has been deleted successfully.` 
+      });
+    } catch (error) {
+      const errMsg = error instanceof Error ? error.message : "Failed to delete student.";
+      toast({
+        title: "Error",
+        description: errMsg,
+        variant: "destructive",
+      });
+    } finally {
+      setProcessingId(null);
+      setTimeout(() => setSuccessMessage(null), 3000);
+    }
+  };
+
+  return (
+    <Card>
+      {successMessage && (
+        <div className="mb-6 p-4 rounded-xl text-foreground bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/20 text-center font-semibold shadow-lg animate-fade-in-up">
+          <div className="flex items-center justify-center gap-2">
+            <Check className="h-5 w-5 text-primary" />
+            <span>{successMessage}</span>
+          </div>
+        </div>
+      )}
+      <CardHeader className="pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-bold text-gradient-primary">Pending Approvals</h2>
+            <p className="text-muted-foreground mt-1">Review and manage alumni profile submissions</p>
+          </div>
+          <div className="bg-primary/10 px-4 py-2 rounded-full">
+            <span className="text-sm font-bold text-primary">
+              {sortedStudents.length} {sortedStudents.length === 1 ? 'student' : 'students'} pending approval
+            </span>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {/* Sticky and horizontally scrollable FilterSection Bar on mobile */}
+        <div className="sticky top-0 z-40 bg-background/90 backdrop-blur-md shadow-lg rounded-b-none rounded-t-lg px-0 py-0 mb-6 w-full overflow-x-auto whitespace-nowrap border-b border-primary/20">
+          <FilterSection
+            students={pendingApprovalStudents}
+            filteredStudents={filteredStudents}
+            selectedYear={selectedYear}
+            selectedSchool={selectedSchool}
+            selectedProgramme={selectedProgramme}
+            searchTerm={searchTerm}
+            onYearChange={setSelectedYear}
+            onSchoolChange={setSelectedSchool}
+            onProgrammeChange={setSelectedProgramme}
+            onSearchChange={setSearchTerm}
+            onClearFilters={() => {
+              setSearchTerm("");
+              setSelectedSchool("all");
+              setSelectedYear("all");
+              setSelectedProgramme("all");
+            }}
+          />
+        </div>
+        
+        {sortedStudents.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {sortedStudents.map((student, index) => (
+              <div
+                key={`${student.id}-${index}`}
+                className="border rounded-lg p-4 relative bg-card hover-lift card-enhanced"
+              >
+                <div className="flex items-center space-x-4 mb-4">
+                  <RobustImage 
+                    photoUrl={student.photoUrl}
+                    studentName={student.name}
+                    size="md"
+                  />
+                  <div>
+                    <h3 className="font-bold text-lg text-foreground">{student.name}</h3>
+                    <p className="text-muted-foreground">{student.programme}</p>
+                    <p className="text-muted-foreground text-sm">Reg. No: <span className="font-medium">{student.registrationNo || '-'}</span></p>
+                    <p className="text-muted-foreground text-sm">Graduation Year: <span className="font-medium">{student.graduationYear || '-'}</span></p>
+                  </div>
+                </div>
+                
+                <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                  <div className="space-y-2 p-3 rounded-lg bg-secondary/30">
+                    <p className="truncate"><span className="font-medium">Email:</span> {student.email || '-'}</p>
+                    <p className="truncate"><span className="font-medium">Phone:</span> {student.phone || '-'}</p>
+                    <p className="truncate"><span className="font-medium">DOB:</span> {formatDateForDisplay(student.dob) || '-'}</p>
+                    <p className="truncate"><span className="font-medium">Address:</span> {student.address ? student.address.substring(0, 30) + (student.address.length > 30 ? '...' : '') : '-'}</p>
+                  </div>
+                  <div className="space-y-2 p-3 rounded-lg bg-secondary/30">
+                    <p className="truncate"><span className="font-medium">Organisation:</span> {student.organisation || '-'}</p>
+                    <p className="truncate"><span className="font-medium">Location:</span> {student.location || student.placeOfWork || '-'}</p>
+                    <p className="truncate"><span className="font-medium">LinkedIn:</span> {student.linkedinId && student.linkedinId !== "NA" && student.linkedinId !== "Not specified" ? (
+                      <a href={`https://linkedin.com/in/${student.linkedinId}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">View Profile</a>
+                    ) : 'Not provided'}</p>
+                  </div>
+                </div>
+                
+                {/* Student Status */}
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="text-sm font-medium">Current Status:</span>
+                  <Badge variant={getCurrentStatus(student).variant}>
+                    {getCurrentStatus(student).label}
+                  </Badge>
+                </div>
+                
+                {/* Skills/Interests */}
+                <div className="mt-2">
+                  <p className="text-sm font-bold text-gradient-primary">Skills/Interests:</p>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {student.areaOfInterest && student.areaOfInterest !== "NA" && student.areaOfInterest !== "Not specified" ? (
+                      student.areaOfInterest.split(',').map((skill, i) => (
+                        <span key={i} className="text-xs bg-gradient-secondary text-dark px-2 py-1 rounded-full font-semibold shadow-soft">
+                          {skill.trim()}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-sm text-muted-foreground italic">Not specified</span>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="mt-4 flex flex-wrap gap-2 justify-end pt-4 border-t border-primary/20">
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="flex-1 text-sm h-10 bg-gradient-to-r from-destructive to-destructive/80 text-white font-bold shadow-glow hover:scale-105 border-0 rounded-xl"
+                    onClick={() => handleDeleteStudent(student.id)}
+                    disabled={processingId === student.id}
+                  >
+                    {processingId === student.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                    <span className="ml-1 hidden sm:inline">Delete</span>
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="flex-1 text-sm h-10 bg-gradient-to-r from-primary to-primary/80 text-white font-bold shadow-glow hover:scale-105 border-0 rounded-xl"
+                    onClick={() => handleApproveStudent(student.id)}
+                    disabled={processingId === student.id}
+                  >
+                    {processingId === student.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                    <span className="ml-1 hidden sm:inline">Approve</span>
+                  </Button>
+                  {isAdmin && (
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="flex-1 text-sm h-10 bg-gradient-to-r from-secondary to-secondary/80 text-foreground font-bold shadow-glow hover:scale-105 border-0 rounded-xl"
+                      onClick={() => handleEditStudent(student.id)}
+                      disabled={editingStudent === student.id}
+                    >
+                      {editingStudent === student.id ? <Save className="h-4 w-4 animate-spin" /> : <Edit className="h-4 w-4" />}
+                      <span className="ml-1 hidden sm:inline">Edit</span>
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="col-span-full text-center py-8 text-gray-500">
+            {searchTerm ? (
+              <>
+                <Search className="h-12 w-12 mx-auto mb-4" />
+                <p>No pending approvals found matching "{searchTerm}"</p>
+              </>
+            ) : (
+              <>
+                <Check className="h-12 w-12 mx-auto mb-4" />
+                <p>No pending approvals</p>
+                <p className="text-sm mt-2">If you believe this is incorrect, check the browser console for any errors.</p>
+              </>
+            )}
+          </div>
+        )}
+        
+        {/* Edit Dialog - Properly positioned using shadcn/ui defaults */}
+        <Dialog open={!!editingStudent} onOpenChange={(open) => { 
+          if (!open) handleCancelEdit(); 
+        }}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Edit Alumni: {students.find(s => s.id === editingStudent)?.name || 'Unknown'}</DialogTitle>
+              <DialogDescription>
+                Make changes to the alumni's details here. Click save when you're done.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto">
+              {/* Photo section at the top */}
+              <div className="flex flex-col items-center gap-4 p-6 bg-secondary/10 rounded-xl">
+                <div className="relative">
+                  <RobustImage 
+                    photoUrl={editedData.photoUrl || ''}
+                    studentName={editedData.name || ''}
+                    size="lg"
+                  />
+                </div>
+                <div className="text-center">
+                  <h3 className="font-bold text-xl">{editedData.name || 'Alumni Name'}</h3>
+                  <p className="text-muted-foreground">{editedData.programme || 'Programme'}</p>
+                </div>
+              </div>
+              
+              {/* Student Status in Edit Dialog */}
+              <div className="flex items-center justify-center gap-2 py-2">
+                <span className="text-sm font-medium">Current Status:</span>
+                <Badge variant={getCurrentStatus(editedData as Student).variant}>
+                  {getCurrentStatus(editedData as Student).label}
+                </Badge>
+              </div>
+              
+              {/* Form fields in a responsive grid with better spacing and organization */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-2">
+                {/* Personal Information Section */}
+                <div className="md:col-span-2">
+                  <h3 className="text-lg font-semibold mb-3 pb-2 border-b border-primary/20 text-primary">Personal Information</h3>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="registrationNo" className="font-medium">
+                    Registration No.
+                  </Label>
+                  <Input
+                    id="registrationNo"
+                    value={editedData.registrationNo || ""}
+                    onChange={(e) => setEditedData(prev => ({ ...prev, registrationNo: e.target.value }))}
+                    className="h-10 bg-gray-100 cursor-not-allowed"
+                    readOnly
+                    disabled
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="name" className="font-medium">
+                    Name
+                  </Label>
+                  <Input
+                    id="name"
+                    value={editedData.name || ""}
+                    onChange={(e) => setEditedData(prev => ({ ...prev, name: e.target.value }))}
+                    className="h-10"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="font-medium">
+                    Email
+                  </Label>
+                  <Input
+                    id="email"
+                    value={editedData.email || ""}
+                    onChange={(e) => setEditedData(prev => ({ ...prev, email: e.target.value }))}
+                    className="h-10"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="phone" className="font-medium">
+                    Phone
+                  </Label>
+                  <Input
+                    id="phone"
+                    value={editedData.phone || ""}
+                    onChange={(e) => setEditedData(prev => ({ ...prev, phone: e.target.value }))}
+                    className="h-10"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="dob" className="font-medium">
+                    Date of Birth
+                  </Label>
+                  <CustomDatePicker
+                    value={editedData.dob || ""}
+                    onChange={(date) => setEditedData(prev => ({ ...prev, dob: date }))}
+                    disabled
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="address" className="font-medium">
+                    Address
+                  </Label>
+                  <Input
+                    id="address"
+                    value={editedData.address || ""}
+                    onChange={(e) => setEditedData(prev => ({ ...prev, address: e.target.value }))}
+                    className="h-10"
+                  />
+                </div>
+                
+                {/* Academic Information Section */}
+                <div className="md:col-span-2 mt-6">
+                  <h3 className="text-lg font-semibold mb-3 pb-2 border-b border-primary/20 text-primary">Academic Information</h3>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="school" className="font-medium">
+                    School
+                  </Label>
+                  <Input
+                    id="school"
+                    value={editedData.school || ""}
+                    onChange={(e) => setEditedData(prev => ({ ...prev, school: e.target.value }))}
+                    className="h-10"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="programme" className="font-medium">
+                    Programme
+                  </Label>
+                  <Input
+                    id="programme"
+                    value={editedData.programme || ""}
+                    onChange={(e) => setEditedData(prev => ({ ...prev, programme: e.target.value }))}
+                    className="h-10"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="graduationYear" className="font-medium">
+                    Graduation Year
+                  </Label>
+                  <Input
+                    id="graduationYear"
+                    type="number"
+                    value={editedData.graduationYear || ""}
+                    onChange={(e) => setEditedData(prev => ({ ...prev, graduationYear: e.target.value }))}
+                    className="h-10"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="department" className="font-medium">
+                    Department
+                  </Label>
+                  <Input
+                    id="department"
+                    value={editedData.department || ""}
+                    onChange={(e) => setEditedData(prev => ({ ...prev, department: e.target.value }))}
+                    className="bg-gray-100 cursor-not-allowed h-10"
+                    placeholder="Enter department"
+                    readOnly
+                    disabled
+                  />
+                </div>
+                
+                {/* Professional Information Section */}
+                <div className="md:col-span-2 mt-6">
+                  <h3 className="text-lg font-semibold mb-3 pb-2 border-b border-primary/20 text-primary">Professional Information</h3>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="designation" className="font-medium">
+                    Designation
+                  </Label>
+                  <Input
+                    id="designation"
+                    value={editedData.designation || ""}
+                    onChange={(e) => setEditedData(prev => ({ ...prev, designation: e.target.value }))}
+                    className="h-10"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="organisation" className="font-medium">
+                    Organisation
+                  </Label>
+                  <Input
+                    id="organisation"
+                    value={editedData.organisation || ""}
+                    onChange={(e) => setEditedData(prev => ({ ...prev, organisation: e.target.value }))}
+                    className="h-10"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="placeOfWork" className="font-medium">
+                    Place of Work
+                  </Label>
+                  <Input
+                    id="placeOfWork"
+                    value={editedData.placeOfWork || ""}
+                    onChange={(e) => setEditedData(prev => ({ ...prev, placeOfWork: e.target.value }))}
+                    className="h-10"
+                  />
+                </div>
+                
+                {/* Higher Studies Information Section */}
+                <div className="md:col-span-2 mt-6">
+                  <h3 className="text-lg font-semibold mb-3 pb-2 border-b border-primary/20 text-primary">Higher Studies Information</h3>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="universityName" className="font-medium">
+                    University Name
+                  </Label>
+                  <Input
+                    id="universityName"
+                    value={editedData.universityName || ""}
+                    onChange={(e) => setEditedData(prev => ({ ...prev, universityName: e.target.value }))}
+                    className="h-10"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="areaOfStudy" className="font-medium">
+                    Area of Study
+                  </Label>
+                  <Input
+                    id="areaOfStudy"
+                    value={editedData.areaOfStudy || ""}
+                    onChange={(e) => setEditedData(prev => ({ ...prev, areaOfStudy: e.target.value }))}
+                    className="h-10"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="location" className="font-medium">
+                    Location
+                  </Label>
+                  <Input
+                    id="location"
+                    value={editedData.location || ""}
+                    onChange={(e) => setEditedData(prev => ({ ...prev, location: e.target.value }))}
+                    className="h-10"
+                  />
+                </div>
+                
+                {/* Additional Information Section */}
+                <div className="md:col-span-2 mt-6">
+                  <h3 className="text-lg font-semibold mb-3 pb-2 border-b border-primary/20 text-primary">Additional Information</h3>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="areaOfInterest" className="font-medium">
+                    Area of Interest
+                  </Label>
+                  <Input
+                    id="areaOfInterest"
+                    value={editedData.areaOfInterest || ""}
+                    onChange={(e) => setEditedData(prev => ({ ...prev, areaOfInterest: e.target.value }))}
+                    className="h-10"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="skills" className="font-medium">
+                    Skills
+                  </Label>
+                  <Input
+                    id="skills"
+                    value={Array.isArray(editedData.skills) ? editedData.skills.join(', ') : ""}
+                    onChange={(e) => setEditedData(prev => ({ ...prev, skills: e.target.value.split(',').map(s => s.trim()).filter(s => s.length > 0) }))}
+                    className="h-10"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="linkedinId" className="font-medium">
+                    LinkedIn ID
+                  </Label>
+                  <Input
+                    id="linkedinId"
+                    value={editedData.linkedinId || ""}
+                    onChange={(e) => setEditedData(prev => ({ ...prev, linkedinId: e.target.value }))}
+                    className="h-10"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="photoUrl" className="font-medium">
+                    Photo URL
+                  </Label>
+                  <Input
+                    id="photoUrl"
+                    value={editedData.photoUrl || ""}
+                    onChange={(e) => setEditedData(prev => ({ ...prev, photoUrl: e.target.value }))}
+                    className="h-10"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="feedback" className="font-medium">
+                    Feedback
+                  </Label>
+                  <Input
+                    id="feedback"
+                    value={editedData.feedback || ""}
+                    onChange={(e) => setEditedData(prev => ({ ...prev, feedback: e.target.value }))}
+                    className="h-10"
+                  />
+                </div>
+              </div>
+              
+              <DialogFooter className="flex gap-2 justify-end pt-4 border-t border-primary/20">
+                <DialogClose asChild>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={handleCancelEdit}
+                    disabled={saving}
+                    className="bg-gradient-to-r from-secondary to-secondary/80 text-foreground font-bold shadow-glow hover:scale-105 border-0 rounded-xl"
+                  >
+                    Cancel
+                  </Button>
+                </DialogClose>
+                <Button 
+                  type="button" 
+                  onClick={handleSaveStudent}
+                  disabled={saving}
+                  className="bg-gradient-to-r from-primary to-primary/80 text-white font-bold shadow-glow hover:scale-105 border-0 rounded-xl"
+                >
+                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  <span className="ml-1">Save Changes</span>
+                </Button>
+              </DialogFooter>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </CardContent>
+    </Card>
+  );
+};
+
+export default ApprovalTab;
