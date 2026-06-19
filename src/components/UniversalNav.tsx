@@ -88,19 +88,18 @@ const UniversalNav = ({
     setIsAlumniCornerOpen(!isAlumniCornerOpen);
   };
 
-  // Close alumni corner dropdown when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = () => {
-      if (isAlumniCornerOpen) {
-        setIsAlumniCornerOpen(false);
-      }
+      if (isAlumniCornerOpen) setIsAlumniCornerOpen(false);
+      if (isAnalyticsDropdownOpen) setIsAnalyticsDropdownOpen(false);
     };
 
     document.addEventListener('click', handleClickOutside);
     return () => {
       document.removeEventListener('click', handleClickOutside);
     };
-  }, [isAlumniCornerOpen]);
+  }, [isAlumniCornerOpen, isAnalyticsDropdownOpen]);
 
   // Render desktop navigation items based on user role
   const renderDesktopNavItems = () => {
@@ -131,10 +130,7 @@ const UniversalNav = ({
             <Users className="w-5 h-5" />
             <span className="hidden md:inline ml-1">Alumni Management</span>
           </button>
-          <div className="relative"
-            onMouseEnter={() => setIsAnalyticsDropdownOpen(true)}
-            onMouseLeave={() => setIsAnalyticsDropdownOpen(false)}
-          >
+          <div className="relative">
             <button
               className={`flex items-center justify-center px-3 py-2 rounded-md transition-all text-sm font-semibold focus:outline-none ${
                 (activeTab === "analytics" || activeTab === "detailed-analytics") 
@@ -479,7 +475,7 @@ const UniversalNav = ({
               title="Alumni Corner"
             >
               <Users className="w-4 h-4 sm:w-5 sm:h-5" />
-              <span className="hidden lg:inline ml-1">Alumni Corner</span>
+              <span className="hidden lg:inline ml-1 whitespace-nowrap">Alumni Corner</span>
               <svg 
                 className={`ml-1 w-4 h-4 transition-transform ${isAlumniCornerOpen ? 'rotate-180' : ''}`} 
                 fill="none" 
@@ -587,7 +583,7 @@ const UniversalNav = ({
               title="Alumni Corner"
             >
               <Users className="w-4 h-4 sm:w-5 sm:h-5" />
-              <span className="hidden sm:inline ml-1">Alumni Corner</span>
+              <span className="hidden sm:inline ml-1 whitespace-nowrap">Alumni Corner</span>
               <svg 
                 className={`ml-1 w-4 h-4 transition-transform ${isAlumniCornerOpen ? 'rotate-180' : ''}`} 
                 fill="none" 
@@ -1121,7 +1117,7 @@ const UniversalNav = ({
               </>
             )}
           </div>
-          <div className="flex items-center space-x-2 md:space-x-4">
+          <div className={`flex items-center space-x-2 md:space-x-4 ${(isLoggedIn && userRole === 'admin') ? 'flex-1 justify-end md:justify-between md:ml-6' : ''}`}>
             {/* Mobile menu button - only visible on mobile */}
             <div className="md:hidden">
               <Sheet>
@@ -1190,7 +1186,7 @@ const UniversalNav = ({
             </div>
             
             {/* Desktop navigation - hidden on mobile */}
-            <div className="hidden md:flex items-center space-x-2 md:space-x-4">
+            <div className={`hidden md:flex items-center ${(isLoggedIn && userRole === 'admin') ? 'justify-between w-full' : 'space-x-2 md:space-x-4'}`}>
               <nav className="flex space-x-1 h-12 bg-white rounded-lg shadow-md p-1">
                 {renderDesktopNavItems()}
               </nav>
