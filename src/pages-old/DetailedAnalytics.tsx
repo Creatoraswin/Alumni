@@ -16,6 +16,44 @@ import { analyticsDataCache } from "@/services/analyticsDataCache";
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
 
+// Helper function to map normalized department codes (like "cse", "ece")
+// to database branch names (like "COMPUTER SCIENCE & ENGINEERING")
+const isDepartmentMatch = (userDept: string, recordDept: string): boolean => {
+  const u = userDept.trim().toLowerCase();
+  const r = recordDept.trim().toLowerCase();
+  
+  if (u === r) return true;
+  
+  // CSE mapping
+  if (u === "cse" && (r.includes("cse") || r.includes("computer science"))) return true;
+  
+  // ECE mapping
+  if (u === "ece" && (r.includes("ece") || r.includes("electronics"))) return true;
+  
+  // Mechanical mapping
+  if (u === "mechanical" && (r.includes("mechanical") || r.includes("mech"))) return true;
+  
+  // Radiology mapping
+  if (u === "radiology" && r.includes("radiology")) return true;
+  
+  // Optometry mapping
+  if (u === "optometry" && r.includes("optometry")) return true;
+  
+  // Anesthesia mapping
+  if (u === "anesthesia" && (r.includes("anesthesia") || r.includes("anaesthesia"))) return true;
+  
+  // Forensic mapping
+  if (u === "forensic" && r.includes("forensic")) return true;
+  
+  // BBA mapping
+  if (u === "bba" && r.includes("bba")) return true;
+  
+  // Partial matches as fallback
+  if (r.includes(u) || u.includes(r)) return true;
+  
+  return false;
+};
+
 const DetailedAnalytics = () => {
   const { students } = useAdminData();
   const { isLoggedIn, userRole, currentDepartmentUser } = useAuth();
@@ -66,10 +104,19 @@ const DetailedAnalytics = () => {
     if (userRole === "school" && currentDepartmentUser && currentDepartmentUser.department) {
       setSelectedGlobalSchool(currentDepartmentUser.department);
     } else if (userRole === "department" && currentDepartmentUser && currentDepartmentUser.department) {
-      setSelectedGlobalDepartment(currentDepartmentUser.department);
+      // Find the matched branch name from studentStrengthData to set as selectedGlobalDepartment
+      const matchedBranch = studentStrengthData.find(
+        item => item.branch && isDepartmentMatch(currentDepartmentUser.department, item.branch)
+      );
+      if (matchedBranch && matchedBranch.branch) {
+        setSelectedGlobalDepartment(matchedBranch.branch);
+      } else {
+        setSelectedGlobalDepartment(currentDepartmentUser.department);
+      }
+      
       // Also determine and set their school if possible from data
       const matchedRecord = studentStrengthData.find(
-        item => item.branch?.toLowerCase() === currentDepartmentUser.department.toLowerCase()
+        item => item.branch && isDepartmentMatch(currentDepartmentUser.department, item.branch)
       );
       if (matchedRecord && matchedRecord.school) {
         setSelectedGlobalSchool(matchedRecord.school);
@@ -93,7 +140,7 @@ const DetailedAnalytics = () => {
       // Role-based access control
       .filter(item => {
         if (userRole === "department" && currentDepartmentUser && currentDepartmentUser.department) {
-          return item.department.trim().toLowerCase() === currentDepartmentUser.department.trim().toLowerCase();
+          return isDepartmentMatch(currentDepartmentUser.department, item.department);
         }
         if (userRole === "school" && currentDepartmentUser && currentDepartmentUser.department) {
           return item.school.trim().toLowerCase() === currentDepartmentUser.department.trim().toLowerCase();
@@ -111,7 +158,7 @@ const DetailedAnalytics = () => {
       studentStrengthData
         .filter(student => {
           if (userRole === "department" && currentDepartmentUser && currentDepartmentUser.department) {
-            return student.branch?.trim().toLowerCase() === currentDepartmentUser.department.trim().toLowerCase();
+            return student.branch && isDepartmentMatch(currentDepartmentUser.department, student.branch);
           }
           if (userRole === "school" && currentDepartmentUser && currentDepartmentUser.department) {
             return student.school?.trim().toLowerCase() === currentDepartmentUser.department.trim().toLowerCase();
@@ -129,7 +176,7 @@ const DetailedAnalytics = () => {
       studentStrengthData
         .filter(student => {
           if (userRole === "department" && currentDepartmentUser && currentDepartmentUser.department) {
-            return student.branch?.trim().toLowerCase() === currentDepartmentUser.department.trim().toLowerCase();
+            return student.branch && isDepartmentMatch(currentDepartmentUser.department, student.branch);
           }
           if (userRole === "school" && currentDepartmentUser && currentDepartmentUser.department) {
             return student.school?.trim().toLowerCase() === currentDepartmentUser.department.trim().toLowerCase();
@@ -146,7 +193,7 @@ const DetailedAnalytics = () => {
   const filteredAlumniFormData = useMemo(() => {
     return alumniFormData.filter(alumni => {
       if (userRole === "department" && currentDepartmentUser && currentDepartmentUser.department) {
-        return alumni.department && alumni.department.trim().toLowerCase() === currentDepartmentUser.department.trim().toLowerCase();
+        return alumni.department && isDepartmentMatch(currentDepartmentUser.department, alumni.department);
       }
       if (userRole === "school" && currentDepartmentUser && currentDepartmentUser.department) {
         return alumni.school && alumni.school.trim().toLowerCase() === currentDepartmentUser.department.trim().toLowerCase();

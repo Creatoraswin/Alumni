@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { registerStudent, fetchStudentsData, testApiConnectivity, testImageUploadEndpoint, testUploadFunctionality } from "@/services/apiService";
 import { useRouter } from 'next/navigation';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -400,6 +400,13 @@ const SignUp = () => {
   const uniqueDepartments = form.school ? Array.from(new Set(academicData.filter(a => a.school === form.school).map(a => a.department))) : [];
   const uniqueProgrammes = form.department ? Array.from(new Set(academicData.filter(a => a.school === form.school && a.department === form.department).map(a => a.programme))) : [];
 
+  const uniqueAreaOfStudy = useMemo(() => Array.from(new Set(students.map(s => s.areaOfStudy).filter(v => v && v !== "NA"))), [students]);
+  const uniqueUniversityName = useMemo(() => Array.from(new Set(students.map(s => s.universityName).filter(v => v && v !== "NA"))), [students]);
+  const uniqueLocation = useMemo(() => Array.from(new Set(students.map(s => s.location).filter(v => v && v !== "NA"))), [students]);
+  const uniqueDesignation = useMemo(() => Array.from(new Set(students.map(s => s.designation).filter(v => v && v !== "NA"))), [students]);
+  const uniqueOrganisation = useMemo(() => Array.from(new Set(students.map(s => s.organisation).filter(v => v && v !== "NA"))), [students]);
+  const uniquePlaceOfWork = useMemo(() => Array.from(new Set(students.map(s => s.placeOfWork).filter(v => v && v !== "NA"))), [students]);
+
 
   if (submitted) {
     return <div className="max-w-xl mx-auto mt-10 p-6 bg-accent/20 rounded shadow text-center text-lg font-semibold text-foreground">Thank you for registering as an alumnus! Your response has been recorded.<br/>Redirecting to main page...</div>;
@@ -513,24 +520,29 @@ const SignUp = () => {
                   {/* Job Fields */}
                   {studentStatus === "Job" && (
                     <>
-                      <div>
-                        <label className="block font-semibold">Current Position *</label>
-                        <input name="currentPosition" value={form.currentPosition} onChange={handleChange} className="w-full border rounded p-2" required />
-                        {errors.currentPosition && <span className="text-destructive text-xs">{errors.currentPosition}</span>}
-                      </div>
+
                       <div>
                         <label className="block font-semibold">Designation *</label>
-                        <input name="designation" value={form.designation} onChange={handleChange} className="w-full border rounded p-2" required />
+                        <input list="designationList" name="designation" value={form.designation} onChange={handleChange} className="w-full border rounded p-2" required />
+                        <datalist id="designationList">
+                          {uniqueDesignation.map((v, i) => <option key={i} value={v} />)}
+                        </datalist>
                         {errors.designation && <span className="text-destructive text-xs">{errors.designation}</span>}
                       </div>
                       <div>
                         <label className="block font-semibold">Name of the Organisation *</label>
-                        <input name="organisation" value={form.organisation} onChange={handleChange} className="w-full border rounded p-2" required />
+                        <input list="organisationList" name="organisation" value={form.organisation} onChange={handleChange} className="w-full border rounded p-2" required />
+                        <datalist id="organisationList">
+                          {uniqueOrganisation.map((v, i) => <option key={i} value={v} />)}
+                        </datalist>
                         {errors.organisation && <span className="text-destructive text-xs">{errors.organisation}</span>}
                       </div>
                       <div>
                         <label className="block font-semibold">Place of work *</label>
-                        <input name="placeOfWork" value={form.placeOfWork} onChange={handleChange} className="w-full border rounded p-2" required />
+                        <input list="placeOfWorkList" name="placeOfWork" value={form.placeOfWork} onChange={handleChange} className="w-full border rounded p-2" required />
+                        <datalist id="placeOfWorkList">
+                          {uniquePlaceOfWork.map((v, i) => <option key={i} value={v} />)}
+                        </datalist>
                         {errors.placeOfWork && <span className="text-destructive text-xs">{errors.placeOfWork}</span>}
                       </div>
                     </>
@@ -545,17 +557,26 @@ const SignUp = () => {
                       </div> */}
                       <div>
                         <label className="block font-semibold">Area of Study *</label>
-                        <input name="areaOfStudy" value={form.areaOfStudy || ""} onChange={handleChange} className="w-full border rounded p-2" required />
+                        <input list="areaOfStudyList" name="areaOfStudy" value={form.areaOfStudy || ""} onChange={handleChange} className="w-full border rounded p-2" required />
+                        <datalist id="areaOfStudyList">
+                          {uniqueAreaOfStudy.map((v, i) => <option key={i} value={v} />)}
+                        </datalist>
                         {errors.areaOfStudy && <span className="text-destructive text-xs">{errors.areaOfStudy}</span>}
                       </div>
                       <div>
                         <label className="block font-semibold">University Name *</label>
-                        <input name="universityName" value={form.universityName || ""} onChange={handleChange} className="w-full border rounded p-2" required />
+                        <input list="universityNameList" name="universityName" value={form.universityName || ""} onChange={handleChange} className="w-full border rounded p-2" required />
+                        <datalist id="universityNameList">
+                          {uniqueUniversityName.map((v, i) => <option key={i} value={v} />)}
+                        </datalist>
                         {errors.universityName && <span className="text-destructive text-xs">{errors.universityName}</span>}
                       </div>
                       <div>
                         <label className="block font-semibold">Location *</label>
-                        <input name="location" value={form.location || ""} onChange={handleChange} className="w-full border rounded p-2" required />
+                        <input list="locationList" name="location" value={form.location || ""} onChange={handleChange} className="w-full border rounded p-2" required />
+                        <datalist id="locationList">
+                          {uniqueLocation.map((v, i) => <option key={i} value={v} />)}
+                        </datalist>
                         {errors.location && <span className="text-destructive text-xs">{errors.location}</span>}
                       </div>
                     </>
@@ -625,7 +646,7 @@ const SignUp = () => {
                   </div>
                   <div>
                     <label className="block font-semibold">Upload photo *</label>
-                    <input name="photo" type="file" accept="image/*" onChange={handleChange} className="w-full border rounded p-2" required />
+                    <input name="photo" type="file" accept="image/*" onChange={handleChange} className="w-full border rounded p-2 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 cursor-pointer" required />
                     {errors.photo && <span className="text-destructive text-xs">{errors.photo}</span>}
                   </div>
                   <div className="sm:col-span-2 xl:col-span-2">
