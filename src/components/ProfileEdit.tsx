@@ -28,6 +28,9 @@ const ProfileEdit = ({ isOpen, onClose, student, onSave }: ProfileEditProps) => 
   const [universityName, setUniversityName] = useState(student.universityName === "NA" ? "" : (student.universityName || ""));
   const [areaOfStudy, setAreaOfStudy] = useState(student.areaOfStudy === "NA" ? "" : (student.areaOfStudy || ""));
   const [location, setLocation] = useState(student.location === "NA" ? "" : (student.location || ""));
+  const [personalEmail, setPersonalEmail] = useState(student.personalEmail && student.personalEmail !== "NA" ? student.personalEmail : (student.email || ""));
+  const [phone, setPhone] = useState(student.phone === "NA" ? "" : (student.phone || ""));
+  const [address, setAddress] = useState(student.address === "NA" ? "" : (student.address || ""));
   const [isEditingPhoto, setIsEditingPhoto] = useState(false);
   const [tempPhotoUrl, setTempPhotoUrl] = useState("");
   const [imageLoading, setImageLoading] = useState(false);
@@ -63,8 +66,12 @@ const ProfileEdit = ({ isOpen, onClose, student, onSave }: ProfileEditProps) => 
       universityName: universityName || "NA",
       areaOfStudy: areaOfStudy || "NA",
       location: location || "NA",
+      personalEmail: personalEmail || "NA",
+      phone: phone || "NA",
+      address: address || "NA",
     };
     
+
     console.log('Saving updated student data:', updatedStudent);
     onSave(updatedStudent);
     onClose();
@@ -237,6 +244,49 @@ const ProfileEdit = ({ isOpen, onClose, student, onSave }: ProfileEditProps) => 
                 </div>
               </div>
             )}
+          </div>
+
+          {/* Personal Information Section */}
+          <div className="space-y-6">
+            <h3 className="text-xl font-bold text-gray-800 border-b pb-2">Personal Information</h3>
+            
+            <div className="space-y-3">
+              <Label htmlFor="personalEmail" className="text-base font-semibold text-gray-700 flex items-center space-x-2">
+                <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                <span>Personal Email</span>
+              </Label>
+              <Input
+                id="personalEmail"
+                placeholder="Enter your personal email"
+                value={personalEmail}
+                onChange={e => setPersonalEmail(e.target.value)}
+                className="border-gray-300 focus:border-blue-400 py-3"
+              />
+
+              <Label htmlFor="phone" className="text-base font-semibold text-gray-700 flex items-center space-x-2">
+                <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
+                <span>Phone Number</span>
+              </Label>
+              <Input
+                id="phone"
+                placeholder="Enter your phone number"
+                value={phone}
+                onChange={e => setPhone(e.target.value)}
+                className="border-gray-300 focus:border-purple-400 py-3"
+              />
+
+              <Label htmlFor="address" className="text-base font-semibold text-gray-700 flex items-center space-x-2">
+                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                <span>Address</span>
+              </Label>
+              <Textarea
+                id="address"
+                placeholder="Enter your address"
+                value={address}
+                onChange={e => setAddress(e.target.value)}
+                className="border-gray-300 focus:border-green-400 py-3 min-h-[80px]"
+              />
+            </div>
           </div>
 
           {/* Current Status Section */}

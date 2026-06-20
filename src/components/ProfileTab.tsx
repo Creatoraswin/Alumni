@@ -31,8 +31,8 @@ const ProfileTab = ({ isLoggedIn, currentStudent, onEditProfile }: ProfileTabPro
             </span>
           </CardTitle>
           {isLoggedIn && currentStudent && (
-            <Button 
-              onClick={onEditProfile} 
+            <Button
+              onClick={onEditProfile}
               size="sm"
               className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 shadow-md"
             >
@@ -48,8 +48,8 @@ const ProfileTab = ({ isLoggedIn, currentStudent, onEditProfile }: ProfileTabPro
             {/* Profile Header */}
             <div className="flex flex-col md:flex-row items-center md:items-start md:space-x-8 space-y-4 md:space-y-0">
               <Avatar className="w-32 h-32 border-4 border-white shadow-xl ring-4 ring-blue-200">
-                <AvatarImage 
-                  src={getDirectImageUrl(currentStudent.photoUrl)} 
+                <AvatarImage
+                  src={getDirectImageUrl(currentStudent.photoUrl)}
                   alt={currentStudent.name}
                   className="object-cover"
                 />
@@ -109,33 +109,33 @@ const ProfileTab = ({ isLoggedIn, currentStudent, onEditProfile }: ProfileTabPro
             </div>
 
             {/* Section: Professional Information */}
-            {currentStudent.currentPosition && 
-             currentStudent.currentPosition.toLowerCase() === "job" && (
-              <Card className="rounded-2xl shadow border-0 bg-gradient-to-br from-green-50 to-white">
-                <CardHeader className="pb-2 flex flex-row items-center gap-2">
-                  <Briefcase className="h-5 w-5 text-green-600" />
-                  <CardTitle className="text-green-700 text-lg font-bold tracking-wide">Professional Information</CardTitle>
-                </CardHeader>
-                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-0">
-                  <div><span className="font-semibold text-gray-700">Current Position:</span> {currentStudent.currentPosition}</div>
-                  {currentStudent.designation && currentStudent.designation.toLowerCase() !== "na" && currentStudent.designation.trim() !== "" && (
-                    <div><span className="font-semibold text-gray-700">Designation:</span> {currentStudent.designation}</div>
-                  )}
-                  {currentStudent.organisation && currentStudent.organisation.toLowerCase() !== "na" && currentStudent.organisation.trim() !== "" && (
-                    <div><span className="font-semibold text-gray-700">Name of the Organisation:</span> {currentStudent.organisation}</div>
-                  )}
-                  {currentStudent.placeOfWork && currentStudent.placeOfWork.toLowerCase() !== "na" && currentStudent.placeOfWork.trim() !== "" && (
-                    <div><span className="font-semibold text-gray-700">Place of Work:</span> {currentStudent.placeOfWork}</div>
-                  )}
-                  {currentStudent.areaOfInterest && currentStudent.areaOfInterest.toLowerCase() !== "na" && currentStudent.areaOfInterest.trim() !== "" && (
-                    <div><span className="font-semibold text-gray-700">Area of Interest/Expertise:</span> {currentStudent.areaOfInterest}</div>
-                  )}
-                  {currentStudent.linkedinId && currentStudent.linkedinId.toLowerCase() !== "na" && currentStudent.linkedinId.trim() !== "" && (
-                    <div><span className="font-semibold text-gray-700">LinkedIn:</span> {currentStudent.linkedinId}</div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
+            {currentStudent.currentPosition &&
+              currentStudent.currentPosition.toLowerCase() === "job" && (
+                <Card className="rounded-2xl shadow border-0 bg-gradient-to-br from-green-50 to-white">
+                  <CardHeader className="pb-2 flex flex-row items-center gap-2">
+                    <Briefcase className="h-5 w-5 text-green-600" />
+                    <CardTitle className="text-green-700 text-lg font-bold tracking-wide">Professional Information</CardTitle>
+                  </CardHeader>
+                  <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-0">
+                    <div><span className="font-semibold text-gray-700">Current Position:</span> {currentStudent.currentPosition}</div>
+                    {currentStudent.designation && currentStudent.designation.toLowerCase() !== "na" && currentStudent.designation.trim() !== "" && (
+                      <div><span className="font-semibold text-gray-700">Designation:</span> {currentStudent.designation}</div>
+                    )}
+                    {currentStudent.organisation && currentStudent.organisation.toLowerCase() !== "na" && currentStudent.organisation.trim() !== "" && (
+                      <div><span className="font-semibold text-gray-700">Name of the Organisation:</span> {currentStudent.organisation}</div>
+                    )}
+                    {currentStudent.placeOfWork && currentStudent.placeOfWork.toLowerCase() !== "na" && currentStudent.placeOfWork.trim() !== "" && (
+                      <div><span className="font-semibold text-gray-700">Place of Work:</span> {currentStudent.placeOfWork}</div>
+                    )}
+                    {currentStudent.areaOfInterest && currentStudent.areaOfInterest.toLowerCase() !== "na" && currentStudent.areaOfInterest.trim() !== "" && (
+                      <div><span className="font-semibold text-gray-700">Area of Interest/Expertise:</span> {currentStudent.areaOfInterest}</div>
+                    )}
+                    {currentStudent.linkedinId && currentStudent.linkedinId.toLowerCase() !== "na" && currentStudent.linkedinId.trim() !== "" && (
+                      <div><span className="font-semibold text-gray-700">LinkedIn:</span> {currentStudent.linkedinId}</div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
 
             {/* Section: Higher Study Information (conditionally rendered) */}
             {currentStudent.currentPosition && currentStudent.currentPosition.toLowerCase() === "higher study" && (
@@ -165,10 +165,12 @@ const ProfileTab = ({ isLoggedIn, currentStudent, onEditProfile }: ProfileTabPro
                 <CardTitle className="text-purple-700 text-lg font-bold tracking-wide">Academic Information</CardTitle>
               </CardHeader>
               <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-0">
+                <div><span className="font-semibold text-gray-700">Registration No.:</span> {currentStudent.registrationNo}</div>
                 <div><span className="font-semibold text-gray-700">School:</span> {currentStudent.school}</div>
+                <div><span className="font-semibold text-gray-700">Department:</span> {currentStudent.department}</div>
                 <div><span className="font-semibold text-gray-700">Programme:</span> {currentStudent.programme}</div>
                 <div><span className="font-semibold text-gray-700">Graduation Year:</span> {currentStudent.graduationYear}</div>
-                
+
               </CardContent>
             </Card>
 
@@ -179,24 +181,14 @@ const ProfileTab = ({ isLoggedIn, currentStudent, onEditProfile }: ProfileTabPro
                 <CardTitle className="text-blue-700 text-lg font-bold tracking-wide">Personal Information</CardTitle>
               </CardHeader>
               <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-0">
-                <div><span className="font-semibold text-gray-700">Registration No.:</span> {currentStudent.registrationNo}</div>
                 <div><span className="font-semibold text-gray-700">Email:</span> {currentStudent.email}</div>
+                {currentStudent.personalEmail && <div><span className="font-semibold text-gray-700">Personal Email:</span> {currentStudent.personalEmail}</div>}
                 <div><span className="font-semibold text-gray-700">Phone:</span> {currentStudent.phone}</div>
                 <div><span className="font-semibold text-gray-700">DOB:</span> {formatDateForDisplay(currentStudent.dob) || "Not specified"}</div>
                 <div className="md:col-span-2"><span className="font-semibold text-gray-700">Address:</span> {currentStudent.address}</div>
               </CardContent>
             </Card>
 
-            {/* Section: Other Information */}
-            <Card className="rounded-2xl shadow border-0 bg-gradient-to-br from-gray-50 to-white">
-              <CardHeader className="pb-2 flex flex-row items-center gap-2">
-                <Badge className="bg-gray-200 text-gray-700">Other</Badge>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className="font-semibold text-gray-700 mb-1">Feedback:</div>
-                <div className="text-gray-800">{currentStudent.feedback}</div>
-              </CardContent>
-            </Card>
           </div>
         ) : (
           <div className="text-center py-12">

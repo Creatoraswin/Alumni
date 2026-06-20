@@ -65,23 +65,40 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   useEffect(() => {
     const loadStudents = async () => {
       try {
-        // If we already have cached data, we're not loading
+        let studentsData: Student[] = [];
+
+        // If we already have cached data, use it
         if (dataCache.hasValidCache()) {
-          const cachedData = dataCache.getCachedData()!;
-          setStudents(cachedData);
-          setLoading(false);
+          studentsData = dataCache.getCachedData()!;
+          setStudents(studentsData);
           setDataLoaded(true);
-          return;
+        } else {
+          setLoading(true);
+          // Use cache service to get data
+          // For the main student list, we want all students including unapproved ones
+          // The individual components will filter as needed
+          studentsData = await dataCache.getData(() => fetchStudentsData(true)); // Pass true to get all students
+          setStudents(studentsData);
+          setDataLoaded(true);
         }
 
-        setLoading(true);
-        
-        // Use cache service to get data
-        // For the main student list, we want all students including unapproved ones
-        // The individual components will filter as needed
-        const data = await dataCache.getData(() => fetchStudentsData(true)); // Pass true to get all students
-        setStudents(data);
-        setDataLoaded(true);
+        // Update current student if it exists, using whichever data we got (cached or fresh)
+        const storedStudentStr = localStorage.getItem('currentStudent');
+        if (storedStudentStr && studentsData.length > 0) {
+          try {
+            const storedStudent = JSON.parse(storedStudentStr);
+            const regNo = storedStudent.registrationNo || storedStudent.registration_no;
+            if (storedStudent && regNo) {
+              const freshStudent = studentsData.find(s => s.registrationNo === regNo);
+              if (freshStudent) {
+                setCurrentStudent(freshStudent);
+                localStorage.setItem('currentStudent', JSON.stringify(freshStudent));
+              }
+            }
+          } catch (e) {
+            console.error("Error updating current student from fresh data:", e);
+          }
+        }
       } catch (error) {
         // Keep any existing cached data in case of error
       } finally {

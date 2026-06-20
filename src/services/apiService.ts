@@ -157,7 +157,8 @@ const mapDbStudentToFrontend = (dbStudent: any): Student => {
 
 export const fetchStudentsData = async (showAll: boolean = false): Promise<Student[]> => {
   try {
-    const response = await fetch(`${API_URL}/students/index.php?showAll=${showAll}`);
+    const ts = new Date().getTime();
+    const response = await fetch(`${API_URL}/students/index.php?showAll=${showAll}&t=${ts}`, { cache: 'no-store' });
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     const data = await response.json();
     if (data.success && data.data) {
@@ -428,7 +429,7 @@ export const authenticateStudent = async (email: string, password: string): Prom
     
     if (!data.success) return null;
     
-    const students: Student[] = data.data;
+    const students: Student[] = data.data.map((item: any) => mapDbStudentToFrontend(item));
     
     // Normalize user input date (which is usually dd/mm/yyyy from AuthModal)
     const normalizedInputPassword = password.replace(/\//g, '-');

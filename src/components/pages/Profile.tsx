@@ -30,6 +30,7 @@ const Profile = () => {
       const refreshed = allStudents.find(s => s.registrationNo === updatedStudent.registrationNo);
       if (refreshed) {
         setCurrentStudent(refreshed);
+        localStorage.setItem('currentStudent', JSON.stringify(refreshed));
         console.log('Profile updated successfully, new data:', refreshed);
       }
       toast({ title: "Profile updated!", description: "Your changes have been saved." });
