@@ -1,6 +1,6 @@
 "use client";
 
-import AlumniMeetDetail from "@/pages-old/AlumniMeetDetail";
+import AlumniMeetDetail from "@/components/pages/AlumniMeetDetail";
 
 export default function AlumniMeetDetailPage() {
   return <AlumniMeetDetail />;

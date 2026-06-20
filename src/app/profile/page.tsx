@@ -1,6 +1,6 @@
 "use client";
 
-import Profile from "@/pages-old/Profile";
+import Profile from "@/components/pages/Profile";
 
 export default function ProfilePage() {
   return <Profile />;

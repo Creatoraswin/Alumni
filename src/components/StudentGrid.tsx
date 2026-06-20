@@ -9,6 +9,7 @@ import { Linkedin } from "lucide-react";
 import { Student, getDirectImageUrl } from "@/services/apiService";
 import RobustImage from "./RobustImage";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useRouter } from "next/navigation";
 
 interface StudentGridProps {
   students: Student[];
@@ -18,6 +19,8 @@ interface StudentGridProps {
 }
 
 const StudentGrid = ({ students, isLoggedIn, loading = false, currentUserInfo }: StudentGridProps) => {
+  const router = useRouter();
+
   // Skeleton loading component
   const StudentCardSkeleton = () => (
     <Card className="group relative overflow-hidden border-0 card-enhanced bg-card rounded-2xl animate-pulse">
@@ -274,7 +277,12 @@ Best regards,
         
         return (
           // Removed hover-lift class to fix white on hover issue
-          <Card key={`${student.id}-${index}`} className="group relative overflow-hidden border-0 card-enhanced animate-fade-in-up bg-card rounded-2xl" style={{ animationDelay: `${index * 0.1}s` }}>
+          <Card 
+            key={`${student.id}-${index}`} 
+            className="group relative overflow-hidden border-0 card-enhanced animate-fade-in-up bg-card rounded-2xl cursor-pointer hover:scale-[1.02] transition-transform shadow-md hover:shadow-elegant" 
+            style={{ animationDelay: `${index * 0.1}s` }}
+            onClick={() => router.push(`/alumni-directory/${student.registrationNo}`)}
+          >
             {/* Enhanced Header with School Color */}
             <div className="h-14 relative overflow-hidden" style={{background: `linear-gradient(135deg, hsl(var(--${schoolColor})), hsl(var(--primary)))`}}>
               <div className="absolute inset-0 bg-black/10"></div>
@@ -389,9 +397,9 @@ Best regards,
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="flex-1 text-sm h-11 font-bold shadow-glow hover:scale-105 border-0 rounded-xl transition-all duration-300"
+                  className="flex-1 text-sm h-11 font-bold shadow-glow hover:scale-105 border-0 rounded-xl transition-all duration-300 relative z-20"
                   style={{background: `linear-gradient(135deg, hsl(var(--${schoolColor})), hsl(var(--primary)))`, color: 'white'}}
-                  onClick={() => handleContactClick(student)}
+                  onClick={(e) => { e.stopPropagation(); handleContactClick(student); }}
                   disabled={!student.email || student.email === "Not specified"}
                 >
                   <Mail className="h-4 w-4 mr-2" />
@@ -400,9 +408,9 @@ Best regards,
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="flex-1 text-sm h-11 font-bold shadow-glow hover:scale-105 border-0 rounded-xl transition-all duration-300"
+                  className="flex-1 text-sm h-11 font-bold shadow-glow hover:scale-105 border-0 rounded-xl transition-all duration-300 relative z-20"
                   style={{background: `linear-gradient(135deg, hsl(var(--${schoolColor})), hsl(var(--primary)))`, color: 'white'}}
-                  onClick={() => handleLinkedInClick(student.linkedinId)}
+                  onClick={(e) => { e.stopPropagation(); handleLinkedInClick(student.linkedinId); }}
                   disabled={!student.linkedinId || student.linkedinId === "Not specified"}
                 >
                   <Linkedin className="h-4 w-4 mr-2" />
@@ -410,6 +418,8 @@ Best regards,
                 </Button>
               </div>
             )}
+
+            {/* View Profile Button - Removed as requested */}
           </CardContent>
         </Card>
       );

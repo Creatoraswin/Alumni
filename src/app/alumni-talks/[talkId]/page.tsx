@@ -1,6 +1,6 @@
 "use client";
 
-import AlumniTalkDetail from "@/pages-old/AlumniTalkDetail";
+import AlumniTalkDetail from "@/components/pages/AlumniTalkDetail";
 
 export default function AlumniTalkDetailPage() {
   return <AlumniTalkDetail />;

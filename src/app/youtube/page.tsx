@@ -1,6 +1,6 @@
 "use client";
 
-import YouTubePlayer from "@/pages-old/YouTubePlayer";
+import YouTubePlayer from "@/components/pages/YouTubePlayer";
 
 export default function YouTubePage() {
   return <YouTubePlayer />;

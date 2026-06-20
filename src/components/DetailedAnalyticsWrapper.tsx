@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import DetailedAnalytics from "@/pages-old/DetailedAnalytics";
+import DetailedAnalytics from "@/components/pages/DetailedAnalytics";
 
 const DetailedAnalyticsWrapper = () => {
   return (

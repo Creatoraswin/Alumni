@@ -1,6 +1,6 @@
 "use client";
 
-import TestAlumniSpotlight from "@/pages-old/TestAlumniSpotlight";
+import TestAlumniSpotlight from "@/components/pages/TestAlumniSpotlight";
 
 export default function TestAlumniSpotlightPage() {
   return <TestAlumniSpotlight />;

@@ -1,0 +1,288 @@
+"use client";
+
+import { Student } from "@/services/apiService";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { MapPin, Mail, Briefcase, Building, GraduationCap, ArrowLeft, Linkedin, BookOpen } from "lucide-react";
+import RobustImage from "@/components/RobustImage";
+import Link from "next/link";
+import { useAuth } from "@/contexts/useAuth";
+import UniversalNav from "@/components/UniversalNav";
+import AuthModal from "@/components/AuthModal";
+import { useState } from "react";
+import { DepartmentUser } from "@/contexts/AuthContext";
+
+interface StudentProfileViewProps {
+  student: Student;
+}
+
+const getSchoolColor = (school: string) => {
+  switch (school?.toUpperCase()) {
+    case 'SOET': return 'school-engineering';
+    case 'SOPAHS': return 'school-paramedical';
+    case 'SOM': return 'school-management';
+    case 'SOCSA': return 'school-agriculture';
+    default: return 'accent';
+  }
+};
+
+const formatValue = (value: unknown): string => {
+  if (
+    !value ||
+    (typeof value === "string" && (
+      value.toLowerCase() === "na" ||
+      value.toLowerCase() === "null" ||
+      value === "Not specified"
+    ))
+  ) {
+    return "Not specified";
+  }
+  return String(value);
+};
+
+export default function StudentProfileView({ student }: StudentProfileViewProps) {
+  const { isLoggedIn, userRole, currentStudent, currentDepartmentUser, login, logout } = useAuth();
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const schoolColor = getSchoolColor(student.school);
+
+  const handleLogin = (role: "student" | "admin" | "department" | "school" | "alumni-manager" | "cadmin", loggedInStudent?: Student, departmentUser?: DepartmentUser) => {
+    login(role, loggedInStudent, departmentUser);
+    setIsAuthModalOpen(false);
+  };
+
+  const handleLinkedInClick = (linkedinUrl: string) => {
+    if (linkedinUrl && linkedinUrl !== 'Not specified') {
+      const url = linkedinUrl.startsWith('http') ? linkedinUrl : `https://${linkedinUrl}`;
+      window.open(url, '_blank');
+    }
+  };
+
+  const handleContactClick = () => {
+    if (!student.email) return;
+    const subject = `Alumini Connect from CUTMAP Portal`;
+    const mailtoUrl = `mailto:${student.email}?subject=${encodeURIComponent(subject)}`;
+    window.location.href = mailtoUrl;
+  };
+
+  return (
+    <div
+      className="min-h-screen flex flex-col"
+      style={{ background: `linear-gradient(180deg, hsl(var(--${schoolColor}) / 0.08) 0%, hsl(var(--background)) 100%)` }}
+    >
+      <UniversalNav
+        isLoggedIn={isLoggedIn}
+        userRole={userRole}
+        currentStudent={currentStudent}
+        currentDepartmentUser={currentDepartmentUser}
+        onLoginClick={() => setIsAuthModalOpen(true)}
+        onLogout={logout}
+      />
+
+      <main className="flex-1 w-full pt-16 md:pt-20">
+        {/* Full-width Banner */}
+        <div className="h-48 md:h-64 w-full relative overflow-hidden bg-muted">
+          {/* Photo Background */}
+          <div className="absolute inset-0 opacity-40 blur-2xl scale-110 pointer-events-none z-0">
+            <RobustImage
+              photoUrl={student.photoUrl}
+              studentName={student.name}
+              size="lg"
+              className="w-full h-full object-cover"
+            />
+          </div>
+
+          {/* Decorative elegant overlays */}
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent z-0"></div>
+
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full relative z-10">
+            <Link href="/alumni-directory" className="absolute top-6 right-4 sm:right-6 z-10">
+              <Button className="gradient-primary text-white border-none shadow-md hover:shadow-glow hover:scale-105 transition-all duration-300 rounded-xl">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Directory
+              </Button>
+            </Link>
+          </div>
+        </div>
+
+        {/* Profile Content Container */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-24 md:-mt-32 relative z-10 pb-20">
+          <div className="flex flex-col lg:flex-row gap-12 lg:gap-20">
+
+            {/* Left Sidebar (Identity & Actions) */}
+            <div className="lg:w-1/3 flex flex-col items-center lg:items-start space-y-6">
+              {/* Profile Photo */}
+              <div style={{ borderColor: `hsl(var(--background))` }} className="border-[6px] rounded-[2rem] shadow-2xl w-64 h-64 md:w-80 md:h-80 overflow-hidden bg-background relative z-20">
+                <RobustImage
+                  photoUrl={student.photoUrl}
+                  studentName={student.name}
+                  size="lg"
+                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                />
+              </div>
+
+              {/* Connect Buttons */}
+              {isLoggedIn && (
+                <div className="w-full space-y-3 pt-6 lg:pt-8 w-full max-w-sm">
+                  <Button
+                    size="lg"
+                    className="w-full h-14 text-base font-bold shadow-glow hover:scale-[1.02] transition-all duration-300 rounded-2xl"
+                    style={{ background: `linear-gradient(135deg, hsl(var(--${schoolColor})), hsl(var(--primary)))`, color: 'white' }}
+                    onClick={handleContactClick}
+                    disabled={!student.email || student.email === "Not specified"}
+                  >
+                    <Mail className="h-5 w-5 mr-3" />
+                    Contact via Email
+                  </Button>
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="w-full h-14 text-base font-bold border-2 hover:bg-secondary/20 transition-all duration-300 rounded-2xl"
+                    style={{ borderColor: `hsl(var(--${schoolColor}))`, color: `hsl(var(--${schoolColor}))` }}
+                    onClick={() => handleLinkedInClick(student.linkedinId)}
+                    disabled={!student.linkedinId || student.linkedinId === "Not specified"}
+                  >
+                    <Linkedin className="h-5 w-5 mr-3" />
+                    LinkedIn Profile
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            {/* Right Content Area (Details & History) */}
+            <div className="lg:w-2/3 lg:pt-12 space-y-8 lg:-mt-16">
+
+              {/* Basic Info (Moved from Left) */}
+              <div className="card-enhanced p-5 md:p-7 relative z-20 text-center lg:text-left w-full space-y-3">
+                <h1 className="font-black text-4xl md:text-5xl text-foreground tracking-tight leading-tight">
+                  {student.name}
+                </h1>
+                <p className="text-lg md:text-xl text-muted-foreground font-medium flex items-center justify-center lg:justify-start gap-2">
+                  <span className="opacity-70">RegNo:</span> {student.registrationNo}
+                </p>
+                <div className="pt-2">
+                  <Badge variant="outline" className="text-sm px-4 py-1.5 rounded-full font-bold border-primary/30 text-primary bg-primary/5">
+                    Passout {student.graduationYear}
+                  </Badge>
+                </div>
+              </div>
+
+              {/* Academic Overview */}
+              <section className="card-enhanced p-5 md:p-7 relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-1 h-full bg-primary/40"></div>
+                <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground/70 mb-8 flex items-center gap-4">
+                  Academic Overview
+                  <div className="h-px bg-border flex-1"></div>
+                </h2>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-10">
+                  <div className="flex gap-5 items-start">
+                    <div className="mt-1 bg-primary/10 p-3.5 rounded-2xl">
+                      <BookOpen className="h-6 w-6 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground font-semibold tracking-wide uppercase mb-1">Programme</p>
+                      <p className="text-xl font-bold text-foreground leading-tight">{student.programme}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-5 items-start">
+                    <div className="mt-1 bg-primary/10 p-3.5 rounded-2xl">
+                      <Building className="h-6 w-6 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground font-semibold tracking-wide uppercase mb-1">Department</p>
+                      <p className="text-xl font-bold text-foreground leading-tight">{formatValue(student.department)}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-5 items-start sm:col-span-2">
+                    <div className="mt-1 bg-primary/10 p-3.5 rounded-2xl">
+                      <GraduationCap className="h-6 w-6 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground font-semibold tracking-wide uppercase mb-1">School</p>
+                      <p className="text-xl font-bold text-foreground leading-tight">{formatValue(student.school)}</p>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              {/* Professional Experience */}
+              {(formatValue(student.designation) !== "Not specified" || formatValue(student.organisation) !== "Not specified") && (
+                <section className="card-enhanced p-5 md:p-7 relative overflow-hidden">
+                  <div className="absolute top-0 left-0 w-1 h-full bg-primary/40"></div>
+                  <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground/70 mb-8 flex items-center gap-4">
+                    Professional Experience
+                    <div className="h-px bg-border flex-1"></div>
+                  </h2>
+
+                  <div className="relative pl-8 before:content-[''] before:absolute before:left-[11px] before:top-3 before:bottom-2 before:w-[2px] before:bg-gradient-to-b before:from-primary before:to-primary/10">
+                    <div className="absolute left-0 top-2 w-6 h-6 bg-background border-[4px] border-primary rounded-full shadow-glow"></div>
+                    <div className="space-y-3 pt-1 pb-4">
+                      <h3 className="text-2xl font-bold text-foreground tracking-tight">{formatValue(student.designation)}</h3>
+                      {formatValue(student.organisation) !== "Not specified" && (
+                        <p className="text-xl text-primary font-semibold">{formatValue(student.organisation)}</p>
+                      )}
+                      {formatValue(student.location) !== "Not specified" && (
+                        <p className="text-base text-muted-foreground flex items-center gap-2 font-medium">
+                          <MapPin className="h-4 w-4" /> {formatValue(student.location)}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </section>
+              )}
+
+              {/* Higher Education */}
+              {formatValue(student.areaOfStudy) !== "Not specified" && (
+                <section className="card-enhanced p-5 md:p-7 relative overflow-hidden">
+                  <div className="absolute top-0 left-0 w-1 h-full bg-primary/40"></div>
+                  <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground/70 mb-8 flex items-center gap-4">
+                    Higher Education
+                    <div className="h-px bg-border flex-1"></div>
+                  </h2>
+
+                  <div className="relative pl-8 before:content-[''] before:absolute before:left-[11px] before:top-3 before:bottom-2 before:w-[2px] before:bg-gradient-to-b before:from-primary before:to-primary/10">
+                    <div className="absolute left-0 top-2 w-6 h-6 bg-background border-[4px] border-primary rounded-full shadow-glow"></div>
+                    <div className="space-y-3 pt-1 pb-4">
+                      <h3 className="text-2xl font-bold text-foreground tracking-tight">{formatValue(student.areaOfStudy)}</h3>
+                      {formatValue(student.universityName) !== "Not specified" && (
+                        <p className="text-xl text-primary font-semibold">{formatValue(student.universityName)}</p>
+                      )}
+                    </div>
+                  </div>
+                </section>
+              )}
+
+              {/* Areas of Interest */}
+              {isLoggedIn && student.areaOfInterest && student.areaOfInterest !== "Not specified" && (
+                <section className="card-enhanced p-5 md:p-7 relative overflow-hidden">
+                  <div className="absolute top-0 left-0 w-1 h-full bg-primary/40"></div>
+                  <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground/70 mb-8 flex items-center gap-4">
+                    Areas of Interest
+                    <div className="h-px bg-border flex-1"></div>
+                  </h2>
+
+                  <div className="flex flex-wrap gap-3">
+                    {student.areaOfInterest.split(',').map((subject, idx) => (
+                      <span key={idx} className="px-5 py-2.5 rounded-xl bg-secondary/50 text-foreground font-semibold text-sm hover:bg-secondary transition-colors border border-border">
+                        {subject.trim()}
+                      </span>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onLogin={handleLogin}
+      />
+    </div>
+  );
+}
