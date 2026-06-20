@@ -38,13 +38,19 @@ class Validator
         if (empty($date) || $date === 'NA') {
             return null;
         }
-        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
-            return $date;
-        }
-        if (preg_match('/^(\d{2})\/(\d{2})\/(\d{4})$/', $date, $matches)) {
+        // If it comes as YYYY-MM-DD, convert to DD-MM-YYYY
+        if (preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $date, $matches)) {
             return $matches[3] . '-' . $matches[2] . '-' . $matches[1];
         }
-        return null;
+        // If it comes as DD/MM/YYYY, convert to DD-MM-YYYY
+        if (preg_match('/^(\d{2})\/(\d{2})\/(\d{4})$/', $date, $matches)) {
+            return $matches[1] . '-' . $matches[2] . '-' . $matches[3];
+        }
+        // If it comes as DD-MM-YYYY, return as is
+        if (preg_match('/^\d{2}-\d{2}-\d{4}$/', $date)) {
+            return $date;
+        }
+        return $date; // fallback to original string if not matched, rather than null
     }
 
     public static function convertDateToDisplay($date)

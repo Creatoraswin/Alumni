@@ -161,7 +161,7 @@ export default function StudentProfileView({ student }: StudentProfileViewProps)
                 </p>
                 <div className="pt-2">
                   <Badge variant="outline" className="text-sm px-4 py-1.5 rounded-full font-bold border-primary/30 text-primary bg-primary/5">
-                    Passout {student.graduationYear}
+                    Graduation Year: {student.graduationYear}
                   </Badge>
                 </div>
               </div>

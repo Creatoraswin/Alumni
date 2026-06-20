@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS students (
     email VARCHAR(255),
     personal_email VARCHAR(255),
     mobile_no VARCHAR(20),
-    dob DATE,
+    dob VARCHAR(15),
     
     -- Academic Info
     school VARCHAR(100),

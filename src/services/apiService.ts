@@ -421,8 +421,45 @@ export function getDirectImageUrlSized(url: unknown, width: number, height: numb
 }
 
 export const authenticateStudent = async (email: string, password: string): Promise<Student | null> => {
-  // Not implemented in DB yet as student login uses different mechanism if any
-  return null;
+  try {
+    // Note: The modal passes password as DD/MM/YYYY
+    const response = await fetch(`${API_URL}/students/index.php`);
+    const data = await response.json();
+    
+    if (!data.success) return null;
+    
+    const students: Student[] = data.data;
+    
+    // Normalize user input date (which is usually dd/mm/yyyy from AuthModal)
+    const normalizedInputPassword = password.replace(/\//g, '-');
+    
+    const matchedStudent = students.find(s => {
+      // Check email
+      const emailMatch = s.email?.toLowerCase() === email.toLowerCase() || 
+                         s.personalEmail?.toLowerCase() === email.toLowerCase();
+                         
+      if (!emailMatch) return false;
+      
+      // The database might have DD-MM-YYYY (if updated) or YYYY-MM-DD
+      // Convert database DOB to DD-MM-YYYY format for safe comparison
+      let dbDobFormatted = s.dob;
+      if (s.dob && s.dob.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        // It's YYYY-MM-DD
+        const parts = s.dob.split('-');
+        dbDobFormatted = `${parts[2]}-${parts[1]}-${parts[0]}`;
+      } else if (s.dob && s.dob.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+        // It's DD/MM/YYYY
+        dbDobFormatted = s.dob.replace(/\//g, '-');
+      }
+      
+      return dbDobFormatted === normalizedInputPassword || s.dob === password;
+    });
+
+    return matchedStudent || null;
+  } catch (error) {
+    console.error("Student authentication error:", error);
+    return null;
+  }
 };
 
 export const authenticateDepartmentUser = async (username: string, password: string): Promise<any> => {
