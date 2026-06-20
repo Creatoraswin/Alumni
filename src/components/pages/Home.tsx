@@ -661,7 +661,7 @@ const Home = () => {
                   <div
                     key={index}
                     className="flex flex-col sm:flex-row border rounded-2xl bg-white shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-shadow duration-300"
-                    onClick={() => router.push(`/alumni-meets/${encodeURIComponent(meet.place || 'event')}-${encodeURIComponent(meet.date)}`)}
+                    onClick={() => router.push(`/alumni-meets/detail?id=${encodeURIComponent(meet.place || 'event')}-${encodeURIComponent(meet.date)}`)}
                   >
                     {/* Banner Photo Section - Left Side */}
                     <div className="w-full sm:w-2/5 aspect-[4/3] sm:aspect-auto bg-slate-50 flex items-center justify-center overflow-hidden min-h-[280px] p-1">
@@ -765,7 +765,7 @@ const Home = () => {
                 <div
                   key={index}
                   className="border rounded-xl bg-white shadow-elegant overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 cursor-pointer"
-                  onClick={() => router.push(`/alumni-talks/${encodeURIComponent(talk.name)}-${encodeURIComponent(talk.date)}`)}
+                  onClick={() => router.push(`/alumni-talks/detail?id=${encodeURIComponent(talk.name)}-${encodeURIComponent(talk.date)}`)}
                 >
                   {/* Banner Only - 1080x1350 aspect ratio */}
                   <div className="relative bg-black w-full" style={{ aspectRatio: '1080/1350' }}>

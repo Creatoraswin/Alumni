@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
 
 // API configuration
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost/Alumni%20next/backend/api";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://alumni.sparvixainnovations.com/backend/api";
 
 // Interfaces
 export interface Student {

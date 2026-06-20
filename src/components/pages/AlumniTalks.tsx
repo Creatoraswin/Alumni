@@ -608,7 +608,7 @@ const AlumniTalks: React.FC = () => {
                     <div
                       key={`${t.name}-${t.date}-${idx}`}
                       className="border rounded-xl bg-white shadow-elegant overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 cursor-pointer"
-                      onClick={() => router.push(`/alumni-talks/${encodeURIComponent(t.name)}-${encodeURIComponent(t.date)}`)}
+                      onClick={() => router.push(`/alumni-talks/detail?id=${encodeURIComponent(t.name)}-${encodeURIComponent(t.date)}`)}
                     >
                       {/* Banner Only - 1080x1350 aspect ratio */}
                       <div className="relative bg-black w-full" style={{ aspectRatio: '1080/1350' }}>

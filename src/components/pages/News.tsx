@@ -183,7 +183,7 @@ const News = () => {
                         <Card 
                           key={video.id} 
                           className="overflow-hidden hover:shadow-xl transition-shadow duration-300 group cursor-pointer"
-                          onClick={() => router.push(`/youtube/${video.id}`)}
+                          onClick={() => router.push(`/youtube?v=${video.id}`)}
                         >
                           <div className="relative">
                             <img 

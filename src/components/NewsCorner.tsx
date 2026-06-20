@@ -112,7 +112,7 @@ const NewsCorner = () => {
                   asChild
                 >
                   <div 
-                    onClick={() => router.push(`/youtube/${video.id}`)}
+                    onClick={() => router.push(`/youtube?v=${video.id}`)}
                     className="block cursor-pointer"
                   >
                     <Card className="hover:shadow-lg transition-shadow duration-200 hover:border-primary/50">

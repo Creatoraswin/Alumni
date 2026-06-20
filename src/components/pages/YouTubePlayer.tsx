@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -25,7 +25,8 @@ interface YouTubeVideo {
 }
 
 const YouTubePlayer = () => {
-  const { videoId } = useParams() as { videoId?: string };
+  const searchParams = useSearchParams();
+  const videoId = searchParams.get('v') || undefined;
   const router = useRouter();
   const { isLoggedIn, userRole, currentStudent, currentDepartmentUser, logout } = useAuth();
   const [videos, setVideos] = useState<YouTubeVideo[]>([]);
@@ -202,7 +203,7 @@ const YouTubePlayer = () => {
   const handleVideoSelect = (video: YouTubeVideo) => {
     setSelectedVideo(video);
     // Update the URL to reflect the selected video
-    router.push(`/youtube/${video.id}`);
+    router.push(`/youtube?v=${video.id}`);
   };
 
   const formatDate = (dateString: string) => {

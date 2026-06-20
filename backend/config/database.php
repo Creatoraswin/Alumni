@@ -7,9 +7,9 @@
 
 class Database {
     private $host = "localhost";
-    private $db_name = "Alumni";
-    private $username = "root";
-    private $password = "";
+    private $db_name = "u336570575_alumni";
+    private $username = "u336570575_alumni";
+    private $password = "Aswin@2026";
     private $conn;
 
     /**

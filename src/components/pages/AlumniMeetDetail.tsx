@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { fetchAlumniMeets, AlumniMeetItem, Student, getDirectImageUrlSized } from '@/services/apiService';
 import { useAuth } from '@/contexts/useAuth';
@@ -12,7 +12,8 @@ import { ArrowLeft } from 'lucide-react';
 const AlumniMeetDetail: React.FC = () => {
   const { isLoggedIn, userRole, currentStudent, currentDepartmentUser, logout, students } = useAuth();
   const router = useRouter();
-  const { meetId } = useParams() as { meetId: string };
+  const searchParams = useSearchParams();
+  const meetId = searchParams.get('id') || '';
 
   const { data: meets = [], isLoading } = useQuery({
     queryKey: ['alumniMeets'],

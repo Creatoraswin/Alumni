@@ -1,0 +1,21 @@
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # Disable directory listing
+  Options -Indexes
+
+  # If the request doesn't end with .html, check if the .html file exists FIRST
+  # This is crucial because Next.js creates both a folder (e.g. /SignUp) and a file (e.g. /SignUp.html)
+  RewriteCond %{REQUEST_FILENAME}.html -f
+  RewriteRule ^(.*)$ $1.html [L]
+
+  # If an existing asset or directory is requested, serve it
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # For any other route, redirect to index.html (useful for client-side routing)
+  # Remove this if you strictly want 404s for non-existent pages in static export
+  # RewriteRule ^(.*)$ index.html [L]
+</IfModule>

@@ -300,7 +300,7 @@ const AlumniMeets: React.FC = () => {
                     <div
                       key={`${m.place}-${m.date}-${idx}`}
                       className="border rounded-xl bg-white shadow-elegant overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 cursor-pointer"
-                      onClick={() => router.push(`/alumni-meets/${encodeURIComponent(m.place || 'event')}-${encodeURIComponent(m.date)}`)}
+                      onClick={() => router.push(`/alumni-meets/detail?id=${encodeURIComponent(m.place || 'event')}-${encodeURIComponent(m.date)}`)}
                     >
                       <div className="relative bg-black w-full" style={{ aspectRatio: '1080/1350' }}>
                         {m.bannerPhotoUrl ? (

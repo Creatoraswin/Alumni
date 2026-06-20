@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { fetchAlumniTalks, Student, getDirectImageUrlSized, parseGalleryImages } from '@/services/apiService';
 import { useAuth } from '@/contexts/useAuth';
@@ -12,7 +12,8 @@ import { ArrowLeft } from 'lucide-react';
 const AlumniTalkDetail: React.FC = () => {
   const { isLoggedIn, userRole, currentStudent, currentDepartmentUser, logout, students } = useAuth();
   const router = useRouter();
-  const { talkId } = useParams() as { talkId: string };
+  const searchParams = useSearchParams();
+  const talkId = searchParams.get('id') || '';
 
   const { data: talks = [], isLoading } = useQuery({
     queryKey: ['alumniTalks'],
