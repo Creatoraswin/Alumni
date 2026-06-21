@@ -77,4 +77,46 @@ class User
         $stmt->bindParam(':username', $username);
         return $stmt->execute();
     }
+
+    public function getAll()
+    {
+        $query = "SELECT id, username, role, email, created_at, updated_at FROM " . $this->table . " ORDER BY id DESC";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function update($data)
+    {
+        $query = "UPDATE " . $this->table . " SET 
+            role = :role,
+            email = :email";
+
+        if (!empty($data['password'])) {
+            $query .= ", password_hash = :password_hash";
+        }
+
+        $query .= " WHERE username = :username";
+
+        $stmt = $this->conn->prepare($query);
+
+        $stmt->bindParam(':role', $data['role']);
+        $stmt->bindParam(':email', $data['email']);
+        $stmt->bindParam(':username', $data['username']);
+
+        if (!empty($data['password'])) {
+            $passwordHash = password_hash($data['password'], PASSWORD_DEFAULT);
+            $stmt->bindParam(':password_hash', $passwordHash);
+        }
+
+        return $stmt->execute();
+    }
+
+    public function delete($username)
+    {
+        $query = "DELETE FROM " . $this->table . " WHERE username = :username";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':username', $username);
+        return $stmt->execute();
+    }
 }

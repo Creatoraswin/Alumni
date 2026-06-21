@@ -667,3 +667,69 @@ export const bulkUploadStudentStrength = async (data: StudentStrength[]): Promis
     throw error;
   }
 };
+
+// ==========================================
+// System Users API Methods
+// ==========================================
+
+export interface SystemUser {
+  id?: number | string;
+  username: string;
+  password?: string; // Optional for fetches, required for creation
+  role: "admin" | "department" | "school" | "alumni-manager" | "cadmin";
+  name?: string;
+  department?: string;
+  email?: string;
+}
+
+export const fetchSystemUsers = async (): Promise<SystemUser[]> => {
+  try {
+    const response = await fetch(`${API_URL}/users/index.php`);
+    if (!response.ok) throw new Error("Network response was not ok");
+    const result = await response.json();
+    return result.success === true ? result.data : [];
+  } catch (error) {
+    console.error("Error fetching system users:", error);
+    return [];
+  }
+};
+
+export const addSystemUser = async (user: SystemUser): Promise<{ success: boolean; message: string }> => {
+  try {
+    const response = await fetch(`${API_URL}/users/index.php`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(user),
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Error adding system user:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
+export const updateSystemUser = async (user: SystemUser): Promise<{ success: boolean; message: string }> => {
+  try {
+    const response = await fetch(`${API_URL}/users/index.php`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(user),
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Error updating system user:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
+export const deleteSystemUser = async (username: string): Promise<{ success: boolean; message: string }> => {
+  try {
+    const response = await fetch(`${API_URL}/users/index.php?username=${encodeURIComponent(username)}`, {
+      method: "DELETE",
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Error deleting system user:", error);
+    return { success: false, message: "Network error" };
+  }
+};

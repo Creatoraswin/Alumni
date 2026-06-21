@@ -39,7 +39,7 @@ const UniversalNav = ({
   const [isAnalyticsDropdownOpen, setIsAnalyticsDropdownOpen] = useState(false);
 
   // Determine active tab based on path
-  const getActiveTab = (): "home" | "alumni" | "news" | "alumni-talks" | "alumni-meets" | "alumni-spotlight" | "youtube" | "profile" | "analytics" | "detailed-analytics" | "alumni-management" | "approval" | "feedback" | "dashboard" | "academic" | "student-strength" => {
+  const getActiveTab = (): "home" | "alumni" | "news" | "alumni-talks" | "alumni-meets" | "alumni-spotlight" | "youtube" | "profile" | "analytics" | "detailed-analytics" | "alumni-management" | "approval" | "feedback" | "dashboard" | "academic" | "student-strength" | "users" => {
     if (pathname === "/") return "home";
     if (pathname === "/alumni-directory") return "alumni";
     if (pathname === "/news") return "news";
@@ -60,6 +60,7 @@ const UniversalNav = ({
       if (pathname.includes("/approval")) return "approval";
       if (pathname.includes("/feedback")) return "feedback";
       if (pathname.includes("/academic")) return "academic";
+      if (pathname.includes("/users")) return "users";
       return "dashboard";
     }
     
@@ -240,7 +241,7 @@ const UniversalNav = ({
           <div className="relative">
             <button
               className={`flex items-center justify-center px-3 py-2 rounded-md transition-all text-sm font-semibold focus:outline-none ${
-                (activeTab === "alumni-talks" || activeTab === "alumni-spotlight" || activeTab === "academic") 
+                (activeTab === "alumni-talks" || activeTab === "alumni-spotlight" || activeTab === "academic" || activeTab === "users") 
                   ? "bg-red-600 text-white shadow-lg" 
                   : "text-muted-foreground hover:text-red-600 hover:shadow-sm hover:scale-105"
               }`}
@@ -300,7 +301,7 @@ const UniversalNav = ({
                       setIsMenuOpen(false);
                     }}
                   >
-                    Academic
+                    Academic Data
                   </button>
                 )}
                 {userRole === "admin" && (
@@ -317,6 +318,22 @@ const UniversalNav = ({
                     }}
                   >
                     Student Strength
+                  </button>
+                )}
+                {(userRole === "admin") && (
+                  <button
+                    className={`block w-full text-left px-4 py-2 text-sm ${
+                      activeTab === "users" 
+                        ? "bg-red-600 text-white" 
+                        : "text-gray-700 hover:bg-gray-100"
+                    }`}
+                    onClick={() => {
+                      router.push("/admin/users");
+                      setIsAlumniCornerOpen(false);
+                      setIsMenuOpen(false);
+                    }}
+                  >
+                    Users Management
                   </button>
                 )}
               </div>
@@ -817,6 +834,19 @@ const UniversalNav = ({
               >
                 <GraduationCap className="w-5 h-5 mr-3" />
                 <span>Academic</span>
+              </button>
+            )}
+            {userRole === "admin" && (
+              <button
+                className={`flex items-center w-full p-3 rounded-lg transition-colors ${
+                  activeTab === "users" 
+                    ? "bg-red-600 text-white shadow-lg" 
+                    : "hover:bg-secondary/50"
+                }`}
+                onClick={() => handleNavigation("/admin/users")}
+              >
+                <Users className="w-5 h-5 mr-3" />
+                <span>Users</span>
               </button>
             )}
           </div>
