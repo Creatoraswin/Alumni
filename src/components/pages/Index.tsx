@@ -39,6 +39,15 @@ const Index = () => {
     }
   }, []);
 
+  useEffect(() => {
+    if (isLoggedIn) {
+      if (userRole === "admin") nextRouter.replace("/admin");
+      else if (userRole === "cadmin") nextRouter.replace("/cadmin");
+      else if (userRole === "department") nextRouter.replace("/department");
+      else if (userRole === "school") nextRouter.replace("/school");
+    }
+  }, [isLoggedIn, userRole, nextRouter]);
+
   // Sort students: Job/Higher study students first, then "NA" students at bottom, finally by Timestamp
   const sortedStudents = [...students].sort((a, b) => {
     // Helper function to check if student has complete job information
@@ -241,15 +250,7 @@ const Index = () => {
 
       {/* Add top padding to account for fixed header */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-8 pt-16 md:pt-20">
-        {isLoggedIn && userRole === "admin" ? (
-          (() => { nextRouter.replace("/admin"); return null; })()
-        ) : isLoggedIn && userRole === "cadmin" ? (
-          (() => { nextRouter.replace("/cadmin"); return null; })()
-        ) : isLoggedIn && userRole === "department" ? (
-          (() => { nextRouter.replace("/department"); return null; })()
-        ) : isLoggedIn && userRole === "school" ? (
-          (() => { nextRouter.replace("/school"); return null; })()
-        ) : (
+        {isLoggedIn && (userRole === "admin" || userRole === "cadmin" || userRole === "department" || userRole === "school") ? null : (
           <>
             <div className="sticky top-0 z-20 bg-white/80 backdrop-blur shadow rounded-b-none rounded-t-lg px-0 py-0 mb-4">
               <FilterSection

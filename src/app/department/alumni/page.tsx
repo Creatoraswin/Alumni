@@ -1,13 +1,13 @@
 "use client";
 
 import React from "react";
-import DepatmentAlumniManagementTab from "@/components/DepatmentAlumniManagementTab";
+import AlumniManagementTab from "@/components/AlumniManagementTab";
 import { useAdminData } from "@/components/AdminLayout";
 
 export default function DepartmentAlumniPage() {
   const { students, setStudents } = useAdminData();
   return (
-    <DepatmentAlumniManagementTab
+    <AlumniManagementTab
       userRole="department"
       students={students}
       onStudentUpdate={(updatedStudent) =>

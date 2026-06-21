@@ -8,7 +8,7 @@ export default function CadminAlumniManagementPage() {
   const { students, setStudents } = useAdminData();
   return (
     <AlumniManagementTab
-      userRole="alumni-manager"
+      userRole="cadmin"
       students={students}
       onStudentUpdate={(updatedStudent) =>
         setStudents((prev) =>
