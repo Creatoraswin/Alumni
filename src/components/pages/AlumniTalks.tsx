@@ -590,7 +590,7 @@ const AlumniTalks: React.FC = () => {
           {isLoading && (!visibleTalks || (Array.isArray(visibleTalks) && visibleTalks.length === 0)) ? (
             <div className="space-y-6">
               <div className="h-8 w-64 bg-gray-200 animate-pulse rounded-lg" />
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
                 {[...Array(3)].map((_, i) => (
                   <div key={i} className="border rounded-xl p-6 bg-white/80 shadow-elegant">
                     <div className="h-6 w-40 bg-gray-200 animate-pulse rounded mb-4" />
@@ -602,7 +602,7 @@ const AlumniTalks: React.FC = () => {
             </div>
           ) : (
             <div className="space-y-8">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
                 {Array.isArray(visibleTalks) && visibleTalks.length > 0 ? (
                   visibleTalks.map((t, idx) => (
                     <div

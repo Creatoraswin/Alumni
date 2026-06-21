@@ -70,9 +70,8 @@ const ProfileEdit = ({ isOpen, onClose, student, onSave }: ProfileEditProps) => 
       phone: phone || "NA",
       address: address || "NA",
     };
-    
 
-    console.log('Saving updated student data:', updatedStudent);
+
     onSave(updatedStudent);
     onClose();
   };

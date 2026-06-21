@@ -10,22 +10,11 @@ const StatusTest = () => {
   useEffect(() => {
     const loadStudents = async () => {
       try {
-        console.log('Fetching all students data...');
         const data = await fetchStudentsData(true);
-        console.log('Fetched students:', data.length);
         setStudents(data);
-        
-        // Log status information for first few students
-        console.log('First 5 students Status info:');
-        data.slice(0, 5).forEach((student, index) => {
-          console.log(`Student ${index + 1}:`, {
-            name: student.name,
-            registrationNo: student.registrationNo,
-            Status: student.Status,
-            StatusType: typeof student.Status
-          });
-        });
-        
+
+        data.slice(0, 5).forEach((student, index) => {});
+
         // Count status distribution
         const statusCounts: Record<string, number> = {};
         data.forEach(student => {
@@ -41,7 +30,6 @@ const StatusTest = () => {
             statusCounts[`other-${typeof status}`] = (statusCounts[`other-${typeof status}`] || 0) + 1;
           }
         });
-        console.log('Status distribution:', statusCounts);
       } catch (error) {
         console.error('Error fetching students:', error);
       } finally {

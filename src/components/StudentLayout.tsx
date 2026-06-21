@@ -10,11 +10,7 @@ const StudentLayout = ({ children }: { children?: React.ReactNode }) => {
   const pathname = usePathname();
 
   // Create a wrapper function for onLoginClick since Header expects no parameters
-  const handleLoginClick = () => {
-    // This function could navigate to a login page or open a modal
-    // For now, we'll just log or handle as needed
-    console.log('Login clicked from StudentLayout');
-  };
+  const handleLoginClick = () => {};
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">

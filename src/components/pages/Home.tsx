@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Student, fetchStudentsData, fetchAlumniTalks, AlumniTalkItem, AlumniSpotlightItem, fetchAlumniSpotlight, fetchAlumniMeets, AlumniMeetItem } from "@/services/apiService";
 import { useAuth } from "@/contexts/useAuth";
 import UniversalNav from "@/components/UniversalNav";
+import VideoPlayer from "@/components/VideoPlayer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -259,26 +260,17 @@ const Home = () => {
   useEffect(() => {
     const loadAlumniSpotlights = async () => {
       try {
-        console.log('Loading alumni spotlights...');
         setSpotlightsLoading(true);
         const spotlights = await fetchAlumniSpotlight();
-        console.log('Fetched alumni spotlights:', spotlights);
 
         // Filter spotlights based on user role
         // Admins can see all spotlights, regular users only see approved ones
         const filteredSpotlights = isAdmin
           ? spotlights
           : spotlights.filter(spotlight => {
-            const isApproved = spotlight.status === 'Approved';
-            console.log('Spotlight approval check:', {
-              name: spotlight.name,
-              status: spotlight.status,
-              isApproved: isApproved
-            });
-            return isApproved;
-          });
-
-        console.log('Filtered alumni spotlights:', filteredSpotlights);
+          const isApproved = spotlight.status === 'Approved';
+          return isApproved;
+        });
 
         // Sort spotlights by date (latest first)
         const sortedSpotlights = [...filteredSpotlights].sort((a, b) => {
@@ -298,11 +290,8 @@ const Home = () => {
           return parseDate(b.dateAdded) - parseDate(a.dateAdded);
         });
 
-        console.log('Sorted alumni spotlights:', sortedSpotlights);
-
-        // Take only the first 3 spotlights for the home page
-        const finalSpotlights = sortedSpotlights.slice(0, 3);
-        console.log('Final alumni spotlights for display:', finalSpotlights);
+        // Take only the first 5 spotlights for the home page
+        const finalSpotlights = sortedSpotlights.slice(0, 5);
 
         setAlumniSpotlights(finalSpotlights);
       } catch (error) {
@@ -489,7 +478,6 @@ const Home = () => {
         }}
         onLoginClick={() => setIsAuthModalOpen(true)}
       />
-
       {/* Hero Section - Mobile Design */}
       <section className="relative overflow-hidden mt-14 sm:hidden">
         {/* Mobile Hero */}
@@ -530,7 +518,6 @@ const Home = () => {
           </div>
         </div>
       </section>
-
       {/* Hero Section - Tablet Design */}
       <section className="relative overflow-hidden mt-16 hidden sm:block md:hidden">
         {/* Tablet Hero */}
@@ -571,7 +558,6 @@ const Home = () => {
           </div>
         </div>
       </section>
-
       {/* Hero Section - Desktop Design */}
       <section className="relative overflow-hidden mt-16 hidden md:block">
         <div
@@ -610,7 +596,6 @@ const Home = () => {
           </div>
         </div>
       </section>
-
       {/* Alumni Students Section - Updated color scheme */}
       <section className="py-4 sm:py-6 bg-muted/30">
         {/* Alumni Meet Section - Only display if there are upcoming meets */}
@@ -752,7 +737,7 @@ const Home = () => {
           </div>
 
           {talksLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
               {[...Array(4)].map((_, index) => (
                 <div key={index} className="border rounded-xl bg-white shadow-elegant overflow-hidden animate-pulse">
                   <div className="w-full bg-gray-200" style={{ aspectRatio: '1080/1350' }}></div>
@@ -760,7 +745,7 @@ const Home = () => {
               ))}
             </div>
           ) : alumniTalks.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
               {alumniTalks.map((talk, index) => (
                 <div
                   key={index}
@@ -874,7 +859,7 @@ const Home = () => {
             </div>
           ) : alumniSpotlights.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {alumniSpotlights.slice(0, 2).map((spotlight, index) => (
+              {alumniSpotlights.slice(0, 5).map((spotlight, index) => (
                 <Card
                   key={index}
                   className="group overflow-hidden shadow-elegant hover:shadow-elegant transition-all duration-500 cursor-pointer transform hover:-translate-y-2 flex flex-col md:flex-row rounded-3xl border-none bg-white relative"
@@ -934,7 +919,7 @@ const Home = () => {
                   {/* Premium Details Side - 60% Width */}
                   <div className="md:basis-3/5 p-6 md:p-8 flex flex-col bg-white relative">
                     {/* Top Right School Tag */}
-                    <div className="absolute top-6 right-6">
+                    <div className="hidden md:block absolute top-6 right-6">
                       <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] uppercase tracking-wider font-bold bg-primary/5 text-primary border border-primary/10">
                         {spotlight.school || 'University'}
                       </span>
@@ -942,10 +927,10 @@ const Home = () => {
 
                     <div className="flex-1">
                       {/* Name */}
-                      <h3 className="font-bold text-2xl mb-3 text-primary">{spotlight.name}</h3>
+                      <h3 className="font-bold text-xl md:text-2xl mb-2 md:mb-3 text-primary">{spotlight.name}</h3>
 
                       {/* Current Position and Company */}
-                      <div className="mb-3">
+                      <div className="hidden md:block mb-3">
                         <p className="text-lg font-semibold text-foreground">{spotlight.currentPosition || 'Position not specified'}</p>
                         <p className="text-md text-muted-foreground">{spotlight.company || 'Organization not specified'}</p>
                       </div>
@@ -956,14 +941,14 @@ const Home = () => {
                       </div>
 
                       {/* Department */}
-                      <div className="mb-3">
+                      <div className="hidden md:block mb-3">
                         <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-accent/10 text-accent-foreground">
                           {spotlight.department || 'Department N/A'}
                         </span>
                       </div>
 
                       {/* Registration Number */}
-                      <div className="mb-2">
+                      <div className="hidden md:block mb-2">
                         <div className="text-sm">
                           <span className="font-medium text-primary">Reg. No: </span>
                           <span className="text-foreground">
@@ -1045,28 +1030,13 @@ const Home = () => {
             <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6 shadow-lg">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center">
-                  <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center mr-3">
-                    <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z" />
-                    </svg>
-                  </div>
                   <h3 className="text-lg font-semibold text-gray-900">Together We Rise: Co-Founder Address to Our Alumni Family</h3>
                 </div>
 
               </div>
 
-              {/* Responsive YouTube iframe container */}
-              <div className="relative w-full pb-[56.25%] h-0 rounded-xl overflow-hidden bg-gray-900 shadow-xl">
-                <iframe
-                  src="https://www.youtube.com/embed/B4vNV49aJL4?si=fncyX0s4NEgP-lLB"
-                  title="Together We Rise: Co-Founder Address to Our Alumni Family"
-                  className="absolute top-0 left-0 w-full h-full"
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  referrerPolicy="strict-origin-when-cross-origin"
-                  allowFullScreen
-                ></iframe>
-              </div>
+              {/* Custom Video Player without initial YouTube branding */}
+              <VideoPlayer />
 
 
             </div>
@@ -1151,7 +1121,6 @@ const Home = () => {
           </div>
         </div>
       </section>
-
       {/* Universities Section */}
       <section className="py-4 sm:py-6 bg-muted/30">
         <div className="w-full mx-auto px-4 sm:px-6 lg:px-8">
@@ -1227,7 +1196,6 @@ const Home = () => {
           </div>
         </div>
       </section>
-
       {/* Schools Section - Updated color scheme */}
       <section className="py-6 sm:py-8 lg:py-12 bg-muted/50">
         <div className="w-full mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
@@ -1252,7 +1220,6 @@ const Home = () => {
           </div>
         </div>
       </section>
-
       {/* Features Section - Updated color scheme */}
       <section className="py-3 sm:py-4 lg:py-6 bg-muted/30">
         <div className="w-full mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
@@ -1298,7 +1265,6 @@ const Home = () => {
           </div>
         </div>
       </section>
-
       {/* Ready to Connect Section */}
       <section className="py-6 sm:py-8 lg:py-12 bg-primary relative overflow-hidden">
         <div className="absolute inset-0 bg-accent/20"></div>
@@ -1330,7 +1296,6 @@ const Home = () => {
           </div>
         </div>
       </section>
-
       {/* Auth Modal */}
       <AuthModal
         isOpen={isAuthModalOpen}
@@ -1340,7 +1305,6 @@ const Home = () => {
           setIsAuthModalOpen(false);
         }}
       />
-
     </div>
   );
 };

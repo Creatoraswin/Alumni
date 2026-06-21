@@ -56,7 +56,6 @@ const LinkedInFeed = () => {
       script.async = true;
       script.defer = true;
       script.onload = () => {
-        console.log('LinkedIn script loaded');
         // Wait for script to fully initialize
         setTimeout(initLinkedIn, 1000);
       };

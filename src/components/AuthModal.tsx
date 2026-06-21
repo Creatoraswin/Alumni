@@ -65,8 +65,8 @@ const AuthModal = ({ isOpen, onClose, onLogin }: AuthModalProps) => {
         const student = await authenticateStudent(email, password);
         if (student) {
           onLogin("student", student);
-          // Redirect to profile after successful login
-          router.push('/profile');
+          // Redirect to directory after successful login
+          router.push('/alumni-directory');
           onClose();
         } else {
           setError("Invalid credentials. Please check your email and date of birth.");

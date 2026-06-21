@@ -22,7 +22,6 @@ const Profile = () => {
   // Save handler for profile edit
   const handleSaveProfile = async (updatedStudent) => {
     try {
-      console.log('Saving profile with updated student data:', updatedStudent);
       // Use "admin" role to ensure all fields are sent to the backend
       await updateStudentData(updatedStudent, "admin");
       // Fetch latest student data and update currentStudent
@@ -31,7 +30,6 @@ const Profile = () => {
       if (refreshed) {
         setCurrentStudent(refreshed);
         localStorage.setItem('currentStudent', JSON.stringify(refreshed));
-        console.log('Profile updated successfully, new data:', refreshed);
       }
       toast({ title: "Profile updated!", description: "Your changes have been saved." });
       setIsProfileEditOpen(false);

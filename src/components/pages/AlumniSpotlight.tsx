@@ -333,7 +333,6 @@ const AlumniSpotlight: React.FC = () => {
         onLogout={logout} 
         onLoginClick={() => router.push('/')} 
       />
-      
       <div className="w-full px-4 md:px-6 lg:px-8 py-6 pt-24">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-6">
@@ -566,7 +565,7 @@ const AlumniSpotlight: React.FC = () => {
         {isLoading && (!visibleSpotlights || visibleSpotlights.length === 0) ? (
           <div className="space-y-6">
             <div className="h-8 w-64 bg-gray-200 animate-pulse rounded-lg" />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-2 gap-3 md:gap-6">
               {[...Array(4)].map((_, i) => (
                 <div key={i} className="border rounded-xl p-6 bg-white/80 shadow-elegant">
                   <div className="h-6 w-40 bg-gray-200 animate-pulse rounded mb-4" />
@@ -591,15 +590,15 @@ const AlumniSpotlight: React.FC = () => {
           </div>
         ) : (
           <div className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
               {visibleSpotlights.length > 0 ? (
                 visibleSpotlights.map((spotlight, idx) => (
                   <div
                     key={idx}
-                    className="border rounded-xl bg-white shadow-elegant overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
+                    className="flex flex-col md:flex-row border rounded-xl bg-white shadow-elegant overflow-hidden hover:shadow-lg transition-all duration-300 transform md:hover:-translate-y-1"
                   >
-                    {/* Image (Top) */}
-                    <div className="relative bg-black aspect-[16/9] w-full">
+                    {/* Image (Top/Left) */}
+                    <div className="relative bg-black aspect-[16/9] md:aspect-auto md:basis-2/5 flex-shrink-0 min-h-[200px]">
                       {spotlight.photoUrl ? (
                         <img
                           src={spotlight.photoUrl}
@@ -655,18 +654,18 @@ const AlumniSpotlight: React.FC = () => {
                       )}
                     </div>
 
-                    {/* Details (Bottom) */}
-                    <div className="p-5 md:p-6">
-                      <div className="flex items-start justify-between gap-3 mb-3">
+                    {/* Details (Bottom/Right) */}
+                    <div className="p-4 md:p-6 md:basis-3/5 flex flex-col">
+                      <div className="flex items-start justify-between gap-3 mb-2 md:mb-3">
                         <div className="min-w-0 flex-1">
-                          <h4 className="text-xl font-bold leading-tight text-foreground">{spotlight.name}</h4>
+                          <h4 className="text-lg md:text-xl font-bold leading-tight text-foreground">{spotlight.name}</h4>
                         </div>
-                        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white font-semibold shadow-md whitespace-nowrap text-sm bg-primary">
+                        <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white font-semibold shadow-md whitespace-nowrap text-sm bg-primary">
                           <span>{spotlight.yearOfGraduation}</span>
                         </div>
                       </div>
                       <div className="min-w-0">
-                        <div className="text-sm text-gray-600 space-y-1 mb-3">
+                        <div className="hidden md:block text-sm text-gray-600 space-y-1 mb-3">
                           <div className="flex items-center gap-2">
                             <span className="text-gray-500">Position:</span>
                             <span className="font-medium">{spotlight.currentPosition}</span>
@@ -681,7 +680,7 @@ const AlumniSpotlight: React.FC = () => {
                         </div>
 
                         {/* Status Badge */}
-                        <div className="mt-3 flex items-center gap-2">
+                        <div className="mt-3 hidden md:flex items-center gap-2">
                           <span className="text-xs font-medium text-muted-foreground">Status:</span>
                           <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
                             spotlight.status === 'Approved' ? 'bg-green-100 text-green-800' :
@@ -694,7 +693,7 @@ const AlumniSpotlight: React.FC = () => {
 
                         {/* Edit and Delete buttons for editors */}
                         {isEditor && (
-                          <div className="mt-4 flex justify-end gap-2">
+                          <div className="mt-auto pt-4 flex justify-end gap-2">
                             <button
                               className="px-3 py-1.5 text-sm bg-blue-50 text-blue-600 rounded-lg font-medium hover:bg-blue-100 transition-colors"
                               onClick={() => {

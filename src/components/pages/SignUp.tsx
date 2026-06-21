@@ -292,7 +292,7 @@ const SignUp = () => {
           setCheckingReg(false);
           return;
         }
-        
+
         // Prepare form for submission based on status and NA logic
         const submitForm = { ...form };
         const naFields: (keyof Omit<FormState, 'photo'>)[] = [
@@ -307,9 +307,9 @@ const SignUp = () => {
             (submitForm[field] as string | undefined) = "NA";
           }
         });
-        
+
         // Format DOB using centralized utility
-        
+
         // Explicit mapping for payload
         const payload = {
           school: submitForm.school,
@@ -338,8 +338,7 @@ const SignUp = () => {
           address: submitForm.address,
           feedback: submitForm.feedback,
         };
-        console.log('Submitting payload:', payload); // Debug log
-        
+
         await registerStudent(payload, setUploadingImage);
         setSubmitted(true);
       } catch (err) {
@@ -368,17 +367,13 @@ const SignUp = () => {
         const isConnected = await testApiConnectivity();
         if (!isConnected) {
           console.warn('API connectivity test failed - this may cause upload issues');
-        } else {
-          console.log('API connectivity test passed');
-        }
+        } else {}
         
         // Also test the image upload endpoint
         const uploadEndpointWorking = await testImageUploadEndpoint();
         if (!uploadEndpointWorking) {
           console.warn('Image upload endpoint test failed - uploads may not work');
-        } else {
-          console.log('Image upload endpoint test passed');
-        }
+        } else {}
         
         // Test upload functionality
         await testUploadFunctionality();

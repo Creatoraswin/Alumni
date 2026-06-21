@@ -11,17 +11,11 @@ const SpotlightDebug: React.FC = () => {
   useEffect(() => {
     const debugSpotlight = async () => {
       try {
-        console.log('Debug: Starting alumni spotlight fetch...');
         setLoading(true);
         setError(null);
-        
-        // Log environment variables
-        console.log('Debug: VITE_API_URL:', process.env.NEXT_PUBLIC_API_URL);
-        console.log('Debug: VITE_API_KEY exists:', !!process.env.NEXT_PUBLIC_API_KEY);
-        
+
         const data = await fetchAlumniSpotlight();
-        console.log('Debug: Raw data received:', data);
-        
+
         setDebugInfo({
           itemCount: data.length,
           items: data,

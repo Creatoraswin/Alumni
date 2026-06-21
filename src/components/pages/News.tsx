@@ -44,9 +44,8 @@ const News = () => {
       try {
         setLoading(true);
         setError(null);
-        console.log('Loading YouTube videos in News page');
         const fetchedVideos = await fetchYouTubeVideos(MAX_RESULTS);
-        
+
         setVideos(fetchedVideos);
       } catch (err) {
         console.error("Error fetching YouTube videos in News page:", err);
@@ -300,10 +299,7 @@ const News = () => {
                           e.preventDefault();
                           console.warn('Facebook embed failed to load');
                         }}
-                        onLoad={() => {
-                          // Facebook embed loaded successfully
-                          console.log('Facebook embed loaded');
-                        }}
+                        onLoad={() => {}}
                       >
                       </iframe>
                     </div>
@@ -337,10 +333,7 @@ const News = () => {
                           e.preventDefault();
                           console.warn('Instagram embed failed to load');
                         }}
-                        onLoad={() => {
-                          // Instagram embed loaded successfully
-                          console.log('Instagram embed loaded');
-                        }}
+                        onLoad={() => {}}
                       >
                       </iframe>
                     </div>

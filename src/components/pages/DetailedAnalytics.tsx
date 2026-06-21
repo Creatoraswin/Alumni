@@ -78,13 +78,8 @@ const DetailedAnalytics = () => {
         // If for some reason cache is empty, this will trigger a background refresh
         const data = await analyticsDataCache.getData();
 
-        console.log('Using cached student strength and alumni form data');
-        console.log('Total student strength records:', data.studentStrength.length);
-        console.log('Sample student strength data:', data.studentStrength.slice(0, 3));
-
         // Extract and log all unique passout years
         const allYears = Array.from(new Set(data.studentStrength.map(s => s.passout_year).filter(Boolean))).sort();
-        console.log('All unique passout years found:', allYears);
 
         setStudentStrengthData(data.studentStrength);
         setAlumniFormData(data.alumniForm);
@@ -215,10 +210,6 @@ const DetailedAnalytics = () => {
 
   // Compare student strength data with alumni form data
   const comparisonData = useMemo(() => {
-    // Debug: Log the data for troubleshooting
-    console.log('Student Strength Data Sample:', transformedStudentStrengthData.slice(0, 3));
-    console.log('Alumni Form Data Sample:', filteredAlumniFormData.slice(0, 3));
-
     // Get all registration numbers from alumni form data with normalization
     const alumniRegistrations = new Set(
       filteredAlumniFormData
@@ -229,20 +220,11 @@ const DetailedAnalytics = () => {
         })
     );
 
-    // Debug: Log the registration numbers
-    console.log('Alumni Registration Numbers (first 10):', Array.from(alumniRegistrations).slice(0, 10));
-    console.log('Student Strength Registration Numbers (first 10):',
-      transformedStudentStrengthData.slice(0, 10).map(s => {
-        return String(s.registrationNo).trim();
-      }));
-
     // Compare with student strength data using normalized registration numbers
     const registeredInAlumni = transformedStudentStrengthData.filter(student => {
       const normalizedRegNo = String(student.registrationNo).trim();
       const hasMatch = alumniRegistrations.has(normalizedRegNo);
-      if (hasMatch) {
-        console.log(`Match found: ${normalizedRegNo}`);
-      }
+      if (hasMatch) {}
       return hasMatch;
     });
 
@@ -250,20 +232,14 @@ const DetailedAnalytics = () => {
       const normalizedRegNo = String(student.registrationNo).trim();
       const hasMatch = alumniRegistrations.has(normalizedRegNo);
       if (!hasMatch) {
-        console.log(`No match for: ${normalizedRegNo}`);
         // Also check for partial matches to help with debugging
         const partialMatches = Array.from(alumniRegistrations).filter(alumniRegNo =>
           alumniRegNo.includes(normalizedRegNo) || normalizedRegNo.includes(alumniRegNo)
         );
-        if (partialMatches.length > 0) {
-          console.log(`Potential partial matches for ${normalizedRegNo}:`, partialMatches);
-        }
+        if (partialMatches.length > 0) {}
       }
       return !hasMatch;
     });
-
-    // Debug: Log the results
-    console.log(`Matched: ${registeredInAlumni.length}, Not Matched: ${notRegisteredInAlumni.length}`);
 
     // Find alumni who registered but are NOT in student strength database
     const studentStrengthRegNos = new Set(
@@ -279,9 +255,6 @@ const DetailedAnalytics = () => {
 
       return !studentStrengthRegNos.has(normalizedRegNo);
     });
-
-    console.log(`Alumni not in student strength database: ${alumniNotInStudentStrength.length}`);
-    console.log('Sample alumni not in student strength:', alumniNotInStudentStrength.slice(0, 3));
 
     return {
       totalStudentStrength: transformedStudentStrengthData.length,

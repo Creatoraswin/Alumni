@@ -124,17 +124,13 @@ class ApiSecurity {
                 responseText = iframe.contentDocument?.body?.textContent || 
                              iframe.contentDocument?.documentElement?.textContent || 
                              '';
-              } catch (e) {
-                console.log('Could not access iframe content directly');
-              }
+              } catch (e) {}
               
               // Method 2: If iframe content is empty, try to get from the iframe's innerHTML
               if (!responseText) {
                 try {
                   responseText = iframe.contentDocument?.body?.innerHTML || '';
-                } catch (e) {
-                  console.log('Could not access iframe innerHTML');
-                }
+                } catch (e) {}
               }
               
               // Clean up
@@ -262,10 +258,7 @@ class ApiSecurity {
         fetch(url, secureOptions),
         timeoutPromise
       ]);
-      
-      // Log response status for debugging
-      console.log('API response status:', response.status);
-      
+
       return response;
     } catch (error) {
       // Provide more specific error messages based on the error type
@@ -381,12 +374,6 @@ export interface Student {
 
 export const fetchStudentsData = async (showAll: boolean = false): Promise<Student[]> => {
   try {
-    console.log('=== fetchStudentsData called ===');
-    console.log('showAll parameter:', showAll);
-    console.log('Fetching data from:', API_URL);
-    // Log the API URL to verify it's correctly set
-    console.log('API_URL value:', API_URL);
-    
     // Try the secure request first, fallback to regular fetch if it fails
     let response;
     try {
@@ -395,75 +382,41 @@ export const fetchStudentsData = async (showAll: boolean = false): Promise<Stude
       console.warn('Secure request failed, falling back to regular fetch:', securityError);
       response = await ApiSecurity.makeSecureRequest(API_URL);
     }
-    
+
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    
+
     const data: ApiResponse = await response.json();
-    console.log('Raw API response:', data);
-    
+
     if (!data || !data["Form Responses 1"]) {
       console.error('Invalid response structure:', data);
       return [];
     }
-    
+
     // Log the field names of the first student to see what's available
     if (data["Form Responses 1"].length > 0) {
       const firstStudent = data["Form Responses 1"][0];
-      console.log('First student field names:', Object.keys(firstStudent));
-      console.log('First student data:', firstStudent);
-      
+
       // Check if "Status" field exists
-      if ("Status" in firstStudent) {
-        console.log('Status field found in raw data:', firstStudent["Status"]);
-      } else {
-        console.log('Status field NOT found in raw data');
+      if ("Status" in firstStudent) {} else {
         // Check for case variations
         const fieldNames = Object.keys(firstStudent);
         const statusField = fieldNames.find(name => name.toLowerCase() === "status");
-        if (statusField) {
-          console.log('Found Status field with different case:', statusField, firstStudent[statusField]);
-        }
-        
+        if (statusField) {}
+
         // Check for whitespace variations
         const statusFieldWithWhitespace = fieldNames.find(name => name.trim().toLowerCase() === "status");
-        if (statusFieldWithWhitespace) {
-          console.log('Found Status field with whitespace:', statusFieldWithWhitespace, firstStudent[statusFieldWithWhitespace]);
-        }
+        if (statusFieldWithWhitespace) {}
       }
     }
-    
-    // Log a sample of the raw data to see the Status field
-    console.log('Sample raw student data:', data["Form Responses 1"].slice(0, 5).map(s => ({
-      name: s["Name of the Student"],
-      registrationNo: s["Registration No."],
-      status: s["Status"],
-      statusType: typeof s["Status"]
-    })));
-    
+
     // Map and filter students
     const allStudents = data["Form Responses 1"].map((student, index) => {
-      // Log the Status field for each student
-      console.log(`Processing student ${index + 1}:`, {
-        name: student["Name of the Student"],
-        registrationNo: student["Registration No."],
-        status: student["Status"],
-        statusType: typeof student["Status"]
-      });
-      
       // Check if Status field exists in raw data
       const rawStatus = student["Status"];
-      if (rawStatus === undefined) {
-        console.log(`Student ${index + 1} has undefined Status field`);
-      } else if (rawStatus === null) {
-        console.log(`Student ${index + 1} has null Status field`);
-      } else if (typeof rawStatus === 'string') {
-        console.log(`Student ${index + 1} has Status field: "${rawStatus}" (length: ${rawStatus.length})`);
-      } else {
-        console.log(`Student ${index + 1} has Status field of unexpected type:`, typeof rawStatus, rawStatus);
-      }
-      
+      if (rawStatus === undefined) {} else if (rawStatus === null) {} else if (typeof rawStatus === 'string') {} else {}
+
       // Special check for Status field name variations
       const fieldNames = Object.keys(student);
       const statusFieldNames = fieldNames.filter(name => 
@@ -471,12 +424,9 @@ export const fetchStudentsData = async (showAll: boolean = false): Promise<Stude
         name.toLowerCase().includes('state')
       );
       if (statusFieldNames.length > 0) {
-        console.log(`Student ${index + 1} has potential status-related fields:`, statusFieldNames);
-        statusFieldNames.forEach(fieldName => {
-          console.log(`  ${fieldName}:`, student[fieldName]);
-        });
+        statusFieldNames.forEach(fieldName => {});
       }
-      
+
       return {
         id: student["Registration No."].toString(),
         name: (student["Name of the Student"] || "NA").trim() || "NA",
@@ -542,14 +492,11 @@ export const fetchStudentsData = async (showAll: boolean = false): Promise<Stude
             name.toLowerCase().includes('status') || 
             name.toLowerCase().includes('approval')
           );
-          
+
           if (statusField) {
-            console.log('Found Status field:', statusField, 'with value:', student[statusField]);
             return student[statusField];
           }
-          
-          // If no Status field found, return undefined
-          console.log('No Status field found in student data');
+
           return undefined;
         })(),
         skills: [],
@@ -557,15 +504,7 @@ export const fetchStudentsData = async (showAll: boolean = false): Promise<Stude
         currentjob: student["Present Occupation"] || "NA", // Added for compatibility
       };
     });
-    
-    console.log(`Total students processed: ${allStudents.length}`);
-    console.log('Sample processed students:', allStudents.slice(0, 5).map(s => ({
-      name: s.name,
-      registrationNo: s.registrationNo,
-      Status: s.Status,
-      StatusType: typeof s.Status
-    })));
-    
+
     // Log status distribution
     const statusCounts: Record<string, number> = {};
     allStudents.forEach(student => {
@@ -581,42 +520,22 @@ export const fetchStudentsData = async (showAll: boolean = false): Promise<Stude
         statusCounts[`other-${typeof status}`] = (statusCounts[`other-${typeof status}`] || 0) + 1;
       }
     });
-    console.log('All students Status distribution:', statusCounts);
-    
-    // Special check for Status field
-    console.log('Detailed Status field analysis:');
     allStudents.forEach((student, index) => {
-      if (index < 10) { // Only log first 10 students
-        console.log(`Student ${index + 1} (${student.name}):`, {
-          Status: student.Status,
-          StatusType: typeof student.Status,
-          StatusValue: student.Status,
-          StatusLength: student.Status ? student.Status.length : undefined,
-          StatusTrimmed: student.Status ? student.Status.trim() : undefined
-        });
-      }
+      if (index < 10) {}
     });
-    
+
     // If showAll is true, return all students (for admin/approval views)
     if (showAll) {
-      console.log('Returning all students (admin view)');
       return allStudents;
     }
-    
+
     // Otherwise, return only approved students
     const approvedStudents = allStudents.filter(student => {
       // Check if Status field is 'Approved'
       const isApproved = student.Status === 'Approved';
-      console.log('Student approval check:', {
-        name: student.name,
-        registrationNo: student.registrationNo,
-        Status: student.Status,
-        isApproved: isApproved
-      });
       return isApproved;
     });
-    
-    console.log(`Approved students: ${approvedStudents.length}`);
+
     return approvedStudents;
   } catch (error) {
     console.error("Error fetching students data:", error);
@@ -1015,31 +934,20 @@ export const authenticateDepartmentUser = async (username: string, password: str
 // Function to test API connectivity
 export const testApiConnectivity = async (): Promise<boolean> => {
   try {
-    console.log('Testing API connectivity...');
-    console.log('Using API URL:', API_URL);
-    
     // Use our secure request method which handles CORS
     const response = await ApiSecurity.makeSecureRequest(API_URL, {
       method: 'GET'
       // Note: We can't use signal with our current implementation, so we'll omit it
     });
-    console.log('API connectivity test response status:', response.status);
-    
+
     // Safely log headers if they exist
-    if (response.headers && typeof response.headers.entries === 'function') {
-      console.log('API connectivity test response headers:', Object.fromEntries(response.headers.entries()));
-    } else {
-      console.log('API connectivity test response headers: Not available');
-    }
-    
+    if (response.headers && typeof response.headers.entries === 'function') {} else {}
+
     const responseText = await response.text();
-    console.log('API connectivity test response text:', responseText);
-    
+
     if (response.ok) {
-      console.log('✅ API connectivity test PASSED');
       return true;
     } else {
-      console.log('❌ API connectivity test FAILED - Status:', response.status);
       return false;
     }
   } catch (error) {
@@ -1056,26 +964,19 @@ export const testApiConnectivity = async (): Promise<boolean> => {
 // Function to test update functionality
 export const testUpdateFunctionality = async (): Promise<boolean> => {
   try {
-    console.log('Testing update functionality...');
-    
     // Create a test payload
     const testPayload = {
       action: 'test',
       message: 'Test update request'
     };
-    
-    console.log('Sending test update payload:', testPayload);
-    
+
     const response = await ApiSecurity.makeSecureRequest(API_URL, {
       method: 'POST',
       body: JSON.stringify(testPayload),
     });
-    
-    console.log('Test update response:', response);
-    
+
     const responseData = await response.json();
-    console.log('Test update response data:', responseData);
-    
+
     return response.ok;
   } catch (error) {
     console.error('Test update failed:', error);
@@ -1085,40 +986,21 @@ export const testUpdateFunctionality = async (): Promise<boolean> => {
 
 // Manual test function - you can call this from browser console
 export const manualApiTest = async () => {
-  console.log('🔍 Starting manual API test...');
-  console.log('Current API URL:', API_URL);
-  
   try {
-    console.log('📡 Testing basic connectivity...');
     // Use our secure request method which handles CORS
     const response = await ApiSecurity.makeSecureRequest(API_URL);
-    console.log('Response status:', response.status);
-    console.log('Response ok:', response.ok);
-    
+
     // Safely log headers if they exist
-    if (response.headers && typeof response.headers.entries === 'function') {
-      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-    } else {
-      console.log('Response headers: Not available');
-    }
-    
+    if (response.headers && typeof response.headers.entries === 'function') {} else {}
+
     const text = await response.text();
-    console.log('Response text:', text);
-    
+
     if (response.ok) {
-      console.log('✅ Basic connectivity test PASSED');
       try {
         const json = JSON.parse(text);
-        console.log('✅ JSON parsing PASSED:', json);
-      } catch (parseError) {
-        console.log('❌ JSON parsing FAILED:', parseError);
-      }
-    } else {
-      console.log('❌ Basic connectivity test FAILED');
-    }
-  } catch (error) {
-    console.log('❌ Manual test FAILED:', error);
-  }
+      } catch (parseError) {}
+    } else {}
+  } catch (error) {}
 };
 
 // Make it available globally for console testing
@@ -1126,20 +1008,15 @@ export const manualApiTest = async () => {
 
 // Test upload functionality specifically
 export const testUploadFunctionality = async () => {
-  console.log('🔍 Testing upload functionality...');
-  
-  console.log('Using URL:', API_URL);
-  
   // Test 1: Basic POST request using our CORS handling approach
   try {
-    console.log('📡 Testing basic POST request...');
     const testPayload = {
       action: 'uploadPhoto',
       fileName: 'test.jpg',
       fileContent: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', // 1x1 pixel PNG
       mimeType: 'image/png'
     };
-    
+
     // Use our secure request method which handles CORS
     const response = await ApiSecurity.makeSecureRequest(API_URL, {
       method: 'POST',
@@ -1148,33 +1025,18 @@ export const testUploadFunctionality = async () => {
         'Content-Type': 'application/json'
       }
     });
-    
-    console.log('POST response status:', response.status);
-    
+
     // Safely log headers if they exist
-    if (response.headers && typeof response.headers.entries === 'function') {
-      console.log('POST response headers:', Object.fromEntries(response.headers.entries()));
-    } else {
-      console.log('POST response headers: Not available');
-    }
-    
+    if (response.headers && typeof response.headers.entries === 'function') {} else {}
+
     const responseText = await response.text();
-    console.log('POST response text:', responseText);
-    
+
     if (response.ok) {
-      console.log('✅ POST request successful');
       try {
         const json = JSON.parse(responseText);
-        console.log('✅ JSON response:', json);
-      } catch (parseError) {
-        console.log('❌ JSON parsing failed:', parseError);
-      }
-    } else {
-      console.log('❌ POST request failed');
-    }
-  } catch (error) {
-    console.log('❌ POST test failed:', error);
-  }
+      } catch (parseError) {}
+    } else {}
+  } catch (error) {}
 };
 
 // Make it available globally
@@ -1221,37 +1083,30 @@ const jsonpUpload = (url: string, payload: Record<string, string>): Promise<Reco
           try {
             // Try multiple ways to get the response
             let responseText = '';
-            
+
             try {
               // Method 1: Try to get from iframe content
               responseText = iframe.contentDocument?.body?.textContent || 
                            iframe.contentDocument?.documentElement?.textContent || 
                            '';
-            } catch (e) {
-              console.log('Could not access iframe content directly');
-            }
-            
+            } catch (e) {}
+
             // Method 2: If iframe content is empty, try to get from the iframe's innerHTML
             if (!responseText) {
               try {
                 responseText = iframe.contentDocument?.body?.innerHTML || '';
-              } catch (e) {
-                console.log('Could not access iframe innerHTML');
-              }
+              } catch (e) {}
             }
-            
+
             // Method 3: If still empty, assume success since the request went through
             if (!responseText) {
-              console.log('No response text found, assuming success');
               responseText = '{"status":"success","message":"Upload completed"}';
             }
-            
-            console.log('Upload response:', responseText);
-            
+
             // Clean up
             document.body.removeChild(form);
             document.body.removeChild(iframe);
-            
+
             try {
               const result = JSON.parse(responseText);
               resolve(result);
@@ -1289,8 +1144,6 @@ const jsonpUpload = (url: string, payload: Record<string, string>): Promise<Reco
 
 // Simple direct test - bypasses all the complex error handling
 export const simpleUploadTest = async () => {
-  console.log('🔍 Simple upload test...');
-  
   try {
     const payload = {
       action: 'uploadPhoto',
@@ -1298,14 +1151,11 @@ export const simpleUploadTest = async () => {
       fileContent: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
       mimeType: 'image/png'
     };
-    
-    console.log('Testing with iframe method to bypass CORS...');
+
     const result = await jsonpUpload(API_URL, payload);
-    console.log('Upload result:', result);
-    
+
     return { success: true, result };
   } catch (error) {
-    console.log('Error:', error);
     return { success: false, error: error.message };
   }
 };
@@ -1315,13 +1165,6 @@ export const simpleUploadTest = async () => {
 
 // Test with a real file upload
 export const testRealFileUpload = async (file: File) => {
-  console.log('🔍 Testing real file upload...');
-  console.log('File details:', {
-    name: file.name,
-    size: file.size,
-    type: file.type
-  });
-  
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     
@@ -1331,28 +1174,20 @@ export const testRealFileUpload = async (file: File) => {
         if (!base64Data) {
           throw new Error('Failed to read file data');
         }
-        
+
         const base64Content = base64Data.split(',')[1];
         if (!base64Content) {
           throw new Error('Invalid file data format');
         }
-        
+
         const payload = {
           action: 'uploadPhoto',
           fileName: file.name,
           fileContent: base64Content,
           mimeType: file.type
         };
-        
-        console.log('Uploading with payload:', {
-          action: payload.action,
-          fileName: payload.fileName,
-          mimeType: payload.mimeType,
-          contentLength: payload.fileContent.length
-        });
-        
+
         const result = await jsonpUpload(API_URL, payload);
-        console.log('Real file upload result:', result);
         resolve(result);
       } catch (error) {
         console.error('Real file upload error:', error);
@@ -1374,25 +1209,22 @@ export const testRealFileUpload = async (file: File) => {
 // Function to test image upload endpoint specifically
 export const testImageUploadEndpoint = async (): Promise<boolean> => {
   try {
-    console.log('Testing image upload endpoint...');
     const testPayload = {
       action: 'uploadPhoto',
       fileName: 'test.jpg',
       fileContent: 'test', // Minimal test data
       mimeType: 'image/jpeg'
     };
-    
+
     // Use our secure request method which handles CORS
     const response = await ApiSecurity.makeSecureRequest(API_URL, {
       method: 'POST',
       body: JSON.stringify(testPayload),
       // Note: We can't use signal with our current implementation, so we'll omit it
     });
-    
-    console.log('Image upload endpoint test response status:', response.status);
+
     const responseText = await response.text();
-    console.log('Image upload endpoint test response text:', responseText);
-    
+
     // We expect this to fail with a proper error message, not a parsing error
     return response.status !== 0; // Any response is better than no response
   } catch (error) {

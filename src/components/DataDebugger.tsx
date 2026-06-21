@@ -21,16 +21,12 @@ const DataDebugger: React.FC = () => {
   useEffect(() => {
     const testDataFetch = async () => {
       try {
-        console.log('=== Data Debug Test Started ===');
-        
         // Test fetching approved students only
         const approvedStudents = await fetchStudentsData(false);
-        console.log('Approved students:', approvedStudents);
-        
+
         // Test fetching all students
         const allStudents = await fetchStudentsData(true);
-        console.log('All students:', allStudents);
-        
+
         setDebugInfo({
           loading: false,
           error: null,
@@ -38,8 +34,6 @@ const DataDebugger: React.FC = () => {
           allStudentCount: allStudents.length,
           rawResponse: allStudents[0] || null, // Show first student as sample
         });
-        
-        console.log('=== Data Debug Test Completed ===');
       } catch (error) {
         console.error('Data fetch error:', error);
         setDebugInfo({

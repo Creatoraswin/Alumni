@@ -315,12 +315,6 @@ const AlumniTalkDetail: React.FC = () => {
 
           {/* Gallery Section */}
           {(() => {
-            console.log('Gallery render check:', {
-              galleryLink: talk.galleryLink,
-              galleryLinkLength: talk.galleryLink?.length,
-              galleryImagesLength: galleryImages.length,
-              galleryImages: galleryImages
-            });
             return talk.galleryLink && galleryImages.length > 0 && (
               <div className="bg-white/80 rounded-2xl shadow-elegant p-6 md:p-8">
                 <h2 className="text-2xl font-bold text-foreground mb-6">Event Gallery</h2>
@@ -333,13 +327,10 @@ const AlumniTalkDetail: React.FC = () => {
                         className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                         loading="lazy"
                         onError={(e) => {
-                          console.log('Gallery image failed to load:', imageUrl);
                           // Hide broken images
                           (e.target as HTMLImageElement).style.display = 'none';
                         }}
-                        onLoad={() => {
-                          console.log('Gallery image loaded successfully:', imageUrl);
-                        }}
+                        onLoad={() => {}}
                       />
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
                     </div>

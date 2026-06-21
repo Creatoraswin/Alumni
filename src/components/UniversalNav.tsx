@@ -1185,8 +1185,8 @@ const UniversalNav = ({
             <div className="md:hidden">
               <Sheet>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="md:hidden">
-                    <Menu className="h-6 w-6" />
+                  <Button variant="outline" className="md:hidden h-12 w-12 border-2 border-primary/50 text-primary shadow-sm rounded-xl flex items-center justify-center p-0">
+                    <Menu className="h-8 w-8" />
                   </Button>
                 </SheetTrigger>
                 <SheetContent side="right" className="w-[300px] sm:w-[400px] p-0">

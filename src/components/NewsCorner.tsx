@@ -34,9 +34,7 @@ const NewsCorner = () => {
       try {
         setLoading(true);
         setError(null);
-        console.log('Loading YouTube videos in NewsCorner');
         const fetchedVideos = await fetchYouTubeVideos(MAX_RESULTS);
-        console.log('Fetched videos in NewsCorner:', fetchedVideos);
         setVideos(fetchedVideos);
       } catch (err) {
         console.error("Error fetching YouTube videos in NewsCorner:", err);

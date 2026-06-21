@@ -51,7 +51,7 @@ class FileUpload
             
             if (isset($metadata['filename_base']) && !empty($metadata['filename_base'])) {
                 $filenameBase = preg_replace('/[^a-zA-Z0-9_-]/', '', $metadata['filename_base']);
-                $filename = "{$type}_{$filenameBase}.{$extension}";
+                $filename = "{$filenameBase}.{$extension}";
             } else {
                 $filename = "{$type}_{$timestamp}_{$randomString}.{$extension}";
             }
@@ -85,6 +85,14 @@ class FileUpload
     {
         switch ($type) {
             case 'photo':
+                if (isset($metadata['filename_base']) && !empty($metadata['filename_base'])) {
+                    $folder = preg_replace('/[^a-zA-Z0-9_-]/', '', $metadata['filename_base']);
+                    $path = rtrim(UPLOAD_PHOTOS_PATH, '/') . '/' . $folder . '/';
+                    if (!is_dir($path)) {
+                        mkdir($path, 0755, true);
+                    }
+                    return $path;
+                }
                 return UPLOAD_PHOTOS_PATH;
             case 'alumni_talk_banner':
                 return UPLOAD_ALUMNI_TALK_PATH . 'Banners/';

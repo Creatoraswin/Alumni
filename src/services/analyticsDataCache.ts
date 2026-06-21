@@ -133,36 +133,30 @@ class AnalyticsDataCacheService {
     if (!forceRefresh && this.hasValidCache()) {
       const cached = this.getCachedData();
       if (cached) {
-        console.log('Returning cached analytics data');
         return cached;
       }
     }
 
     // If already loading, return the existing promise
     if (this.loadingPromise) {
-      console.log('Analytics data already loading, returning existing promise');
       return this.loadingPromise;
     }
 
-    // Start new fetch
-    console.log('Fetching fresh analytics data');
     this.loadingPromise = Promise.all([
       fetchStudentStrengthData(),
       fetchStudentsData(true) // true to get all data including unapproved
     ])
       .then(([studentStrength, alumniForm]) => {
-        this.cacheData(studentStrength, alumniForm);
-        this.loadingPromise = null;
-        console.log('Analytics data fetched and cached successfully');
-        return { studentStrength, alumniForm };
-      })
+      this.cacheData(studentStrength, alumniForm);
+      this.loadingPromise = null;
+      return { studentStrength, alumniForm };
+    })
       .catch((error) => {
         this.loadingPromise = null;
         
         // Return cached data if available, even if expired, as fallback
         const cachedData = this.memoryCache;
         if (cachedData) {
-          console.log('Returning expired cached data due to fetch error');
           return {
             studentStrength: cachedData.studentStrength,
             alumniForm: cachedData.alumniForm
@@ -229,7 +223,6 @@ class AnalyticsDataCacheService {
    * Force refresh the cache with fresh data
    */
   async refreshCache(): Promise<{ studentStrength: StudentStrength[]; alumniForm: any[] }> {
-    console.log('Force refreshing analytics data cache');
     return this.getData(true);
   }
 }

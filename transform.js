@@ -1,0 +1,13 @@
+module.exports = function(fileInfo, api) {
+  const j = api.jscodeshift;
+  return j(fileInfo.source)
+    .find(j.CallExpression, {
+      callee: {
+        type: 'MemberExpression',
+        object: { name: 'console' },
+        property: { name: 'log' }
+      }
+    })
+    .remove()
+    .toSource();
+};

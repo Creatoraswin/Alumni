@@ -12,6 +12,7 @@ import { toast } from "@/components/ui/use-toast";
 
 // Icons
 import { Edit, Save, Search, Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 // Local Components
 import { useAdminData } from "@/components/AdminLayout";
@@ -34,6 +35,7 @@ interface AlumniManagementTabProps {
 }
 
 const DepatmentAlumniManagementTab = (props: AlumniManagementTabProps) => {
+  const router = useRouter();
   const adminData = useAdminData();
   const isAdmin = props.userRole === "admin";
   const students = props.students ?? (isAdmin ? adminData.students : []);
@@ -263,9 +265,10 @@ const DepatmentAlumniManagementTab = (props: AlumniManagementTabProps) => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredStudents.map((student, index) => (
             // Removed hover-lift class to fix white on hover issue
-            <div
+            (<div
               key={`${student.id}-${index}`}
-              className="border rounded-lg p-4 relative bg-card card-enhanced"
+              onClick={() => router.push(`/alumni-directory/detail?id=${student.registrationNo}`)}
+              className="border rounded-lg p-4 relative bg-card card-enhanced cursor-pointer hover:shadow-lg transition-shadow"
             >
               {/* Edit button at top right - only show for department admin */}
               {props.userRole === "department" && (
@@ -287,7 +290,6 @@ const DepatmentAlumniManagementTab = (props: AlumniManagementTabProps) => {
                   <p className="text-muted-foreground text-sm">Graduation Year: <span className="font-medium">{student.graduationYear || '-'}</span></p>
                 </div>
               </div>
-              
               <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                 <div className="space-y-2 p-3 rounded-lg bg-secondary/30">
                   <p className="truncate"><span className="font-medium">Email:</span> {student.email || '-'}</p>
@@ -311,7 +313,6 @@ const DepatmentAlumniManagementTab = (props: AlumniManagementTabProps) => {
                   ) : 'Not provided'}</p>
                 </div>
               </div>
-              
               {/* Skills/Interests */}
               <div className="mt-2">
                 <p className="text-sm font-bold text-gradient-primary">Skills/Interests:</p>
@@ -327,7 +328,7 @@ const DepatmentAlumniManagementTab = (props: AlumniManagementTabProps) => {
                   )}
                 </div>
               </div>
-            </div>
+            </div>)
           ))}
           
           {filteredStudents.length === 0 && searchTerm && (

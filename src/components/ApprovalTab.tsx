@@ -334,7 +334,6 @@ const ApprovalTab = (props: ApprovalTabProps) => {
         currentjob: statusForSheet // Also update currentjob for consistency
       };
 
-      console.log('Saving student with full payload:', fullPayload);
       await updateStudentData(fullPayload, "admin");
 
       // Force refresh all students from backend with showAll=true to get fresh data
@@ -406,7 +405,6 @@ const ApprovalTab = (props: ApprovalTabProps) => {
         currentjob: statusForSheet // Also update currentjob for consistency
       };
 
-      console.log('Approving student with data:', updatedStudent);
       await updateStudentData(updatedStudent as Student, "admin");
 
       // Force refresh all students from backend with showAll=true to get fresh data

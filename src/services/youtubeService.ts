@@ -113,10 +113,10 @@ const determineContentType = (title: string, description: string, duration?: str
   // Convert to lowercase for easier matching
   const lowerTitle = title.toLowerCase();
   const lowerDescription = description.toLowerCase();
-  
+
   // Log for debugging
   // console.log('Determining content type for:', { title: lowerTitle, description: lowerDescription, duration });
-  
+
   // Check for shorts indicators - more aggressive detection
   if (lowerTitle.includes('#shorts') || 
       lowerTitle.includes('short') || 
@@ -125,11 +125,10 @@ const determineContentType = (title: string, description: string, duration?: str
       lowerTitle.includes('reels') ||
       (duration && duration.startsWith('PT') && 
        ((duration.includes('S') && !duration.includes('M')) || 
-        (duration.match(/PT(\d+)S/) && parseInt(duration.match(/PT(\d+)S/)![1]) <= 90)))) { // Increased to 90 seconds
-    console.log('Detected as short');
+        (duration.match(/PT(\d+)S/) && parseInt(duration.match(/PT(\d+)S/)![1]) <= 90)))) {
     return 'short';
   }
-  
+
   // Check for post indicators (this is more heuristic-based)
   if (lowerTitle.includes('post') || 
       lowerDescription.includes('post') ||
@@ -139,12 +138,9 @@ const determineContentType = (title: string, description: string, duration?: str
       lowerTitle.includes('announcement') ||
       lowerTitle.includes('q&a') ||
       lowerTitle.includes('q & a')) {
-    console.log('Detected as post');
     return 'post';
   }
-  
-  // Default to video
-  console.log('Defaulting to video');
+
   return 'video';
 };
 
@@ -162,16 +158,13 @@ export const fetchYouTubeVideos = async (maxResults: number = 50, forceRefresh: 
         // Fall through to use cached data
       }
     }
-    
+
     // Check cache first
     const now = Date.now();
     if (!forceRefresh && youtubeCache.videos && youtubeCache.timestamp && 
         (now - youtubeCache.timestamp) < youtubeCache.ttl) {
-      console.log('Returning cached YouTube videos');
-      
       // Start background refresh if cache is older than 2 minutes
       if ((now - youtubeCache.timestamp) > 2 * 60 * 1000 && !youtubeCache.backgroundRefreshPromise) {
-        console.log('Starting background refresh');
         youtubeCache.backgroundRefreshPromise = fetchYouTubeVideos(maxResults, true)
           .then(data => {
             youtubeCache.backgroundRefreshPromise = null;
@@ -182,24 +175,22 @@ export const fetchYouTubeVideos = async (maxResults: number = 50, forceRefresh: 
             throw error;
           });
       }
-      
+
       return youtubeCache.videos;
     }
-    
+
     // Validate API key
     if (!API_KEY) {
       console.warn("No API key provided. Please set your YouTube API key.");
     }
-    
+
     // Validate channel ID
     if (!CHANNEL_ID) {
       throw new Error("Channel ID is not defined. Please set your YouTube channel ID.");
     }
-    
+
     // First, try to fetch from a specific playlist if PLAYLIST_ID is defined
     if (PLAYLIST_ID) {
-      console.log('Fetching YouTube playlist through proxy');
-      
       // Fetch playlist items with content details
       const playlistData = await fetchYouTubeData('playlistItems', {
         key: API_KEY,
@@ -207,9 +198,7 @@ export const fetchYouTubeVideos = async (maxResults: number = 50, forceRefresh: 
         part: 'snippet,id,contentDetails',
         maxResults: maxResults.toString()
       }) as YouTubePlaylistResponse;
-      
-      console.log('YouTube Playlist API response:', playlistData);
-      
+
       // Handle case where proxy returns generic success message instead of YouTube data
       if (playlistData && typeof playlistData === 'object' && 'status' in playlistData && playlistData.status === 'success' && 
           'message' in playlistData && playlistData.message === 'Operation completed') {
@@ -217,28 +206,23 @@ export const fetchYouTubeVideos = async (maxResults: number = 50, forceRefresh: 
         // Try direct API call as fallback
         return await fetchYouTubeVideosDirect(maxResults, 'playlist');
       }
-      
+
       // Validate response structure
       if (!playlistData || !playlistData.items || !Array.isArray(playlistData.items)) {
         console.warn('Invalid playlist response structure from YouTube API. Falling back to direct API call.');
         // Try direct API call as fallback
         return await fetchYouTubeVideosDirect(maxResults, 'playlist');
       }
-      
+
       // Get video IDs to fetch statistics and content details
       const videoIds = playlistData.items.map((item: YouTubePlaylistItem) => item.contentDetails.videoId).join(',');
-      
-      // Fetch video statistics with like and favorite counts and content details
-      console.log('Fetching YouTube video statistics through proxy');
-      
+
       const statsDataResult = await fetchYouTubeData('videos', {
         key: API_KEY,
         id: videoIds,
         part: 'statistics,contentDetails'
       }) as YouTubeStatisticsResponse;
-      
-      console.log('YouTube Statistics API response:', statsDataResult);
-      
+
       // Handle case where proxy returns generic success message instead of YouTube data
       if (statsDataResult && typeof statsDataResult === 'object' && 'status' in statsDataResult && statsDataResult.status === 'success' && 
           'message' in statsDataResult && statsDataResult.message === 'Operation completed') {
@@ -246,20 +230,20 @@ export const fetchYouTubeVideos = async (maxResults: number = 50, forceRefresh: 
         // Try direct API call as fallback
         return await fetchYouTubeVideosDirect(maxResults, 'playlist');
       }
-      
+
       // Validate statistics response structure
       if (!statsDataResult || !statsDataResult.items || !Array.isArray(statsDataResult.items)) {
         console.warn('Invalid statistics response structure from YouTube API. Falling back to direct API call.');
         // Try direct API call as fallback
         return await fetchYouTubeVideosDirect(maxResults, 'playlist');
       }
-      
+
       // Create a map of video IDs to statistics and content details
       const statsMap: Record<string, YouTubeVideoStatistics | undefined> = {};
       statsDataResult.items.forEach((item: YouTubeVideoStatistics) => {
         statsMap[item.id] = item;
       });
-      
+
       // Process the data to match our YouTubeVideo interface
       const videos: YouTubeVideo[] = playlistData.items.map((item: YouTubePlaylistItem) => {
         const stats = statsMap[item.contentDetails.videoId];
@@ -288,17 +272,14 @@ export const fetchYouTubeVideos = async (maxResults: number = 50, forceRefresh: 
           contentType
         };
       });
-      
+
       // Cache the results
       youtubeCache.videos = videos;
       youtubeCache.timestamp = Date.now();
-      
+
       return videos;
     }
-    
-    // If no playlist ID, fetch from channel
-    console.log('Fetching YouTube videos through proxy');
-    
+
     // Fetch search results
     const searchData = await fetchYouTubeData('search', {
       key: API_KEY,
@@ -308,9 +289,7 @@ export const fetchYouTubeVideos = async (maxResults: number = 50, forceRefresh: 
       maxResults: maxResults.toString(),
       type: 'video'
     }) as YouTubeSearchResponse;
-    
-    console.log('YouTube API response:', searchData);
-    
+
     // Handle case where proxy returns generic success message instead of YouTube data
     if (searchData && typeof searchData === 'object' && 'status' in searchData && searchData.status === 'success' && 
         'message' in searchData && searchData.message === 'Operation completed') {
@@ -318,28 +297,23 @@ export const fetchYouTubeVideos = async (maxResults: number = 50, forceRefresh: 
       // Try direct API call as fallback
       return await fetchYouTubeVideosDirect(maxResults, 'channel');
     }
-    
+
     // Validate response structure
     if (!searchData || !searchData.items || !Array.isArray(searchData.items)) {
       console.warn('Invalid search response structure from YouTube API. Falling back to direct API call.');
       // Try direct API call as fallback
       return await fetchYouTubeVideosDirect(maxResults, 'channel');
     }
-    
+
     // Get video IDs to fetch statistics and content details
     const videoIds = searchData.items.map((item: YouTubeSearchItem) => item.id.videoId).join(',');
-    
-    // Fetch video statistics with like and favorite counts and content details
-    console.log('Fetching YouTube video statistics through proxy');
-    
+
     const statsDataResult = await fetchYouTubeData('videos', {
       key: API_KEY,
       id: videoIds,
       part: 'statistics,contentDetails'
     }) as YouTubeStatisticsResponse;
-    
-    console.log('YouTube Statistics API response:', statsDataResult);
-    
+
     // Handle case where proxy returns generic success message instead of YouTube data
     if (statsDataResult && typeof statsDataResult === 'object' && 'status' in statsDataResult && statsDataResult.status === 'success' && 
         'message' in statsDataResult && statsDataResult.message === 'Operation completed') {
@@ -347,20 +321,20 @@ export const fetchYouTubeVideos = async (maxResults: number = 50, forceRefresh: 
       // Try direct API call as fallback
       return await fetchYouTubeVideosDirect(maxResults, 'channel');
     }
-    
+
     // Validate statistics response structure
     if (!statsDataResult || !statsDataResult.items || !Array.isArray(statsDataResult.items)) {
       console.warn('Invalid statistics response structure from YouTube API. Falling back to direct API call.');
       // Try direct API call as fallback
       return await fetchYouTubeVideosDirect(maxResults, 'channel');
     }
-    
+
     // Create a map of video IDs to statistics and content details
     const statsMap: Record<string, YouTubeVideoStatistics | undefined> = {};
     statsDataResult.items.forEach((item: YouTubeVideoStatistics) => {
       statsMap[item.id] = item;
     });
-    
+
     // Process the data to match our YouTubeVideo interface
     const videos: YouTubeVideo[] = searchData.items.map((item: YouTubeSearchItem) => {
       const stats = statsMap[item.id.videoId];
@@ -389,18 +363,17 @@ export const fetchYouTubeVideos = async (maxResults: number = 50, forceRefresh: 
         contentType
       };
     });
-    
+
     // Cache the results
     youtubeCache.videos = videos;
     youtubeCache.timestamp = Date.now();
-    
+
     return videos;
   } catch (error) {
     console.error("Error fetching YouTube videos:", error);
     
     // If we have cached data, return it even if fetch failed
     if (youtubeCache.videos) {
-      console.log("Returning cached data due to fetch error");
       return youtubeCache.videos;
     }
     
@@ -422,17 +395,15 @@ export const fetchYouTubeContentByType = async (contentType: 'videos' | 'shorts'
   try {
     const now = Date.now();
     const cache = contentCaches[contentType];
-    
+
     // Check cache first
     if (cache.data && cache.timestamp && (now - cache.timestamp) < youtubeCache.ttl) {
-      console.log(`Returning cached ${contentType}`);
       return cache.data;
     }
-    
+
     // Fetch all videos (this ensures we get content from all types)
     const allVideos = await fetchYouTubeVideos(maxResults * 3); // Fetch more to ensure we have enough of each type
-    console.log(`Fetched ${allVideos.length} total videos`);
-    
+
     // Filter by content type
     const filteredVideos = allVideos.filter(video => {
       // Special handling for 'videos' - it should include both 'video' and any that don't match shorts/posts
@@ -445,23 +416,20 @@ export const fetchYouTubeContentByType = async (contentType: 'videos' | 'shorts'
       }
       return false;
     }).slice(0, maxResults);
-    
-    console.log(`Filtered ${contentType}: ${filteredVideos.length} items`);
-    
+
     // If we don't have enough content for a specific type, show all content in that tab
     if (filteredVideos.length === 0 && allVideos.length > 0) {
-      console.log(`No ${contentType} found, showing all videos in this tab`);
       const fallbackVideos = allVideos.slice(0, maxResults);
       // Update cache
       cache.data = fallbackVideos;
       cache.timestamp = now;
       return fallbackVideos;
     }
-    
+
     // Update cache
     cache.data = filteredVideos;
     cache.timestamp = now;
-    
+
     return filteredVideos;
   } catch (error) {
     console.error(`Error fetching ${contentType}:`, error);
@@ -473,50 +441,46 @@ export const fetchYouTubeContentByType = async (contentType: 'videos' | 'shorts'
 // Fallback function for direct API calls when proxy fails
 const fetchYouTubeVideosDirect = async (maxResults: number = 50, mode: 'playlist' | 'channel' = 'channel'): Promise<YouTubeVideo[]> => {
   try {
-    console.log('Attempting direct YouTube API call');
-    
     if (mode === 'playlist' && PLAYLIST_ID) {
       // Fetch from playlist directly
       const playlistUrl = `https://www.googleapis.com/youtube/v3/playlistItems?key=${API_KEY}&playlistId=${PLAYLIST_ID}&part=snippet,id,contentDetails&maxResults=${maxResults}`;
-      console.log('Fetching YouTube playlist directly from:', playlistUrl);
-      
+
       const playlistResponse = await fetch(playlistUrl);
       if (!playlistResponse.ok) {
         throw new Error(`Playlist API error: ${playlistResponse.status} - ${await playlistResponse.text()}`);
       }
-      
+
       const playlistData = await playlistResponse.json();
-      
+
       // Validate response structure
       if (!playlistData || !playlistData.items || !Array.isArray(playlistData.items)) {
         throw new Error('Invalid playlist response structure from YouTube API');
       }
-      
+
       // Get video IDs to fetch statistics
       const videoIds = playlistData.items.map((item: YouTubePlaylistItem) => item.contentDetails.videoId).join(',');
-      
+
       // Fetch video statistics with like and favorite counts and content details
       const statsUrl = `https://www.googleapis.com/youtube/v3/videos?key=${API_KEY}&id=${videoIds}&part=statistics,contentDetails`;
-      console.log('Fetching YouTube video statistics directly from:', statsUrl);
-      
+
       const statsResponse = await fetch(statsUrl);
       if (!statsResponse.ok) {
         throw new Error(`Statistics API error: ${statsResponse.status} - ${await statsResponse.text()}`);
       }
-      
+
       const statsData = await statsResponse.json();
-      
+
       // Validate statistics response structure
       if (!statsData || !statsData.items || !Array.isArray(statsData.items)) {
         throw new Error('Invalid statistics response structure from YouTube API');
       }
-      
+
       // Create a map of video IDs to statistics and content details
       const statsMap: Record<string, YouTubeVideoStatistics | undefined> = {};
       statsData.items.forEach((item: YouTubeVideoStatistics) => {
         statsMap[item.id] = item;
       });
-      
+
       // Process the data to match our YouTubeVideo interface
       const videos: YouTubeVideo[] = playlistData.items.map((item: YouTubePlaylistItem) => {
         const stats = statsMap[item.contentDetails.videoId];
@@ -545,54 +509,52 @@ const fetchYouTubeVideosDirect = async (maxResults: number = 50, mode: 'playlist
           contentType
         };
       });
-      
+
       // Cache the results
       youtubeCache.videos = videos;
       youtubeCache.timestamp = Date.now();
-      
+
       return videos;
     } else {
       // Fetch from channel directly
       const searchUrl = `https://www.googleapis.com/youtube/v3/search?key=${API_KEY}&channelId=${CHANNEL_ID}&part=snippet,id&order=date&maxResults=${maxResults}&type=video`;
-      console.log('Fetching YouTube videos directly from:', searchUrl);
-      
+
       const searchResponse = await fetch(searchUrl);
       if (!searchResponse.ok) {
         throw new Error(`Search API error: ${searchResponse.status} - ${await searchResponse.text()}`);
       }
-      
+
       const searchData = await searchResponse.json();
-      
+
       // Validate response structure
       if (!searchData || !searchData.items || !Array.isArray(searchData.items)) {
         throw new Error('Invalid search response structure from YouTube API');
       }
-      
+
       // Get video IDs to fetch statistics
       const videoIds = searchData.items.map((item: YouTubeSearchItem) => item.id.videoId).join(',');
-      
+
       // Fetch video statistics with like and favorite counts and content details
       const statsUrl = `https://www.googleapis.com/youtube/v3/videos?key=${API_KEY}&id=${videoIds}&part=statistics,contentDetails`;
-      console.log('Fetching YouTube video statistics directly from:', statsUrl);
-      
+
       const statsResponse = await fetch(statsUrl);
       if (!statsResponse.ok) {
         throw new Error(`Statistics API error: ${statsResponse.status} - ${await statsResponse.text()}`);
       }
-      
+
       const statsData = await statsResponse.json();
-      
+
       // Validate statistics response structure
       if (!statsData || !statsData.items || !Array.isArray(statsData.items)) {
         throw new Error('Invalid statistics response structure from YouTube API');
       }
-      
+
       // Create a map of video IDs to statistics and content details
       const statsMap: Record<string, YouTubeVideoStatistics | undefined> = {};
       statsData.items.forEach((item: YouTubeVideoStatistics) => {
         statsMap[item.id] = item;
       });
-      
+
       // Process the data to match our YouTubeVideo interface
       const videos: YouTubeVideo[] = searchData.items.map((item: YouTubeSearchItem) => {
         const stats = statsMap[item.id.videoId];
@@ -621,11 +583,11 @@ const fetchYouTubeVideosDirect = async (maxResults: number = 50, mode: 'playlist
           contentType
         };
       });
-      
+
       // Cache the results
       youtubeCache.videos = videos;
       youtubeCache.timestamp = Date.now();
-      
+
       return videos;
     }
   } catch (error) {

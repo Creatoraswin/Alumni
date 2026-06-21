@@ -77,15 +77,13 @@ const YouTubePlayer = () => {
     try {
       setLoading(true);
       setError(null);
-      console.log('Loading YouTube content in YouTubePlayer');
-      
+
       // Clear cache to ensure fresh data
       clearYouTubeCache();
-      
+
       // First, fetch all videos to see what we're working with
       const allVideos = await fetchYouTubeVideos(MAX_RESULTS);
-      console.log('All videos fetched:', allVideos);
-      
+
       // Check if we have any videos at all
       if (!allVideos || allVideos.length === 0) {
         console.warn('No videos fetched from YouTube API');
@@ -93,53 +91,47 @@ const YouTubePlayer = () => {
         setLoading(false);
         return;
       }
-      
+
       // Count content types for debugging
       const videoCount = allVideos.filter(v => v.contentType === 'video').length;
       const shortCount = allVideos.filter(v => v.contentType === 'short').length;
       const postCount = allVideos.filter(v => v.contentType === 'post').length;
-      
-      console.log('Content type breakdown:', { videoCount, shortCount, postCount });
-      
+
       // Load all content types with error handling
       let videosData: YouTubeVideo[] = [];
       let shortsData: YouTubeVideo[] = [];
       let postsData: YouTubeVideo[] = [];
-      
+
       try {
         videosData = await fetchYouTubeContentByType('videos', MAX_RESULTS);
       } catch (err) {
         console.warn('Error fetching videos, using fallback:', err);
         videosData = allVideos;
       }
-      
+
       try {
         shortsData = await fetchYouTubeContentByType('shorts', MAX_RESULTS);
       } catch (err) {
         console.warn('Error fetching shorts, using fallback:', err);
         shortsData = allVideos.slice(0, Math.min(allVideos.length, 12));
       }
-      
+
       try {
         postsData = await fetchYouTubeContentByType('posts', MAX_RESULTS);
       } catch (err) {
         console.warn('Error fetching posts, using fallback:', err);
         postsData = allVideos.slice(0, Math.min(allVideos.length, 6));
       }
-      
-      console.log('Fetched videos:', videosData);
-      console.log('Fetched shorts:', shortsData);
-      console.log('Fetched posts:', postsData);
-      
+
       // Ensure we have content to display
       const finalVideosData = videosData.length > 0 ? videosData : allVideos;
       const finalShortsData = shortsData.length > 0 ? shortsData : allVideos.slice(0, Math.min(allVideos.length, 12));
       const finalPostsData = postsData.length > 0 ? postsData : allVideos.slice(0, Math.min(allVideos.length, 6));
-      
+
       setVideos(finalVideosData);
       setShorts(finalShortsData);
       setPosts(finalPostsData);
-      
+
       // If a videoId is provided in the URL, select that video
       if (videoId) {
         const allVideosCombined = [...finalVideosData, ...finalShortsData, ...finalPostsData];

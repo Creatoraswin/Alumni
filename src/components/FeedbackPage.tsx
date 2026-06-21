@@ -28,7 +28,6 @@ const FeedbackPage = ({ students }: FeedbackPageProps) => {
           Complete alumni database with all submitted information including feedback and personal details.
         </div>
       </div>
-
       <div className="space-y-6">
         {students.map((student, index) => (
           <Card key={`${student.id}-${index}`} className="shadow-lg border border-border bg-card">

@@ -12,10 +12,7 @@ interface RobustImageProps {
 
 const RobustImage = ({ photoUrl, studentName, className = "", size = "md" }: RobustImageProps) => {
   const [currentUrlIndex, setCurrentUrlIndex] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
-  const [loadingTimeout, setLoadingTimeout] = useState<NodeJS.Timeout | null>(null);
-  const [validImageUrl, setValidImageUrl] = useState<string | null>(null);
 
   // Generate all possible URL formats for Google Drive
   const generateUrlFormats = (url: string): string[] => {
@@ -46,13 +43,12 @@ const RobustImage = ({ photoUrl, studentName, className = "", size = "md" }: Rob
       
       if (fileId) {
         // Use the most reliable Google Drive URL formats in order of preference
-        const driveUrls = [
+        return [
           `https://lh3.googleusercontent.com/d/${fileId}=w400-h400-c`, // Google's CDN - most reliable
           `https://drive.google.com/thumbnail?id=${fileId}&sz=w400-h400`, // Thumbnail with explicit size
           `https://drive.google.com/uc?export=view&id=${fileId}`, // Direct view
           url // Original URL as fallback
         ];
-        return driveUrls;
       }
     }
     
@@ -63,122 +59,21 @@ const RobustImage = ({ photoUrl, studentName, className = "", size = "md" }: Rob
   const urlFormats = generateUrlFormats(photoUrl);
   const currentUrl = urlFormats[currentUrlIndex] || "";
 
-  // Function to test if an image URL is accessible
-  const testImageUrl = (url: string): Promise<boolean> => {
-    return new Promise((resolve) => {
-      const img = new Image();
-      
-      // Set CORS attributes
-      img.crossOrigin = 'anonymous';
-      
-      const cleanup = () => {
-        img.onload = null;
-        img.onerror = null;
-      };
-      
-      img.onload = () => {
-        cleanup();
-        resolve(true);
-      };
-      
-      img.onerror = () => {
-        cleanup();
-        resolve(false);
-      };
-      
-      // Set a reasonable timeout
-      setTimeout(() => {
-        cleanup();
-        resolve(false);
-      }, 5000); // 5 second timeout
-      
-      img.src = url;
-    });
-  };
-
-  const handleError = async () => {
-    // console.log(`[RobustImage] ❌ Image failed to load (${studentName}): ${currentUrl} (index: ${currentUrlIndex})`);
-    
+  const handleError = () => {
     if (currentUrlIndex < urlFormats.length - 1) {
       // Try next URL format
-      // console.log(`[RobustImage] 🔄 Trying next URL format (${studentName}) (${currentUrlIndex + 1}/${urlFormats.length - 1})`);
-      setCurrentUrlIndex(currentUrlIndex + 1);
-      setHasError(false);
-      setIsLoading(true);
-      setValidImageUrl(null);
+      setCurrentUrlIndex(prev => prev + 1);
     } else {
       // All formats tried - show fallback
-      // console.log(`[RobustImage] 💀 All URL formats failed, showing fallback (${studentName})`);
       setHasError(true);
-      setIsLoading(false);
-      setValidImageUrl(null);
     }
   };
-
-  const handleLoad = () => {
-    // console.log(`[RobustImage] ✅ Image loaded successfully (${studentName}): ${currentUrl}`);
-    if (loadingTimeout) {
-      clearTimeout(loadingTimeout);
-      setLoadingTimeout(null);
-    }
-    setHasError(false);
-    setIsLoading(false);
-  };
-
-  // Test current URL when it changes
-  useEffect(() => {
-    if (currentUrl && !hasError) {
-      // console.log(`[RobustImage] Testing image URL (${studentName}): ${currentUrl}`);
-      testImageUrl(currentUrl).then((isValid) => {
-        if (isValid) {
-          // console.log(`[RobustImage] ✅ Valid image URL found (${studentName}): ${currentUrl}`);
-          setValidImageUrl(currentUrl);
-          setIsLoading(false);
-        } else {
-          // console.log(`[RobustImage] ❌ Invalid image URL (${studentName}): ${currentUrl}`);
-          handleError();
-        }
-      });
-    }
-  }, [currentUrl, hasError]);
 
   // Reset when photoUrl changes
   useEffect(() => {
-    // console.log(`[RobustImage] Photo URL changed (${studentName}): ${photoUrl}`);
-    // console.log(`[RobustImage] Generated URL formats (${studentName}):`, urlFormats);
     setCurrentUrlIndex(0);
     setHasError(false);
-    setIsLoading(true);
-    setValidImageUrl(null);
-    
-    // Clear any existing timeout
-    if (loadingTimeout) {
-      clearTimeout(loadingTimeout);
-    }
-    
-    // Set a timeout to try next URL if current one takes too long
-    const timeout = setTimeout(() => {
-      if (isLoading && !hasError && !validImageUrl) {
-        // console.log(`[RobustImage] ⏰ Image loading timeout (${studentName}), trying next URL format`);
-        handleError(); // This will try the next URL format
-      }
-    }, 10000); // 10 second timeout (increased from 8 seconds)
-    
-    setLoadingTimeout(timeout);
-    
-    return () => {
-      if (timeout) clearTimeout(timeout);
-    };
   }, [photoUrl]);
-  
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (loadingTimeout) {
-        clearTimeout(loadingTimeout);
-      }
-    };
-  }, []);
 
   // Size classes
   const sizeClasses = {
@@ -193,7 +88,7 @@ const RobustImage = ({ photoUrl, studentName, className = "", size = "md" }: Rob
     return name.split(' ').map(n => n[0]).join('').slice(0, 2);
   };
 
-  if (urlFormats.length === 0) {
+  if (urlFormats.length === 0 || hasError) {
     return (
       <Avatar className={`${sizeClasses[size]} ${className}`}>
         <AvatarFallback className="text-sm bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold">
@@ -205,17 +100,13 @@ const RobustImage = ({ photoUrl, studentName, className = "", size = "md" }: Rob
 
   return (
     <Avatar className={`${sizeClasses[size]} ${className}`}>
-      {validImageUrl && !hasError && (
-        <AvatarImage 
-          src={validImageUrl}
-          alt={studentName || 'Student'}
-          className="object-cover"
-          referrerPolicy="no-referrer"
-          onError={handleError}
-          onLoad={handleLoad}
-          crossOrigin="anonymous"
-        />
-      )}
+      <AvatarImage 
+        src={currentUrl}
+        alt={studentName || 'Student'}
+        className="object-cover"
+        referrerPolicy="no-referrer"
+        onError={handleError}
+      />
       <AvatarFallback className="text-sm bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold">
         {getInitials(studentName)}
       </AvatarFallback>

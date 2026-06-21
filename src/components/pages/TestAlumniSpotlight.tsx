@@ -11,10 +11,8 @@ const TestAlumniSpotlight: React.FC = () => {
   useEffect(() => {
     const loadSpotlights = async () => {
       try {
-        console.log('Test: Loading alumni spotlights...');
         setLoading(true);
         const data = await fetchAlumniSpotlight();
-        console.log('Test: Fetched alumni spotlights:', data);
         setSpotlights(data);
       } catch (err) {
         console.error('Test: Failed to load alumni spotlights:', err);
@@ -45,7 +43,6 @@ const TestAlumniSpotlight: React.FC = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-6">Alumni Spotlight Test</h1>
-      
       <div className="mb-4">
         <button 
           onClick={refreshSpotlights}
@@ -54,20 +51,17 @@ const TestAlumniSpotlight: React.FC = () => {
           Refresh Data
         </button>
       </div>
-      
       {loading && (
         <div className="text-center py-8">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-primary/20 border-t-primary"></div>
           <p className="mt-2 text-muted-foreground">Loading alumni spotlights...</p>
         </div>
       )}
-      
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
           <p>Error: {error}</p>
         </div>
       )}
-      
       {!loading && !error && (
         <div>
           <p className="mb-4">Found {spotlights.length} alumni spotlights</p>
@@ -88,7 +82,6 @@ const TestAlumniSpotlight: React.FC = () => {
                       alt={spotlight.name} 
                       className="mt-2 w-full h-32 object-cover rounded"
                       onError={(e) => {
-                        console.log('Image failed to load:', spotlight.photoUrl);
                         // Try alternative Google Drive URL formats if the first one fails
                         const img = e.target as HTMLImageElement;
                         const url = img.src;

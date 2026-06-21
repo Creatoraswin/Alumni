@@ -340,11 +340,14 @@ export const deleteStudentData = async (student: Student): Promise<{ status: str
   }
 };
 
-export const uploadImageToDrive = async (file: File): Promise<string> => {
+export const uploadImageToDrive = async (file: File, registrationNo?: string): Promise<string> => {
   try {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('type', 'photo');
+    if (registrationNo) {
+      formData.append('registration_no', registrationNo);
+    }
     
     const response = await fetch(`${API_URL}/upload/index.php`, {
       method: 'POST',
@@ -367,7 +370,7 @@ export const registerStudent = async (studentData: Record<string, any>, setUploa
     let photoUrl = "";
     if (studentData.photo && studentData.photo instanceof File) {
       if (setUploadingImage) setUploadingImage(true);
-      photoUrl = await uploadImageToDrive(studentData.photo);
+      photoUrl = await uploadImageToDrive(studentData.photo, studentData.registrationNo);
       if (setUploadingImage) setUploadingImage(false);
     }
     
