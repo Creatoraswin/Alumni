@@ -7,7 +7,9 @@ header('Content-Type: application/json');
 require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../models/Student.php';
+require_once __DIR__ . '/../../models/LinkedInStatus.php';
 require_once __DIR__ . '/../../utils/Response.php';
+require_once __DIR__ . '/../../utils/FileUpload.php';
 
 Response::setCorsHeaders();
 
@@ -26,6 +28,20 @@ try {
     $database = new Database();
     $db = $database->getConnection();
     $studentModel = new Student($db);
+
+    // Fetch the student first to retrieve file URLs
+    $student = $studentModel->getByRegistrationNo($registrationNo);
+    
+    if ($student) {
+        // Delete photo if exists
+        if (!empty($student['photo_url'])) {
+            FileUpload::delete($student['photo_url']);
+        }
+    }
+
+    // Delete from linkedin_status table
+    $linkedInModel = new LinkedInStatus($db);
+    $linkedInModel->delete($registrationNo);
 
     $success = $studentModel->delete($registrationNo);
     if ($success) {

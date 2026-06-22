@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { getDirectImageUrl } from "@/services/apiService";
 
 interface RobustImageProps {
   photoUrl: string;
@@ -52,8 +53,8 @@ const RobustImage = ({ photoUrl, studentName, className = "", size = "md" }: Rob
       }
     }
     
-    // For non-Google Drive URLs, just return the original URL
-    return [url];
+    // For non-Google Drive URLs, just return the original URL resolved
+    return [getDirectImageUrl(url)];
   };
 
   const urlFormats = generateUrlFormats(photoUrl);

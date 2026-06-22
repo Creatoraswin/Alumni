@@ -12,7 +12,7 @@ import { toast } from "@/components/ui/use-toast";
 import { Badge } from "@/components/ui/badge";
 
 // Icons
-import { Check, Trash2, Search, Loader2, Edit, Save, Database } from "lucide-react";
+import { Check, Trash2, Search, Loader2, Edit, Save, Database, RefreshCw } from "lucide-react";
 
 // Local Components
 import { useAdminData } from "@/components/AdminLayout";
@@ -108,6 +108,34 @@ const ApprovalTab = (props: ApprovalTabProps) => {
 
   // Academic data state
   const [academicData, setAcademicData] = useState<AcademicInfo[]>([]);
+
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    try {
+      setIsRefreshing(true);
+      if (authContext && typeof authContext.refreshData === 'function') {
+        await authContext.refreshData(true); // Force refresh
+      } else {
+        const freshStudents = await fetchStudentsData(true);
+        if (isAdmin && adminData.setStudents) {
+          adminData.setStudents(freshStudents);
+        }
+      }
+      toast({
+        title: "Refreshed",
+        description: "Pending approvals data has been updated.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to refresh data.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   // Fetch student strength data and academic data on component mount
   useEffect(() => {
@@ -507,10 +535,22 @@ const ApprovalTab = (props: ApprovalTabProps) => {
             <h2 className="text-2xl font-bold text-gradient-primary">Pending Approvals</h2>
             <p className="text-muted-foreground mt-1">Review and manage alumni profile submissions</p>
           </div>
-          <div className="bg-primary/10 px-4 py-2 rounded-full">
-            <span className="text-sm font-bold text-primary">
-              {sortedStudents.length} {sortedStudents.length === 1 ? 'student' : 'students'} pending approval
-            </span>
+          <div className="flex flex-col gap-2 sm:items-end">
+            <div className="bg-primary/10 px-4 py-2 rounded-full">
+              <span className="text-sm font-bold text-primary">
+                {sortedStudents.length} {sortedStudents.length === 1 ? 'student' : 'students'} pending approval
+              </span>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleRefresh} 
+              disabled={isRefreshing}
+              className="w-full sm:w-auto flex items-center justify-center gap-2"
+            >
+              <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
           </div>
         </div>
       </CardHeader>

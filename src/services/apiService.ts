@@ -411,11 +411,17 @@ export const registerStudent = async (studentData: Record<string, any>, setUploa
   }
 };
 
+const getBackendBaseUrl = (): string => {
+  return API_URL.replace(/\/backend\/api\/?$/, '');
+};
+
 export function getDirectImageUrl(url: unknown): string {
   if (typeof url !== 'string' || !url || url === "NA") return "";
-  // Local uploads are served from Next.js public/ via junction link
-  if (url.startsWith('/Uploads/')) {
-    return url; // Next.js serves public/Uploads/ at /Uploads/
+  // Local uploads are served from the backend server
+  if (url.startsWith('/Uploads/') || url.startsWith('Uploads/')) {
+    const baseUrl = getBackendBaseUrl();
+    const cleanUrl = url.startsWith('/') ? url : '/' + url;
+    return `${baseUrl}${cleanUrl}`;
   }
   return url;
 }

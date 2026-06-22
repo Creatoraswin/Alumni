@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { 
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
 } from "./ui/table";
@@ -6,6 +6,7 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "./ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { 
   StudentStrength, fetchStudentStrength, addStudentStrength, 
@@ -21,6 +22,7 @@ export const StudentStrengthTab = () => {
   const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("all");
   
   // Form State
   const [formData, setFormData] = useState<StudentStrength>({
@@ -191,11 +193,24 @@ export const StudentStrengthTab = () => {
     };
     reader.readAsBinaryString(bulkFile);
   };
+  const filteredData = data.filter(d => {
+    const matchesSearch = d.registration_no?.toLowerCase().includes(search.toLowerCase()) || 
+                          d.name?.toLowerCase().includes(search.toLowerCase());
+    const yearStr = d.passout_year ? String(d.passout_year) : "Unknown";
+    const matchesTab = activeTab === "all" || yearStr === activeTab;
+    return matchesSearch && matchesTab;
+  });
 
-  const filteredData = data.filter(d => 
-    d.registration_no?.toLowerCase().includes(search.toLowerCase()) || 
-    d.name?.toLowerCase().includes(search.toLowerCase())
-  );
+  const yearWiseData = useMemo(() => {
+    const grouped: Record<string, number> = {};
+    data.forEach(item => {
+      const year = item.passout_year ? String(item.passout_year) : "Unknown";
+      grouped[year] = (grouped[year] || 0) + 1;
+    });
+    return Object.entries(grouped)
+      .map(([year, count]) => ({ year, count }))
+      .sort((a, b) => b.year.localeCompare(a.year)); // Sort descending by year
+  }, [data]);
 
   return (
     <div className="space-y-6">
@@ -215,70 +230,87 @@ export const StudentStrengthTab = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow p-4 border">
-        <div className="mb-4">
-          <Input 
-            placeholder="Search by Registration No or Name..." 
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="max-w-md"
-          />
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <div className="overflow-x-auto pb-2 mb-4">
+          <TabsList className="inline-flex h-auto p-1 flex-wrap gap-1">
+            <TabsTrigger value="all">All ({data.length})</TabsTrigger>
+            {yearWiseData.map((item) => (
+              <TabsTrigger key={item.year} value={item.year}>
+                {item.year === "Unknown" ? "Unknown" : item.year} ({item.count})
+              </TabsTrigger>
+            ))}
+          </TabsList>
         </div>
 
-        <div className="rounded-md border overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Sl.No</TableHead>
-                <TableHead>Registration No.</TableHead>
-                <TableHead>Name of the Student</TableHead>
-                <TableHead>Batch</TableHead>
-                <TableHead>School</TableHead>
-                <TableHead>Branch</TableHead>
-                <TableHead>Program</TableHead>
-                <TableHead>Passout</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-4">Loading data...</TableCell>
-                </TableRow>
-              ) : filteredData.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-4">No records found.</TableCell>
-                </TableRow>
-              ) : (
-                filteredData.map((item, index) => (
-                  <TableRow key={item.id}>
-                    <TableCell>{index + 1}</TableCell>
-                    <TableCell className="font-medium">{item.registration_no}</TableCell>
-                    <TableCell>{item.name}</TableCell>
-                    <TableCell>{item.batch}</TableCell>
-                    <TableCell>{item.school}</TableCell>
-                    <TableCell>{item.branch}</TableCell>
-                    <TableCell>{item.program}</TableCell>
-                    <TableCell>{item.passout_year}</TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="icon" onClick={() => {
-                        setFormData(item);
-                        setEditingId(item.id || null);
-                        setModalOpen(true);
-                      }}>
-                        <Edit className="w-4 h-4 text-blue-500" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(item.id!)}>
-                        <Trash2 className="w-4 h-4 text-red-500" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </div>
+        {["all", ...yearWiseData.map(y => y.year)].map(tabValue => (
+          <TabsContent key={tabValue} value={tabValue} className="m-0">
+            <div className="bg-white rounded-lg shadow p-4 border">
+              <div className="mb-4">
+                <Input 
+                  placeholder="Search by Registration No or Name..." 
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="max-w-md"
+                />
+              </div>
+
+              <div className="rounded-md border overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Sl.No</TableHead>
+                      <TableHead>Registration No.</TableHead>
+                      <TableHead>Name of the Student</TableHead>
+                      <TableHead>Batch</TableHead>
+                      <TableHead>School</TableHead>
+                      <TableHead>Branch</TableHead>
+                      <TableHead>Program</TableHead>
+                      <TableHead>Passout</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {loading ? (
+                      <TableRow>
+                        <TableCell colSpan={9} className="text-center py-4">Loading data...</TableCell>
+                      </TableRow>
+                    ) : filteredData.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={9} className="text-center py-4">No records found.</TableCell>
+                      </TableRow>
+                    ) : (
+                      filteredData.map((item, index) => (
+                        <TableRow key={item.id}>
+                          <TableCell>{index + 1}</TableCell>
+                          <TableCell className="font-medium">{item.registration_no}</TableCell>
+                          <TableCell>{item.name}</TableCell>
+                          <TableCell>{item.batch}</TableCell>
+                          <TableCell>{item.school}</TableCell>
+                          <TableCell>{item.branch}</TableCell>
+                          <TableCell>{item.program}</TableCell>
+                          <TableCell>{item.passout_year}</TableCell>
+                          <TableCell className="text-right">
+                            <Button variant="ghost" size="icon" onClick={() => {
+                              setFormData(item);
+                              setEditingId(item.id || null);
+                              setModalOpen(true);
+                            }}>
+                              <Edit className="w-4 h-4 text-blue-500" />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => handleDelete(item.id!)}>
+                              <Trash2 className="w-4 h-4 text-red-500" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          </TabsContent>
+        ))}
+      </Tabs>
 
       {/* Add/Edit Modal */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
