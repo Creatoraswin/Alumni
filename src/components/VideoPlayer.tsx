@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 
 export default function VideoPlayer() {
   const [play, setPlay] = useState(false);
@@ -12,10 +13,11 @@ export default function VideoPlayer() {
           className="cursor-pointer absolute inset-0 w-full h-full"
           onClick={() => setPlay(true)}
         >
-          <img
+          <Image
             src="https://img.youtube.com/vi/B4vNV49aJL4/maxresdefault.jpg"
             alt="Video Thumbnail"
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
           />
         </div>
       ) : (

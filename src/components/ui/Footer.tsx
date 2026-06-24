@@ -11,12 +11,12 @@ const Footer = () => (
     
       <div className="text-sm text-muted-foreground mt-2 md:mt-0 font-medium">
         Designed & developed by <a 
-          href="https://www.linkedin.com/in/creatoraswin/" 
+          href="https://www.sparvixainnovations.com/" 
           target="_blank" 
           rel="noopener noreferrer"
           className="font-bold text-gradient-gold hover:text-primary transition-colors duration-200 cursor-pointer"
         >
-          creatoraswin
+          Sparvixa Innovations
         </a>
       </div>
     </div>

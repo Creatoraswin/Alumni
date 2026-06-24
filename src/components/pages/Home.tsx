@@ -4,14 +4,17 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Student, fetchStudentsData, fetchAlumniTalks, AlumniTalkItem, AlumniSpotlightItem, fetchAlumniSpotlight, fetchAlumniMeets, AlumniMeetItem } from "@/services/apiService";
 import { useAuth } from "@/contexts/useAuth";
 import UniversalNav from "@/components/UniversalNav";
-import VideoPlayer from "@/components/VideoPlayer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Star, Building2, GraduationCap, TrendingUp, Users, ArrowRight, Youtube, Award, Phone, Mail, Linkedin, Globe, ChevronRight } from "lucide-react";
 import { useRouter } from 'next/navigation';
 import { dataCache } from "@/services/dataCache";
-import AuthModal from "@/components/AuthModal";
+import Image from "next/image";
+import dynamic from 'next/dynamic';
+
+const VideoPlayer = dynamic(() => import("@/components/VideoPlayer"), { ssr: false });
+const AuthModal = dynamic(() => import("@/components/AuthModal"), { ssr: false });
 
 const Home = () => {
   const router = useRouter();
@@ -481,18 +484,16 @@ const Home = () => {
       {/* Hero Section - Mobile Design */}
       <section className="relative overflow-hidden mt-14 sm:hidden">
         {/* Mobile Hero */}
-        <div
-          className="relative"
-          style={{
-            backgroundImage: "url(/Alumni_banner.svg)",
-            backgroundSize: "contain",
-            backgroundPosition: "center center",
-            backgroundRepeat: "no-repeat",
-            minHeight: "180px",
-            height: "5vh"
-          }}
-          onLoad={() => setBannerLoaded(true)}
-        >
+        <div className="relative w-full min-h-[180px] h-[5vh]">
+          <Image
+            src="/Alumni_banner.webp"
+            alt="Alumni Banner"
+            fill
+            style={{ objectFit: "contain", objectPosition: "center" }}
+            priority
+            quality={80}
+            onLoad={() => setBannerLoaded(true)}
+          />
           <div className="absolute inset-0 bg-black/5"></div>
         </div>
         {/* Mobile Buttons Below Image */}
@@ -521,18 +522,16 @@ const Home = () => {
       {/* Hero Section - Tablet Design */}
       <section className="relative overflow-hidden mt-16 hidden sm:block md:hidden">
         {/* Tablet Hero */}
-        <div
-          className="relative"
-          style={{
-            backgroundImage: "url(/Alumni_banner.svg)",
-            backgroundSize: "contain",
-            backgroundPosition: "center center",
-            backgroundRepeat: "no-repeat",
-            minHeight: "250px",
-            height: "35vh"
-          }}
-          onLoad={() => setBannerLoaded(true)}
-        >
+        <div className="relative w-full min-h-[250px] h-[35vh]">
+          <Image
+            src="/Alumni_banner.webp"
+            alt="Alumni Banner"
+            fill
+            style={{ objectFit: "contain", objectPosition: "center" }}
+            priority
+            quality={80}
+            onLoad={() => setBannerLoaded(true)}
+          />
           <div className="absolute inset-0 bg-black/5"></div>
         </div>
         {/* Tablet Buttons Below Image */}
@@ -560,18 +559,16 @@ const Home = () => {
       </section>
       {/* Hero Section - Desktop Design */}
       <section className="relative overflow-hidden mt-16 hidden md:block">
-        <div
-          className="relative"
-          style={{
-            backgroundImage: "url(/Alumni_banner.svg)",
-            backgroundSize: "cover",
-            backgroundPosition: "center center",
-            backgroundRepeat: "no-repeat",
-            minHeight: "500px",
-            height: "80vh"
-          }}
-          onLoad={() => setBannerLoaded(true)}
-        >
+        <div className="relative w-full min-h-[500px] h-[80vh]">
+          <Image
+            src="/Alumni_banner.webp"
+            alt="Alumni Banner"
+            fill
+            style={{ objectFit: "cover", objectPosition: "center" }}
+            priority
+            quality={80}
+            onLoad={() => setBannerLoaded(true)}
+          />
           <div className="absolute inset-0 bg-transparent"></div>
           <div className="absolute bottom-16 left-8 z-10">
             <div className="flex flex-row gap-6 justify-start items-center">

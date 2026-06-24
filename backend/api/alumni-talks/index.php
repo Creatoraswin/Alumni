@@ -19,12 +19,38 @@ try {
     $method = $_SERVER['REQUEST_METHOD'];
 
     if ($method === 'GET') {
-        $talks = $talkModel->getAll();
-        foreach ($talks as &$talk) {
-            if (isset($talk['date_of_event'])) {
-                $talk['date_of_event'] = Validator::convertDateToDisplay($talk['date_of_event']);
+        $cacheKey = 'alumni_talks_all';
+        $cachedData = false;
+        $redis = null;
+
+        // Try to connect to Redis if available
+        if (class_exists('Redis')) {
+            try {
+                $redis = new Redis();
+                if ($redis->connect('127.0.0.1', 6379)) {
+                    $cachedData = $redis->get($cacheKey);
+                }
+            } catch (Exception $e) {
+                error_log('Redis connection failed: ' . $e->getMessage());
             }
         }
+
+        if ($cachedData) {
+            $talks = json_decode($cachedData, true);
+        } else {
+            $talks = $talkModel->getAll();
+            foreach ($talks as &$talk) {
+                if (isset($talk['date_of_event'])) {
+                    $talk['date_of_event'] = Validator::convertDateToDisplay($talk['date_of_event']);
+                }
+            }
+            
+            // Save to Redis if connected
+            if ($redis && $redis->isConnected()) {
+                $redis->setex($cacheKey, 3600, json_encode($talks));
+            }
+        }
+        
         Response::success($talks, 'Alumni talks retrieved successfully');
 
     } elseif ($method === 'POST') {

@@ -136,7 +136,7 @@ const mapDbStudentToFrontend = (dbStudent: any): Student => {
     areaOfStudy: dbStudent.area_of_study || "NA",
     location: dbStudent.location || "NA",
     areaOfInterest: dbStudent.area_of_interest || "NA",
-    photoUrl: dbStudent.photo_url || "",
+    photoUrl: (dbStudent.photo_url || "").replace(/\.(jpg|jpeg|png)$/i, '.webp'),
     registrationNo: String(dbStudent.registration_no || "NA"),
     school: dbStudent.school || "NA",
     programme: dbStudent.programme || "NA",
@@ -199,7 +199,7 @@ export const fetchAlumniTalks = async (): Promise<AlumniTalkItem[]> => {
         school: item.school || '',
         department: item.department || '',
         registrationNo: item.registration_no || '',
-        bannerPhotoUrl: item.banner_photo_url || '',
+        bannerPhotoUrl: (item.banner_photo_url || '').replace(/\.(jpg|jpeg|png)$/i, '.webp'),
         talkon: item.talk_on || '',
         galleryLink: item.gallery_link || ''
       }));
@@ -251,7 +251,7 @@ export const fetchAlumniSpotlight = async (showAll: boolean = false): Promise<Al
         registrationNo: item.registration_no || '',
         currentPosition: item.current_position || '',
         company: item.company_organization || '',
-        photoUrl: item.photo_url || '',
+        photoUrl: (item.photo_url || '').replace(/\.(jpg|jpeg|png)$/i, '.webp'),
         achievement: item.achievement_story || '',
         galleryLink: item.gallery_link || '',
         status: item.status || 'Pending'
