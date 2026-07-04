@@ -431,6 +431,7 @@ export default function AlumniChatbot() {
     "admin", "cadmin", "alumni-manager", "school", "department"
   ].includes(userRole ?? "");
   const [open, setOpen] = useState(false);
+  const [showTooltip, setShowTooltip] = useState(false);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -479,8 +480,26 @@ export default function AlumniChatbot() {
     if (open) {
       setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
       inputRef.current?.focus();
+      setShowTooltip(false); // Hide tooltip if user explicitly opens the chat
     }
   }, [messages, open]);
+
+  useEffect(() => {
+    // Show tooltip 2.5 seconds after component mounts (page load)
+    const timer = setTimeout(() => {
+      setShowTooltip(true);
+    }, 2500);
+
+    // Hide it automatically after 10.5 seconds
+    const hideTimer = setTimeout(() => {
+      setShowTooltip(false);
+    }, 10500);
+
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(hideTimer);
+    };
+  }, []);
 
   const sendMessage = useCallback(
     (text: string) => {
@@ -514,6 +533,25 @@ export default function AlumniChatbot() {
 
   return (
     <>
+      {/* Floating tooltip message */}
+      {showTooltip && !open && (
+        <div
+          onClick={() => {
+            setOpen(true);
+            setShowTooltip(false);
+          }}
+          className="fixed bottom-24 right-6 z-[9999] bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs font-semibold px-4 py-2.5 rounded-2xl shadow-xl cursor-pointer hover:scale-105 transition-all duration-300 animate-bounce flex items-center gap-2 border border-white/20 select-none whitespace-nowrap"
+        >
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-400"></span>
+          </span>
+          Hi! I am Alumni Bot 🎓
+          {/* Arrow pointing down */}
+          <div className="absolute top-full right-6 w-3 h-3 bg-indigo-600 rotate-45 transform -translate-y-1.5 -z-10"></div>
+        </div>
+      )}
+
       {/* Toggle button */}
       <button
         id="alumni-chatbot-toggle"
@@ -530,8 +568,15 @@ export default function AlumniChatbot() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
           </svg>
         ) : (
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="white" className="w-7 h-7">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} className="w-8 h-8 text-white">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 2L4 5.5l8 3.5 8-3.5L12 2z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8 7v2c0 1 1.8 1.8 4 1.8s4-.8 4-1.8V7" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M18 5.5V10c0 .5.5 1 1 1" />
+            <rect x="5" y="9.5" width="14" height="10.5" rx="2" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M2 15h3M19 15h3" />
+            <circle cx="9" cy="14" r="1" fill="currentColor" />
+            <circle cx="15" cy="14" r="1" fill="currentColor" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M10 17c.5.8 2.5.8 3 0" />
           </svg>
         )}
       </button>
@@ -557,8 +602,15 @@ export default function AlumniChatbot() {
           {/* Header */}
           <div className="bg-gradient-to-r from-blue-700 to-indigo-700 px-4 py-3 flex items-center gap-3 shrink-0">
             <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center shrink-0">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="white" className="w-5 h-5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5" />
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} className="w-6 h-6 text-white">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 2L4 5.5l8 3.5 8-3.5L12 2z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8 7v2c0 1 1.8 1.8 4 1.8s4-.8 4-1.8V7" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M18 5.5V10c0 .5.5 1 1 1" />
+                <rect x="5" y="9.5" width="14" height="10.5" rx="2" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M2 15h3M19 15h3" />
+                <circle cx="9" cy="14" r="1" fill="currentColor" />
+                <circle cx="15" cy="14" r="1" fill="currentColor" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10 17c.5.8 2.5.8 3 0" />
               </svg>
             </div>
             <div className="flex-1 min-w-0">
@@ -587,8 +639,17 @@ export default function AlumniChatbot() {
             {messages.map((msg) => (
               <div key={msg.id} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                 {msg.role === "bot" && (
-                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shrink-0 mr-2 mt-1">
-                    <span className="text-white text-xs font-bold">AI</span>
+                  <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center shrink-0 mr-2 mt-1 border border-blue-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} className="w-5 h-5 text-blue-600">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 2L4 5.5l8 3.5 8-3.5L12 2z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8 7v2c0 1 1.8 1.8 4 1.8s4-.8 4-1.8V7" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M18 5.5V10c0 .5.5 1 1 1" />
+                      <rect x="5" y="9.5" width="14" height="10.5" rx="2" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M2 15h3M19 15h3" />
+                      <circle cx="9" cy="14" r="1" fill="currentColor" />
+                      <circle cx="15" cy="14" r="1" fill="currentColor" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M10 17c.5.8 2.5.8 3 0" />
+                    </svg>
                   </div>
                 )}
                 <div
@@ -604,8 +665,17 @@ export default function AlumniChatbot() {
             ))}
             {isTyping && (
               <div className="flex justify-start">
-                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shrink-0 mr-2">
-                  <span className="text-white text-xs font-bold">AI</span>
+                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center shrink-0 mr-2 border border-blue-200">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} className="w-5 h-5 text-blue-600">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 2L4 5.5l8 3.5 8-3.5L12 2z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 7v2c0 1 1.8 1.8 4 1.8s4-.8 4-1.8V7" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M18 5.5V10c0 .5.5 1 1 1" />
+                    <rect x="5" y="9.5" width="14" height="10.5" rx="2" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2 15h3M19 15h3" />
+                    <circle cx="9" cy="14" r="1" fill="currentColor" />
+                    <circle cx="15" cy="14" r="1" fill="currentColor" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M10 17c.5.8 2.5.8 3 0" />
+                  </svg>
                 </div>
                 <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-sm px-4 py-2 flex gap-1 items-center shadow-sm">
                   <span className="w-2 h-2 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: "0ms" }} />
