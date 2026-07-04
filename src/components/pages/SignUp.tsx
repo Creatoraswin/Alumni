@@ -486,6 +486,17 @@ const SignUp = () => {
   const uniqueOrganisation = useMemo(() => Array.from(new Set(students.map(s => s.organisation).filter(v => v && v !== "NA"))), [students]);
   const uniquePlaceOfWork = useMemo(() => Array.from(new Set(students.map(s => s.placeOfWork).filter(v => v && v !== "NA"))), [students]);
 
+  const previewLinkedinUrl = useMemo(() => {
+    let normalized = form.linkedin?.trim() || "";
+    if (!normalized) return "";
+    if (normalized.startsWith('http://') || normalized.startsWith('https://')) {
+      return normalized;
+    }
+    if (normalized.includes('linkedin.com/in/')) {
+      return 'https://' + normalized;
+    }
+    return 'https://www.linkedin.com/in/' + normalized.replace(/^\//, '');
+  }, [form.linkedin]);
 
   if (submitted) {
     return <div className="max-w-xl mx-auto mt-10 p-6 bg-accent/20 rounded shadow text-center text-lg font-semibold text-foreground">Thank you for registering as an alumnus! Your response has been recorded.<br/>Redirecting to main page...</div>;
@@ -687,20 +698,21 @@ const SignUp = () => {
                         name="linkedin" 
                         value={form.linkedin} 
                         onChange={handleChange} 
-                        className={`w-full border rounded p-2 focus:ring-2 focus:ring-primary pr-20 ${errors.linkedin ? 'border-destructive bg-destructive/10' : 'border-input'}`} 
+                        className={`w-full border rounded p-2 focus:ring-2 focus:ring-primary pr-28 ${errors.linkedin ? 'border-destructive bg-destructive/10' : 'border-input'}`} 
                         required 
                         placeholder="e.g. johndoe123 or https://..."
                       />
-                      {form.linkedin && form.linkedin.startsWith('http') && (
+                      {previewLinkedinUrl && (
                         <a 
-                          href={form.linkedin} 
+                          href={previewLinkedinUrl} 
                           target="_blank" 
                           rel="noopener noreferrer"
-                          className="absolute right-10 top-1/2 transform -translate-y-1/2 text-blue-600 hover:text-blue-800"
-                          title="View LinkedIn Profile"
+                          className="absolute right-10 top-1/2 transform -translate-y-1/2 text-xs font-bold text-blue-700 bg-blue-100 hover:bg-blue-200 px-2 py-1 rounded transition-colors flex items-center gap-1 z-10"
+                          title="Click to test your LinkedIn Profile link"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-                            <path d="M20.5 2h-17A1.5 1.5 0 002 3.5v17A1.5 1.5 0 003.5 22h17a1.5 1.5 0 001.5-1.5v-17A1.5 1.5 0 0020.5 2zM8 19H5v-9h3v9zM6.5 8.25A1.75 1.75 0 118.3 6.5a1.78 1.78 0 01-1.8 1.75zM19 19h-3v-4.74c0-1.42-.6-1.93-1.38-1.93A1.74 1.74 0 0013 14.19a.66.66 0 000 .14V19h-3v-9h2.9v1.3a3.11 3.11 0 012.7-1.4c1.55 0 3.36.86 3.36 3.66V19z"/>
+                          Verify Link
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-3 h-3">
+                            <path d="M14 4.5V7h3.5L11 13.5l1.5 1.5L19 8.5V12h2V4.5h-7zM5 9.5v7H3v-7h2zm-1-2H2v11h2v-11zm15 0v11h2v-11h-2zm-1 2h-2v7h2v-7z"/>
                           </svg>
                         </a>
                       )}
