@@ -11,6 +11,11 @@ import { formatDateForSubmission } from "@/lib/dateUtils";
 import { YEARS } from "@/lib/constants";
 import { fetchAcademicInfo, AcademicInfo } from "@/services/apiService";
 
+import Cropper, { Area } from 'react-easy-crop';
+import getCroppedImg from '@/lib/cropImage';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Slider } from "@/components/ui/slider";
+
 // Define MAX_UPLOAD_ATTEMPTS constant
 
 type FormState = {
@@ -73,6 +78,14 @@ type StudentStatus = "Job" | "Higher study" | "Entrepreneurship" | "NA";
 const SignUp = () => {
   const [form, setForm] = useState<FormState>(initialState);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [imageSrc, setImageSrc] = useState<string | null>(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [rotation, setRotation] = useState(0);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+  const [isCropDialogOpen, setIsCropDialogOpen] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [submitError, setSubmitError] = useState("");
@@ -132,10 +145,37 @@ const SignUp = () => {
     }
     if (type === "file") {
       const fileInput = e.target as HTMLInputElement;
-      setForm((prev) => ({
-        ...prev,
-        [name]: fileInput.files && fileInput.files[0] ? fileInput.files[0] : null,
-      }));
+      const file = fileInput.files && fileInput.files[0] ? fileInput.files[0] : null;
+
+      if (file) {
+        // Validate original file size (50KB to 2MB)
+        if (file.size < 50 * 1024 || file.size > 2 * 1024 * 1024) {
+          setErrors(prev => ({...prev, photo: "File size must be between 50KB and 2MB."}));
+          return;
+        }
+
+        // Validate file type
+        const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+        if (!validTypes.includes(file.type)) {
+          setErrors(prev => ({...prev, photo: "Invalid file type. Please select a JPEG, PNG, or GIF image."}));
+          return;
+        }
+
+        // Clear error
+        setErrors(prev => {
+          const newErrors = {...prev};
+          delete newErrors.photo;
+          return newErrors;
+        });
+
+        // Read file for cropping
+        const reader = new FileReader();
+        reader.addEventListener('load', () => {
+          setImageSrc(reader.result?.toString() || null);
+          setIsCropDialogOpen(true);
+        });
+        reader.readAsDataURL(file);
+      }
       
       // Show upload attempt tracking
       const attemptText = document.getElementById('upload-attempts');
@@ -161,6 +201,40 @@ const SignUp = () => {
       setRegNumberError("");
     }
   };
+
+  const onCropComplete = useCallback((croppedArea: Area, croppedAreaPixels: Area) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  }, []);
+
+  const showCroppedImage = useCallback(async () => {
+    try {
+      if (!imageSrc || !croppedAreaPixels) return;
+      const croppedImageBlob = await getCroppedImg(
+        imageSrc,
+        croppedAreaPixels,
+        rotation
+      );
+
+      if (croppedImageBlob) {
+        // Validate cropped image size
+        if (croppedImageBlob.size < 50 * 1024 || croppedImageBlob.size > 2 * 1024 * 1024) {
+          setErrors(prev => ({...prev, photo: "Cropped file size must be between 50KB and 2MB. Try a different crop or original image."}));
+          setIsCropDialogOpen(false);
+          return;
+        }
+
+        setForm((prev) => ({
+          ...prev,
+          photo: croppedImageBlob,
+        }));
+        setPreviewUrl(URL.createObjectURL(croppedImageBlob));
+        setIsCropDialogOpen(false);
+      }
+    } catch (e) {
+      console.error(e);
+      setErrors(prev => ({...prev, photo: "Failed to crop image."}));
+    }
+  }, [imageSrc, croppedAreaPixels, rotation]);
 
   const checkRegistrationNumberUniqueness = async (regNumber: string) => {
     if (regNumber.length !== 12) return;
@@ -229,9 +303,9 @@ const SignUp = () => {
     }
     // LinkedIn ID: now mandatory
     if (!form.linkedin) {
-      newErrors.linkedin = "LinkedIn ID is required.";
-    } else if (!form.linkedin.startsWith('https://')) {
-      newErrors.linkedin = "Please enter a valid LinkedIn URL starting with https://";
+      newErrors.linkedin = "LinkedIn ID or Username is required.";
+    } else if (form.linkedin.includes(' ')) {
+      newErrors.linkedin = "LinkedIn username or URL should not contain spaces.";
     }
     // Required fields validation
     ["school", "programme", "graduationYear", "name", "dob", "address", "feedback"].forEach((field) => {
@@ -242,13 +316,13 @@ const SignUp = () => {
       newErrors.photo = "Required.";
     } else if (form.photo instanceof File) {
       // Validate file type
-      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
       if (!validTypes.includes(form.photo.type)) {
         newErrors.photo = "Invalid file type. Please select a JPEG, PNG, or GIF image.";
       }
-      // Validate file size (limit to 5MB)
-      if (form.photo.size > 5 * 1024 * 1024) {
-        newErrors.photo = "File size too large. Please select an image smaller than 5MB.";
+      // Validate file size (limit to 50KB - 2MB)
+      if (form.photo.size < 50 * 1024 || form.photo.size > 2 * 1024 * 1024) {
+        newErrors.photo = "File size must be between 50KB and 2MB.";
       }
     } else if (typeof form.photo === 'string') {
       // Validate URL format
@@ -310,6 +384,16 @@ const SignUp = () => {
 
         // Format DOB using centralized utility
 
+        let normalizedLinkedin = submitForm.linkedin.trim();
+        if (normalizedLinkedin && !normalizedLinkedin.startsWith('http://') && !normalizedLinkedin.startsWith('https://')) {
+          if (normalizedLinkedin.includes('linkedin.com/in/')) {
+            normalizedLinkedin = 'https://' + normalizedLinkedin;
+          } else {
+            // It's likely just a username
+            normalizedLinkedin = 'https://www.linkedin.com/in/' + normalizedLinkedin.replace(/^\//, '');
+          }
+        }
+
         // Explicit mapping for payload
         const payload = {
           school: submitForm.school,
@@ -333,7 +417,7 @@ const SignUp = () => {
           personalEmail: submitForm.personalEmail,
           mobile: submitForm.mobile,
           dob: formatDateForSubmission(submitForm.dob),
-          linkedin: submitForm.linkedin,
+          linkedin: normalizedLinkedin,
           photo: submitForm.photo, // Include the photo file
           address: submitForm.address,
           feedback: submitForm.feedback,
@@ -597,7 +681,7 @@ const SignUp = () => {
                     </>
                   )}
                   <div>
-                    <label className="block font-semibold">LinkedIn Id *</label>
+                    <label className="block font-semibold">LinkedIn Profile URL or Username *</label>
                     <div className="relative">
                       <input 
                         name="linkedin" 
@@ -605,9 +689,9 @@ const SignUp = () => {
                         onChange={handleChange} 
                         className={`w-full border rounded p-2 focus:ring-2 focus:ring-primary pr-20 ${errors.linkedin ? 'border-destructive bg-destructive/10' : 'border-input'}`} 
                         required 
-                        placeholder="https://www.linkedin.com/in/yourname"
+                        placeholder="e.g. johndoe123 or https://..."
                       />
-                      {form.linkedin && (
+                      {form.linkedin && form.linkedin.startsWith('http') && (
                         <a 
                           href={form.linkedin} 
                           target="_blank" 
@@ -623,10 +707,9 @@ const SignUp = () => {
                       <button
                         type="button"
                         onClick={() => {
-                          // Open LinkedIn profile section in a new tab/window
                           window.open('https://www.linkedin.com/in/', '_blank', 'noopener,noreferrer');
                         }}
-                        className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-blue-600 text-white rounded p-1 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-blue-600 text-white rounded p-1 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 hidden sm:block"
                         title="Open LinkedIn to copy your profile URL"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
@@ -636,13 +719,22 @@ const SignUp = () => {
 
                     </div>
                     {errors.linkedin && <span className="text-destructive text-xs">{errors.linkedin}</span>}
-                    <p className="text-xs text-gray-500 mt-1">Please enter your full LinkedIn profile URL (e.g., https://www.linkedin.com/in/yourname)</p>
-                    <p className="text-xs text-blue-600 mt-1">Tip: Click the icon to open LinkedIn and copy your profile URL</p>
+                    <p className="text-xs text-gray-500 mt-1">Enter your LinkedIn username (e.g. johndoe) or full profile URL.</p>
                   </div>
                   <div>
                     <label className="block font-semibold">Upload photo *</label>
-                    <input name="photo" type="file" accept="image/*" onChange={handleChange} className="w-full border rounded p-2 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 cursor-pointer" required />
-                    {errors.photo && <span className="text-destructive text-xs">{errors.photo}</span>}
+                    <div className="flex items-center gap-4 mt-1">
+                      <div className="flex-grow">
+                        <input name="photo" type="file" accept="image/*" onChange={handleChange} className="w-full border rounded p-2 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 cursor-pointer" required={!form.photo} />
+                      </div>
+                      {previewUrl && (
+                        <div className="h-14 w-14 relative rounded-full overflow-hidden shadow-sm flex-shrink-0 border-2 border-primary">
+                          <img src={previewUrl} alt="Preview" className="object-cover h-full w-full" />
+                        </div>
+                      )}
+                    </div>
+                    {errors.photo && <span className="text-destructive text-xs block mt-1">{errors.photo}</span>}
+                    <p className="text-xs text-muted-foreground mt-1">Image size must be between 50KB and 2MB.</p>
                   </div>
                   <div className="sm:col-span-2 xl:col-span-2">
                     <label className="block font-semibold">Address *</label>
@@ -654,13 +746,63 @@ const SignUp = () => {
                     <textarea name="feedback" value={form.feedback} onChange={handleChange} className="w-full border rounded p-2" required />
                     {errors.feedback && <span className="text-destructive text-xs">{errors.feedback}</span>}
                   </div>
-                  <div className="sm:col-span-2 xl:col-span-4">
+                  <div className="sm:col-span-2 xl:col-span-4 mt-4">
                     <button type="submit" className="w-full bg-primary text-primary-foreground font-bold py-2 rounded-lg hover:bg-primary/90 transition text-lg flex items-center justify-center shadow-lg" disabled={loading || checkingReg || uploadingImage || isCheckingRegNumber || !!regNumberError}>
                       {(loading || checkingReg || uploadingImage || isCheckingRegNumber) ? <span className="animate-spin mr-2">⏳</span> : null}
                       {uploadingImage ? "Uploading Image..." : (loading || checkingReg) ? "Submitting..." : isCheckingRegNumber ? "Checking..." : "Submit"}
                     </button>
                   </div>
                 </form>
+
+                <Dialog open={isCropDialogOpen} onOpenChange={setIsCropDialogOpen}>
+                  <DialogContent className="max-w-md md:max-w-xl">
+                    <DialogHeader>
+                      <DialogTitle>Crop & Adjust Image</DialogTitle>
+                    </DialogHeader>
+                    <div className="relative h-64 md:h-80 w-full bg-black/10 rounded overflow-hidden">
+                      {imageSrc && (
+                        <Cropper
+                          image={imageSrc}
+                          crop={crop}
+                          zoom={zoom}
+                          rotation={rotation}
+                          aspect={1}
+                          onCropChange={setCrop}
+                          onCropComplete={onCropComplete}
+                          onZoomChange={setZoom}
+                          onRotationChange={setRotation}
+                        />
+                      )}
+                    </div>
+                    <div className="space-y-6 my-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Zoom</label>
+                        <Slider
+                          value={[zoom]}
+                          min={1}
+                          max={3}
+                          step={0.1}
+                          onValueChange={(vals) => setZoom(vals[0])}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Rotation (Degrees)</label>
+                        <Slider
+                          value={[rotation]}
+                          min={0}
+                          max={360}
+                          step={1}
+                          onValueChange={(vals) => setRotation(vals[0])}
+                        />
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <button type="button" onClick={() => setIsCropDialogOpen(false)} className="px-4 py-2 border rounded hover:bg-accent transition">Cancel</button>
+                      <button type="button" onClick={showCroppedImage} className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 transition">Save Image</button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+
               </TabsContent>
               <TabsContent value="instructions">
                 <div className="p-4 text-foreground">
