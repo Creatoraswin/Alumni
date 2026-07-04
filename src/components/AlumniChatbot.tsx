@@ -60,8 +60,7 @@ function StudentCard({ student, canViewContact }: { student: Student; canViewCon
             </svg>
             View LinkedIn Profile
           </a>
-          <br />
-          <span className="text-[10px] text-gray-400 break-all">{student.linkedinId}</span>
+
         </>
       ) : (
         <span className="text-gray-400 text-xs"> Not provided</span>
@@ -262,11 +261,11 @@ function buildReply(query: string, students: Student[], canViewContact: boolean)
   const nameToSearch = keywordPrefixMatch
     ? normalizeStr(keywordPrefixMatch[1])
     : (() => {
-        // If query is short (≤3 words) and has no other keyword triggers, treat as name search
-        const words = q.trim().split(" ");
-        const hasKeyword = /\b(how many|list|show|stat|count|total|batch|alumni|school|company|compan|department|contact|manager|help|hello|hi|hey|who are you|what are you|about|college|university|admission|course|location|campus|cutmap|centurion)\b/.test(q);
-        return (!hasKeyword && words.length <= 3) ? q.trim() : null;
-      })();
+      // If query is short (≤3 words) and has no other keyword triggers, treat as name search
+      const words = q.trim().split(" ");
+      const hasKeyword = /\b(how many|list|show|stat|count|total|batch|alumni|school|company|compan|department|contact|manager|help|hello|hi|hey|who are you|what are you|about|college|university|admission|course|location|campus|cutmap|centurion)\b/.test(q);
+      return (!hasKeyword && words.length <= 3) ? q.trim() : null;
+    })();
 
   if (nameToSearch) {
     const found = approved.filter((s) => normalizeStr(s.name).includes(nameToSearch));
@@ -557,11 +556,10 @@ export default function AlumniChatbot() {
         id="alumni-chatbot-toggle"
         aria-label="Open Alumni Chat Assistant"
         onClick={() => setOpen((o) => !o)}
-        className={`fixed bottom-6 right-6 z-[9999] w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 ${
-          open
-            ? "bg-red-500 hover:bg-red-600"
-            : "bg-gradient-to-br from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800"
-        }`}
+        className={`fixed bottom-6 right-6 z-[9999] w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 ${open
+          ? "bg-red-500 hover:bg-red-600"
+          : "bg-gradient-to-br from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800"
+          }`}
       >
         {open ? (
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="white" className="w-6 h-6">
@@ -653,11 +651,10 @@ export default function AlumniChatbot() {
                   </div>
                 )}
                 <div
-                  className={`max-w-[82%] rounded-2xl px-3 py-2 text-sm leading-relaxed ${
-                    msg.role === "user"
-                      ? "bg-blue-600 text-white rounded-tr-sm"
-                      : "bg-white text-gray-800 rounded-tl-sm border border-gray-200 shadow-sm"
-                  }`}
+                  className={`max-w-[82%] rounded-2xl px-3 py-2 text-sm leading-relaxed ${msg.role === "user"
+                    ? "bg-blue-600 text-white rounded-tr-sm"
+                    : "bg-white text-gray-800 rounded-tl-sm border border-gray-200 shadow-sm"
+                    }`}
                 >
                   {msg.text}
                 </div>
