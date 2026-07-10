@@ -10,6 +10,30 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChevronLeft } from 'lucide-react';
+const parseDateString = (d: string): number => {
+  if (!d) return 0;
+  
+  // 1. Check DD/MM/YYYY or DD-MM-YYYY
+  const matchSlashOrDash = d.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if (matchSlashOrDash) {
+    const day = parseInt(matchSlashOrDash[1], 10);
+    const month = parseInt(matchSlashOrDash[2], 10) - 1;
+    const year = parseInt(matchSlashOrDash[3], 10);
+    return new Date(year, month, day).getTime();
+  }
+  
+  // 2. Check YYYY-MM-DD or YYYY/MM/DD
+  const matchYearFirst = d.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+  if (matchYearFirst) {
+    const year = parseInt(matchYearFirst[1], 10);
+    const month = parseInt(matchYearFirst[2], 10) - 1;
+    const day = parseInt(matchYearFirst[3], 10);
+    return new Date(year, month, day).getTime();
+  }
+
+  const t = Date.parse(d);
+  return isNaN(t) ? 0 : t;
+};
 
 const AlumniTalks: React.FC = () => {
   const { isLoggedIn, userRole, currentStudent, currentDepartmentUser, logout } = useAuth();
@@ -33,6 +57,19 @@ const AlumniTalks: React.FC = () => {
   const [form, setForm] = useState<AlumniTalkItem>({ date: '', name: '', school: '', department: '', registrationNo: '', bannerPhotoUrl: '', reportUrl: '', talkon: '', galleryLink: '' });
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [showForm, setShowForm] = useState(false);
+
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
+  const [bannerPreview, setBannerPreview] = useState<string>("");
+  const [reportFile, setReportFile] = useState<File | null>(null);
+  const [reportFileName, setReportFileName] = useState<string>("");
+
+  useEffect(() => {
+    return () => {
+      if (bannerPreview && bannerPreview.startsWith('blob:')) {
+        URL.revokeObjectURL(bannerPreview);
+      }
+    };
+  }, [bannerPreview]);
   const [registrationNo, setRegistrationNo] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSchool, setSelectedSchool] = useState("all");
@@ -74,29 +111,31 @@ const AlumniTalks: React.FC = () => {
   }, [students]);
 
 
-  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setUploadingImage(true);
-    try {
-      const url = await uploadImageToDrive(file, 'alumni_talk_banner');
-      setForm(prev => ({ ...prev, bannerPhotoUrl: url }));
-    } finally { setUploadingImage(false); }
+    setBannerFile(file);
+    if (bannerPreview && bannerPreview.startsWith('blob:')) {
+      URL.revokeObjectURL(bannerPreview);
+    }
+    setBannerPreview(URL.createObjectURL(file));
   };
 
-  const handleReportChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleReportChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setUploadingReport(true);
-    try {
-      const url = await uploadReportToDrive(file);
-      setForm(prev => ({ ...prev, reportUrl: url }));
-    } finally { setUploadingReport(false); }
+    setReportFile(file);
+    setReportFileName(file.name);
   };
 
   const resetForm = () => {
     setForm({ date: '', name: '', school: '', department: '', registrationNo: '', bannerPhotoUrl: '', reportUrl: '', talkon: '', galleryLink: '' });
     setRegNoError("");
+    setRegistrationNo("");
+    setBannerFile(null);
+    setBannerPreview("");
+    setReportFile(null);
+    setReportFileName("");
   };
 
   const onCreate = async () => {
@@ -125,17 +164,68 @@ const AlumniTalks: React.FC = () => {
     setSaving(true);
     setRegNoError(""); // Clear any previous error
     try {
-      await createAlumniTalk(form);
+      let finalBannerUrl = form.bannerPhotoUrl;
+      let finalReportUrl = form.reportUrl;
+
+      if (bannerFile) {
+        setUploadingImage(true);
+        try {
+          finalBannerUrl = await uploadImageToDrive(bannerFile, 'alumni_talk_banner');
+        } finally {
+          setUploadingImage(false);
+        }
+      }
+
+      if (reportFile) {
+        setUploadingReport(true);
+        try {
+          finalReportUrl = await uploadReportToDrive(reportFile);
+        } finally {
+          setUploadingReport(false);
+        }
+      }
+
+      const submissionForm = {
+        ...form,
+        bannerPhotoUrl: finalBannerUrl,
+        reportUrl: finalReportUrl
+      };
+
+      await createAlumniTalk(submissionForm);
       resetForm();
       // refresh cache but avoid global loading indicators
       const next = await fetchAlumniTalks();
       queryClient.setQueryData(['alumniTalks'], next);
+    } catch (e) {
+      console.error(e);
     } finally { setSaving(false); }
   };
 
   const onEdit = (idx: number) => {
+    const talk = talks[idx];
     setEditingIndex(idx);
-    setForm(talks[idx]);
+    
+    let formattedDate = "";
+    if (talk.date) {
+      if (/^\d{4}-\d{2}-\d{2}$/.test(talk.date)) {
+        formattedDate = talk.date;
+      } else {
+        const m = talk.date.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+        if (m) {
+          formattedDate = `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
+        }
+      }
+    }
+
+    setForm({
+      ...talk,
+      date: formattedDate
+    });
+    setRegistrationNo(talk.registrationNo || "");
+    setBannerFile(null);
+    setBannerPreview("");
+    setReportFile(null);
+    setReportFileName("");
     setShowForm(true);
   };
 
@@ -145,12 +235,41 @@ const AlumniTalks: React.FC = () => {
     setSaving(true);
     try {
       const target = talks[editingIndex];
-      await updateAlumniTalk({ id: target.id }, form);
+      let finalBannerUrl = form.bannerPhotoUrl;
+      let finalReportUrl = form.reportUrl;
+
+      if (bannerFile) {
+        setUploadingImage(true);
+        try {
+          finalBannerUrl = await uploadImageToDrive(bannerFile, 'alumni_talk_banner');
+        } finally {
+          setUploadingImage(false);
+        }
+      }
+
+      if (reportFile) {
+        setUploadingReport(true);
+        try {
+          finalReportUrl = await uploadReportToDrive(reportFile);
+        } finally {
+          setUploadingReport(false);
+        }
+      }
+
+      const submissionForm = {
+        ...form,
+        bannerPhotoUrl: finalBannerUrl,
+        reportUrl: finalReportUrl
+      };
+
+      await updateAlumniTalk({ id: target.id }, submissionForm);
       setEditingIndex(null);
       resetForm();
       setShowForm(false);
       const next = await fetchAlumniTalks();
       queryClient.setQueryData(['alumniTalks'], next);
+    } catch (e) {
+      console.error(e);
     } finally { setSaving(false); }
   };
 
@@ -166,34 +285,10 @@ const AlumniTalks: React.FC = () => {
   };
 
   const grouped = useMemo(() => {
-    // Create a memoized date parser for better performance
-    const dateCache = new Map<string, number>();
-
-    const parse = (d: string) => {
-      if (dateCache.has(d)) {
-        return dateCache.get(d)!;
-      }
-
-      // supports DD/MM/YYYY
-      const m = d.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-      if (m) {
-        const day = parseInt(m[1], 10);
-        const month = parseInt(m[2], 10) - 1;
-        const year = parseInt(m[3], 10);
-        const result = new Date(year, month, day).getTime();
-        dateCache.set(d, result);
-        return result;
-      }
-      const t = Date.parse(d);
-      const result = isNaN(t) ? 0 : t;
-      dateCache.set(d, result);
-      return result;
-    };
-
     // Sort all talks from latest to oldest
     const sorted = [...talks].sort((a, b) => {
-      const ta = parse(a.date);
-      const tb = parse(b.date);
+      const ta = parseDateString(a.date);
+      const tb = parseDateString(b.date);
       // Descending sort - latest first
       return tb - ta;
     });
@@ -358,23 +453,9 @@ const AlumniTalks: React.FC = () => {
       return true;
     });
 
-    // Sort filtered talks from latest to oldest
-    const parseDate = (d: string) => {
-      // supports DD/MM/YYYY
-      const m = d.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-      if (m) {
-        const day = parseInt(m[1], 10);
-        const month = parseInt(m[2], 10) - 1;
-        const year = parseInt(m[3], 10);
-        return new Date(year, month, day).getTime();
-      }
-      const t = Date.parse(d);
-      return isNaN(t) ? 0 : t;
-    };
-
     return filtered.sort((a, b) => {
-      const ta = parseDate(a.date);
-      const tb = parseDate(b.date);
+      const ta = parseDateString(a.date);
+      const tb = parseDateString(b.date);
       // Descending order - latest first
       return tb - ta;
     });
@@ -513,38 +594,55 @@ const AlumniTalks: React.FC = () => {
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-foreground">Banner Photo</label>
                     <div className="flex flex-col gap-3">
-                      {form.bannerPhotoUrl && (
+                      {(bannerPreview || form.bannerPhotoUrl) && (
                         <div className="relative w-full max-w-md aspect-[16/9] rounded-lg overflow-hidden border bg-gray-50 flex items-center justify-center">
                           <img
-                            src={getDirectImageUrl(form.bannerPhotoUrl)}
+                            src={bannerPreview || getDirectImageUrl(form.bannerPhotoUrl)}
                             alt="Banner Preview"
                             className="w-full h-full object-cover"
                             style={{ objectFit: 'cover' }}
                             onError={(e) => {
                               const img = e.target as HTMLImageElement;
-                              if (img.src.includes('drive.google.com') || img.src.includes('googleusercontent.com')) {
-                                const match = img.src.match(/\/d\/([a-zA-Z0-9_-]+)/) || img.src.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+                              const url = img.src;
+                              if (url.includes('drive.google.com') || url.includes('googleusercontent.com')) {
+                                const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
                                 if (match && match[1]) {
                                   img.src = `https://lh3.googleusercontent.com/d/${match[1]}=w800-h400-c`;
+                                }
+                              } else if (url.includes('/Uploads/')) {
+                                if (url.endsWith('.webp')) {
+                                  img.src = url.replace(/\.webp$/i, '.jpg');
+                                } else if (url.endsWith('.jpg')) {
+                                  img.src = url.replace(/\.jpg$/i, '.png');
+                                } else if (url.endsWith('.png')) {
+                                  img.src = url.replace(/\.png$/i, '.jpeg');
                                 }
                               }
                             }}
                           />
                         </div>
                       )}
-                      <div className="flex items-center gap-2">
-                        <input
-                          className="flex-1 p-3 border border-input rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all text-xs"
-                          placeholder="Banner Photo URL"
-                          value={form.bannerPhotoUrl}
-                          onChange={e => setForm({ ...form, bannerPhotoUrl: e.target.value })}
-                        />
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handleImageChange}
-                          className="file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-white hover:file:bg-primary/90"
-                        />
+                      <div className="flex items-center gap-3">
+                        <label className="cursor-pointer flex items-center justify-center gap-2 px-5 py-2.5 bg-primary text-white rounded-lg font-semibold text-sm hover:bg-primary/90 transition-all shadow-md">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageChange}
+                            className="hidden"
+                          />
+                          {editingIndex !== null ? 'Reupload / Edit Banner' : 'Upload Banner'}
+                        </label>
+                        {bannerFile ? (
+                          <span className="text-xs text-muted-foreground truncate max-w-xs font-medium">
+                            Selected: {bannerFile.name}
+                          </span>
+                        ) : (
+                          form.bannerPhotoUrl && (
+                            <span className="text-xs text-muted-foreground truncate max-w-xs">
+                              Using existing banner image
+                            </span>
+                          )
+                        )}
                       </div>
                     </div>
                   </div>

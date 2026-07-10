@@ -55,6 +55,19 @@ class AlumniTalk
 
     public function update($id, $updates)
     {
+        if (isset($updates['banner_photo_url'])) {
+            $talk = $this->getById($id);
+            if ($talk && !empty($talk['banner_photo_url']) && $talk['banner_photo_url'] !== $updates['banner_photo_url']) {
+                $bannerPath = ltrim($talk['banner_photo_url'], '/');
+                if (strpos($bannerPath, 'Uploads/') === 0) {
+                    $physicalPath = __DIR__ . '/../../' . $bannerPath;
+                    if (file_exists($physicalPath) && is_file($physicalPath)) {
+                        unlink($physicalPath);
+                    }
+                }
+            }
+        }
+
         $setParts = [];
         $params = [':id' => $id];
         $allowedFields = ['date_of_event', 'name_of_alumni', 'school', 'department',
@@ -76,6 +89,17 @@ class AlumniTalk
 
     public function delete($id)
     {
+        $talk = $this->getById($id);
+        if ($talk && !empty($talk['banner_photo_url'])) {
+            $bannerPath = ltrim($talk['banner_photo_url'], '/');
+            if (strpos($bannerPath, 'Uploads/') === 0) {
+                $physicalPath = __DIR__ . '/../../' . $bannerPath;
+                if (file_exists($physicalPath) && is_file($physicalPath)) {
+                    unlink($physicalPath);
+                }
+            }
+        }
+
         $query = "DELETE FROM " . $this->table . " WHERE id = :id";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':id', $id);

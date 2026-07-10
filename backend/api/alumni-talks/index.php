@@ -12,6 +12,19 @@ require_once __DIR__ . '/../../utils/Validator.php';
 
 Response::setCorsHeaders();
 
+function invalidateTalksCache() {
+    if (class_exists('Redis')) {
+        try {
+            $redis = new Redis();
+            if ($redis->connect('127.0.0.1', 6379)) {
+                $redis->del('alumni_talks_all');
+            }
+        } catch (Exception $e) {
+            error_log('Redis invalidation failed: ' . $e->getMessage());
+        }
+    }
+}
+
 try {
     $database = new Database();
     $db = $database->getConnection();
@@ -22,9 +35,10 @@ try {
         $cacheKey = 'alumni_talks_all';
         $cachedData = false;
         $redis = null;
+        $bypassCache = isset($_GET['nocache']) && $_GET['nocache'] === 'true';
 
         // Try to connect to Redis if available
-        if (class_exists('Redis')) {
+        if (class_exists('Redis') && !$bypassCache) {
             try {
                 $redis = new Redis();
                 if ($redis->connect('127.0.0.1', 6379)) {
@@ -46,6 +60,12 @@ try {
             }
             
             // Save to Redis if connected
+            if (!$redis && class_exists('Redis')) {
+                try {
+                    $redis = new Redis();
+                    $redis->connect('127.0.0.1', 6379);
+                } catch (Exception $e) {}
+            }
             if ($redis && $redis->isConnected()) {
                 $redis->setex($cacheKey, 3600, json_encode($talks));
             }
@@ -69,7 +89,10 @@ try {
                     'gallery_link' => Validator::sanitizeString($input['talk']['gallery_link'] ?? '')
                 ];
                 $id = $talkModel->create($data);
-                if ($id) { Response::success(['id' => $id], 'Alumni talk created successfully', 201); }
+                if ($id) {
+                    invalidateTalksCache();
+                    Response::success(['id' => $id], 'Alumni talk created successfully', 201);
+                }
                 else { Response::error('Failed to create alumni talk', 500); }
 
             } elseif ($input['action'] === 'update' && isset($input['criteria']) && isset($input['updates'])) {
@@ -78,7 +101,10 @@ try {
                 else { $talk = $talkModel->findByCriteria($input['criteria']); }
                 if (!$talk) { Response::error('Alumni talk not found', 404); }
                 $success = $talkModel->update($talk['id'], $input['updates']);
-                if ($success) { Response::success(null, 'Alumni talk updated successfully'); }
+                if ($success) {
+                    invalidateTalksCache();
+                    Response::success(null, 'Alumni talk updated successfully');
+                }
                 else { Response::error('Failed to update alumni talk', 500); }
 
             } elseif ($input['action'] === 'delete' && isset($input['criteria'])) {
@@ -87,7 +113,10 @@ try {
                 else { $talk = $talkModel->findByCriteria($input['criteria']); }
                 if (!$talk) { Response::error('Alumni talk not found', 404); }
                 $success = $talkModel->delete($talk['id']);
-                if ($success) { Response::success(null, 'Alumni talk deleted successfully'); }
+                if ($success) {
+                    invalidateTalksCache();
+                    Response::success(null, 'Alumni talk deleted successfully');
+                }
                 else { Response::error('Failed to delete alumni talk', 500); }
             } else {
                 Response::error('Invalid action or missing parameters', 400);

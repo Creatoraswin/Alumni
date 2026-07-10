@@ -3,6 +3,31 @@ import { ReactNode } from 'react';
 // API configuration
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://alumni.sparvixainnovations.com/backend/api";
 
+const parseDateString = (d: string): number => {
+  if (!d) return 0;
+  
+  // 1. Check DD/MM/YYYY or DD-MM-YYYY
+  const matchSlashOrDash = d.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if (matchSlashOrDash) {
+    const day = parseInt(matchSlashOrDash[1], 10);
+    const month = parseInt(matchSlashOrDash[2], 10) - 1;
+    const year = parseInt(matchSlashOrDash[3], 10);
+    return new Date(year, month, day).getTime();
+  }
+  
+  // 2. Check YYYY-MM-DD or YYYY/MM/DD
+  const matchYearFirst = d.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+  if (matchYearFirst) {
+    const year = parseInt(matchYearFirst[1], 10);
+    const month = parseInt(matchYearFirst[2], 10) - 1;
+    const day = parseInt(matchYearFirst[3], 10);
+    return new Date(year, month, day).getTime();
+  }
+
+  const t = Date.parse(d);
+  return isNaN(t) ? 0 : t;
+};
+
 // Interfaces
 export interface Student {
   id: string;
@@ -188,7 +213,7 @@ export const fetchStudentStrengthData = async (): Promise<StudentStrength[]> => 
 
 export const fetchAlumniTalks = async (): Promise<AlumniTalkItem[]> => {
   try {
-    const response = await fetch(`${API_URL}/alumni-talks/index.php`);
+    const response = await fetch(`${API_URL}/alumni-talks/index.php?nocache=true&t=${Date.now()}`);
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     const data = await response.json();
     if (data.success && data.data) {
@@ -213,16 +238,13 @@ export const fetchAlumniTalks = async (): Promise<AlumniTalkItem[]> => {
       
       // Sort by date descending, fallback to ID descending for invalid/empty dates
       uniqueTalks.sort((a: any, b: any) => {
-        // Parse dates - handling DD/MM/YYYY or YYYY-MM-DD
-        let dateA = new Date(a.date).getTime();
-        let dateB = new Date(b.date).getTime();
+        const dateA = parseDateString(a.date);
+        const dateB = parseDateString(b.date);
         
-        // If dates are valid and different, sort by date
-        if (!isNaN(dateA) && !isNaN(dateB) && dateA !== dateB) {
+        if (dateA !== dateB) {
           return dateB - dateA;
         }
         
-        // Fallback: sort by ID descending (newest added first)
         return b.id - a.id;
       });
       
@@ -237,11 +259,11 @@ export const fetchAlumniTalks = async (): Promise<AlumniTalkItem[]> => {
 
 export const fetchAlumniSpotlight = async (showAll: boolean = false): Promise<AlumniSpotlightItem[]> => {
   try {
-    const response = await fetch(`${API_URL}/alumni-spotlight/index.php?showAll=${showAll}`);
+    const response = await fetch(`${API_URL}/alumni-spotlight/index.php?showAll=${showAll}&t=${Date.now()}`);
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     const data = await response.json();
     if (data.success && data.data) {
-      return data.data.map((item: any) => ({
+      const mapped = data.data.map((item: any) => ({
         id: item.id,
         dateAdded: item.date_added || '',
         name: item.name_of_alumni || '',
@@ -256,6 +278,17 @@ export const fetchAlumniSpotlight = async (showAll: boolean = false): Promise<Al
         galleryLink: item.gallery_link || '',
         status: item.status || 'Pending'
       }));
+
+      mapped.sort((a: any, b: any) => {
+        const dateA = parseDateString(a.dateAdded);
+        const dateB = parseDateString(b.dateAdded);
+        if (dateA !== dateB) {
+          return dateB - dateA;
+        }
+        return b.id - a.id;
+      });
+
+      return mapped;
     }
     return [];
   } catch (error) {
@@ -648,7 +681,26 @@ export const fetchAlumniMeets = async () => [];
 export const createAlumniMeet = async (m: any) => ({ status: 'success', message: '' });
 export const updateAlumniMeet = async (c: any, u: any) => ({ status: 'success', message: '' });
 export const deleteAlumniMeet = async (c: any) => ({ status: 'success', message: '' });
-export const uploadReportToDrive = async (f: any) => "";
+export const uploadReportToDrive = async (file: File): Promise<string> => {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('type', 'alumni_talk_report');
+    
+    const response = await fetch(`${API_URL}/upload/index.php`, {
+      method: 'POST',
+      body: formData
+    });
+    const data = await response.json();
+    if (data.success) {
+      return data.data.url;
+    }
+    throw new Error(data.message);
+  } catch (error) {
+    console.error('Upload failed:', error);
+    throw error;
+  }
+};
 export const extractGoogleDriveFileId = (u: any) => null;
 export const generateGoogleDriveUrls = (id: any) => ({ download: '', view: '', thumbnail: '' });
 export const parseGalleryImages = (l: any) => [];

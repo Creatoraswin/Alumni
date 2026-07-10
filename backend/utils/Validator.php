@@ -24,10 +24,10 @@ class Validator
 
     public static function isValidDate($date)
     {
-        if (preg_match('/^(\d{2})\/(\d{2})\/(\d{4})$/', $date, $matches)) {
+        if (preg_match('/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/', $date, $matches)) {
             return checkdate($matches[2], $matches[1], $matches[3]);
         }
-        if (preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $date, $matches)) {
+        if (preg_match('/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/', $date, $matches)) {
             return checkdate($matches[2], $matches[3], $matches[1]);
         }
         return false;
@@ -38,19 +38,18 @@ class Validator
         if (empty($date) || $date === 'NA') {
             return null;
         }
-        // If it comes as YYYY-MM-DD, convert to DD-MM-YYYY
-        if (preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $date, $matches)) {
-            return $matches[3] . '-' . $matches[2] . '-' . $matches[1];
-        }
-        // If it comes as DD/MM/YYYY, convert to DD-MM-YYYY
-        if (preg_match('/^(\d{2})\/(\d{2})\/(\d{4})$/', $date, $matches)) {
-            return $matches[1] . '-' . $matches[2] . '-' . $matches[3];
-        }
-        // If it comes as DD-MM-YYYY, return as is
-        if (preg_match('/^\d{2}-\d{2}-\d{4}$/', $date)) {
+        // If it comes as YYYY-MM-DD, return as is
+        if (preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $date)) {
             return $date;
         }
-        return $date; // fallback to original string if not matched, rather than null
+        // If it comes as DD/MM/YYYY or DD-MM-YYYY, convert to YYYY-MM-DD
+        if (preg_match('/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/', $date, $matches)) {
+            $day = str_pad($matches[1], 2, '0', STR_PAD_LEFT);
+            $month = str_pad($matches[2], 2, '0', STR_PAD_LEFT);
+            $year = $matches[3];
+            return $year . '-' . $month . '-' . $day;
+        }
+        return $date;
     }
 
     public static function convertDateToDisplay($date)

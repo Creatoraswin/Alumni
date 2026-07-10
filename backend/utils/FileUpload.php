@@ -91,6 +91,11 @@ class FileUpload
                 return UPLOAD_PHOTOS_PATH;
             case 'alumni_talk_banner':
                 return UPLOAD_ALUMNI_TALK_PATH . 'Banners/';
+            case 'alumni_talk_report':
+                if (!is_dir(UPLOAD_ALUMNI_TALK_PATH . 'Reports/')) {
+                    mkdir(UPLOAD_ALUMNI_TALK_PATH . 'Reports/', 0755, true);
+                }
+                return UPLOAD_ALUMNI_TALK_PATH . 'Reports/';
             case 'alumni_talk_gallery':
                 return UPLOAD_ALUMNI_TALK_PATH . 'Galleries/';
             case 'alumni_spotlight_photo':

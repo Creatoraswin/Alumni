@@ -15,15 +15,42 @@ import { Textarea } from "@/components/ui/textarea";
 import { Calendar, MapPin, Building2, UserCheck, Star, ChevronLeft } from "lucide-react";
 import { formatDateForDisplay, formatDateForSubmission } from '@/lib/dateUtils';
 import SpotlightFilterSection from '@/components/SpotlightFilterSection';
+const parseDateString = (d: string): number => {
+  if (!d) return 0;
+  
+  // 1. Check DD/MM/YYYY or DD-MM-YYYY
+  const matchSlashOrDash = d.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if (matchSlashOrDash) {
+    const day = parseInt(matchSlashOrDash[1], 10);
+    const month = parseInt(matchSlashOrDash[2], 10) - 1;
+    const year = parseInt(matchSlashOrDash[3], 10);
+    return new Date(year, month, day).getTime();
+  }
+  
+  // 2. Check YYYY-MM-DD or YYYY/MM/DD
+  const matchYearFirst = d.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+  if (matchYearFirst) {
+    const year = parseInt(matchYearFirst[1], 10);
+    const month = parseInt(matchYearFirst[2], 10) - 1;
+    const day = parseInt(matchYearFirst[3], 10);
+    return new Date(year, month, day).getTime();
+  }
+
+  const t = Date.parse(d);
+  return isNaN(t) ? 0 : t;
+};
 
 const AlumniSpotlight: React.FC = () => {
   const { isLoggedIn, userRole, currentStudent, currentDepartmentUser, logout } = useAuth();
   const router = useRouter();
 
+  const isEditor = isLoggedIn && (userRole === 'admin' || userRole === 'alumni-manager');
+  const isAdmin = isLoggedIn && userRole === 'admin';
+
   const queryClient = useQueryClient();
   const { data: spotlights = [], isLoading, isFetching, isError, error, refetch } = useQuery({
-    queryKey: ['alumniSpotlight'],
-    queryFn: () => fetchAlumniSpotlight(),
+    queryKey: ['alumniSpotlight', isEditor],
+    queryFn: () => fetchAlumniSpotlight(isEditor),
     staleTime: 1000 * 60 * 5, // 5 minutes for fresh data
     gcTime: 1000 * 60 * 30, // 30 minutes for cache retention
     refetchOnWindowFocus: false,
@@ -54,6 +81,18 @@ const AlumniSpotlight: React.FC = () => {
   });
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [showForm, setShowForm] = useState(false);
+
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string>("");
+
+  useEffect(() => {
+    return () => {
+      if (photoPreview && photoPreview.startsWith('blob:')) {
+        URL.revokeObjectURL(photoPreview);
+      }
+    };
+  }, [photoPreview]);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSchool, setSelectedSchool] = useState("all");
   const [selectedDepartment, setSelectedDepartment] = useState("all");
@@ -72,9 +111,7 @@ const AlumniSpotlight: React.FC = () => {
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
-  // Only check for editor permissions if user is logged in
-  const isEditor = isLoggedIn && (userRole === 'admin' || userRole === 'alumni-manager');
-  const isAdmin = isLoggedIn && userRole === 'admin';
+  // Permissions are declared at the top of the component
   
   // Set default status based on user role
   useEffect(() => {
@@ -137,16 +174,14 @@ const AlumniSpotlight: React.FC = () => {
     }
   };
 
-  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setUploadingImage(true);
-    try {
-      const url = await uploadImageToDrive(file, 'alumni_spotlight_photo');
-      setForm(prev => ({ ...prev, photoUrl: url }));
-    } finally {
-      setUploadingImage(false);
+    setPhotoFile(file);
+    if (photoPreview && photoPreview.startsWith('blob:')) {
+      URL.revokeObjectURL(photoPreview);
     }
+    setPhotoPreview(URL.createObjectURL(file));
   };
 
   const resetForm = () => {
@@ -165,6 +200,8 @@ const AlumniSpotlight: React.FC = () => {
       status: 'Pending'
     });
     setRegNoError("");
+    setPhotoFile(null);
+    setPhotoPreview("");
   };
 
   const onCreate = async () => {
@@ -193,18 +230,54 @@ const AlumniSpotlight: React.FC = () => {
     setSaving(true);
     setRegNoError(""); // Clear any previous error
     try {
-      await createAlumniSpotlight(form);
+      let finalPhotoUrl = form.photoUrl;
+      if (photoFile) {
+        setUploadingImage(true);
+        try {
+          finalPhotoUrl = await uploadImageToDrive(photoFile, 'alumni_spotlight_photo');
+        } finally {
+          setUploadingImage(false);
+        }
+      }
+
+      const submissionForm = {
+        ...form,
+        photoUrl: finalPhotoUrl
+      };
+
+      await createAlumniSpotlight(submissionForm);
       resetForm();
       setShowForm(false);
       // refresh cache but avoid global loading indicators
-      const next = await fetchAlumniSpotlight();
-      queryClient.setQueryData(['alumniSpotlight'], next);
+      const next = await fetchAlumniSpotlight(isEditor);
+      queryClient.setQueryData(['alumniSpotlight', isEditor], next);
+    } catch (e) {
+      console.error(e);
     } finally { setSaving(false); }
   };
 
   const onEdit = (idx: number) => {
+    const spotlight = spotlights[idx];
     setEditingIndex(idx);
-    setForm(spotlights[idx]);
+    
+    let formattedDate = "";
+    if (spotlight.dateAdded) {
+      if (/^\d{4}-\d{2}-\d{2}$/.test(spotlight.dateAdded)) {
+        formattedDate = spotlight.dateAdded;
+      } else {
+        const m = spotlight.dateAdded.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+        if (m) {
+          formattedDate = `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
+        }
+      }
+    }
+
+    setForm({
+      ...spotlight,
+      dateAdded: formattedDate
+    });
+    setPhotoFile(null);
+    setPhotoPreview("");
     setShowForm(true);
   };
 
@@ -214,12 +287,29 @@ const AlumniSpotlight: React.FC = () => {
     setSaving(true);
     try {
       const target = spotlights[editingIndex];
-      await updateAlumniSpotlight({ id: target.id }, form);
+      let finalPhotoUrl = form.photoUrl;
+      if (photoFile) {
+        setUploadingImage(true);
+        try {
+          finalPhotoUrl = await uploadImageToDrive(photoFile, 'alumni_spotlight_photo');
+        } finally {
+          setUploadingImage(false);
+        }
+      }
+
+      const submissionForm = {
+        ...form,
+        photoUrl: finalPhotoUrl
+      };
+
+      await updateAlumniSpotlight({ id: target.id }, submissionForm);
       setEditingIndex(null);
       resetForm();
       setShowForm(false);
-      const next = await fetchAlumniSpotlight();
-      queryClient.setQueryData(['alumniSpotlight'], next);
+      const next = await fetchAlumniSpotlight(isEditor);
+      queryClient.setQueryData(['alumniSpotlight', isEditor], next);
+    } catch (e) {
+      console.error(e);
     } finally { setSaving(false); }
   };
 
@@ -229,39 +319,15 @@ const AlumniSpotlight: React.FC = () => {
     setSaving(true);
     try {
       await deleteAlumniSpotlight({ id: target.id });
-      const next = await fetchAlumniSpotlight();
-      queryClient.setQueryData(['alumniSpotlight'], next);
+      const next = await fetchAlumniSpotlight(isEditor);
+      queryClient.setQueryData(['alumniSpotlight', isEditor], next);
     } finally { setSaving(false); }
   };
   const grouped = useMemo(() => {
-    // Create a memoized date parser for better performance
-    const dateCache = new Map<string, number>();
-    
-    const parse = (d: string) => {
-      if (dateCache.has(d)) {
-        return dateCache.get(d)!;
-      }
-      
-      // supports DD/MM/YYYY
-      const m = d.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-      if (m) {
-        const day = parseInt(m[1], 10);
-        const month = parseInt(m[2], 10) - 1;
-        const year = parseInt(m[3], 10);
-        const result = new Date(year, month, day).getTime();
-        dateCache.set(d, result);
-        return result;
-      }
-      const t = Date.parse(d);
-      const result = isNaN(t) ? 0 : t;
-      dateCache.set(d, result);
-      return result;
-    };
-    
     // Sort all spotlights from latest to oldest
     const sorted = [...spotlights].sort((a, b) => {
-      const ta = parse(a.dateAdded);
-      const tb = parse(b.dateAdded);
+      const ta = parseDateString(a.dateAdded);
+      const tb = parseDateString(b.dateAdded);
       // Descending sort - latest first
       return tb - ta;
     });
@@ -291,7 +357,7 @@ const AlumniSpotlight: React.FC = () => {
       ? spotlights 
       : spotlights.filter(spotlight => spotlight.status === 'Approved');
     
-    return filteredSpotlights.filter(spotlight => {
+    const filtered = filteredSpotlights.filter(spotlight => {
       // Role-based access control
       if (userRole === "department" && currentDepartmentUser && spotlight.department !== currentDepartmentUser.department) return false;
       if (userRole === "school" && currentDepartmentUser && spotlight.school !== currentDepartmentUser.department) return false;
@@ -309,7 +375,14 @@ const AlumniSpotlight: React.FC = () => {
       
       return matchesSearch && matchesSchool && matchesDepartment && matchesStatus;
     });
-  }, [spotlights, isEditor, searchTerm, selectedSchool, selectedDepartment, selectedStatus]);
+
+    // Sort by date added descending (latest first)
+    return filtered.sort((a, b) => {
+      const ta = parseDateString(a.dateAdded);
+      const tb = parseDateString(b.dateAdded);
+      return tb - ta;
+    });
+  }, [spotlights, isEditor, searchTerm, selectedSchool, selectedDepartment, selectedStatus, userRole, currentDepartmentUser]);
 
   // Get unique schools and departments for filters from student data (like Alumni Talks)
   const allSchools = Array.from(new Set(students.map(s => s.school).filter(Boolean))).sort();
@@ -465,38 +538,55 @@ const AlumniSpotlight: React.FC = () => {
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground">Photo URL</label>
                 <div className="flex flex-col gap-3">
-                  {form.photoUrl && (
+                  {(photoPreview || form.photoUrl) && (
                     <div className="relative w-32 h-32 rounded-xl overflow-hidden border bg-gray-50 flex items-center justify-center">
                       <img
-                        src={getDirectImageUrl(form.photoUrl)}
+                        src={photoPreview || getDirectImageUrl(form.photoUrl)}
                         alt="Profile Preview"
                         className="w-full h-full object-cover"
                         style={{ objectFit: 'cover' }}
                         onError={(e) => {
                           const img = e.target as HTMLImageElement;
-                          if (img.src.includes('drive.google.com') || img.src.includes('googleusercontent.com')) {
-                            const match = img.src.match(/\/d\/([a-zA-Z0-9_-]+)/) || img.src.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+                          const url = img.src;
+                          if (url.includes('drive.google.com') || url.includes('googleusercontent.com')) {
+                            const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
                             if (match && match[1]) {
                               img.src = `https://lh3.googleusercontent.com/d/${match[1]}=w300-h300-c`;
+                            }
+                          } else if (url.includes('/Uploads/')) {
+                            if (url.endsWith('.webp')) {
+                              img.src = url.replace(/\.webp$/i, '.jpg');
+                            } else if (url.endsWith('.jpg')) {
+                              img.src = url.replace(/\.jpg$/i, '.png');
+                            } else if (url.endsWith('.png')) {
+                              img.src = url.replace(/\.png$/i, '.jpeg');
                             }
                           }
                         }}
                       />
                     </div>
                   )}
-                  <div className="flex items-center gap-2">
-                    <input
-                      className="flex-1 p-3 border border-input rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all text-xs"
-                      placeholder="Photo URL"
-                      value={form.photoUrl}
-                      onChange={e => setForm({ ...form, photoUrl: e.target.value })}
-                    />
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageChange}
-                      className="file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-white hover:file:bg-primary/90"
-                    />
+                   <div className="flex items-center gap-3">
+                    <label className="cursor-pointer flex items-center justify-center gap-2 px-5 py-2.5 bg-primary text-white rounded-lg font-semibold text-sm hover:bg-primary/90 transition-all shadow-md">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageChange}
+                        className="hidden"
+                      />
+                      {editingIndex !== null ? 'Reupload / Edit Photo' : 'Upload Photo'}
+                    </label>
+                    {photoFile ? (
+                      <span className="text-xs text-muted-foreground truncate max-w-xs font-medium">
+                        Selected: {photoFile.name}
+                      </span>
+                    ) : (
+                      form.photoUrl && (
+                        <span className="text-xs text-muted-foreground truncate max-w-xs">
+                          Using existing photo
+                        </span>
+                      )
+                    )}
                   </div>
                 </div>
               </div>

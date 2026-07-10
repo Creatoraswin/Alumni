@@ -65,6 +65,19 @@ class AlumniSpotlight
 
     public function update($id, $updates)
     {
+        if (isset($updates['photo_url'])) {
+            $spotlight = $this->getById($id);
+            if ($spotlight && !empty($spotlight['photo_url']) && $spotlight['photo_url'] !== $updates['photo_url']) {
+                $photoPath = ltrim($spotlight['photo_url'], '/');
+                if (strpos($photoPath, 'Uploads/') === 0) {
+                    $physicalPath = __DIR__ . '/../../' . $photoPath;
+                    if (file_exists($physicalPath) && is_file($physicalPath)) {
+                        unlink($physicalPath);
+                    }
+                }
+            }
+        }
+
         $setParts = [];
         $params = [':id' => $id];
         $allowedFields = ['date_added', 'name_of_alumni', 'year_of_graduation', 'school',
@@ -87,6 +100,17 @@ class AlumniSpotlight
 
     public function delete($id)
     {
+        $spotlight = $this->getById($id);
+        if ($spotlight && !empty($spotlight['photo_url'])) {
+            $photoPath = ltrim($spotlight['photo_url'], '/');
+            if (strpos($photoPath, 'Uploads/') === 0) {
+                $physicalPath = __DIR__ . '/../../' . $photoPath;
+                if (file_exists($physicalPath) && is_file($physicalPath)) {
+                    unlink($physicalPath);
+                }
+            }
+        }
+
         $query = "DELETE FROM " . $this->table . " WHERE id = :id";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':id', $id);
