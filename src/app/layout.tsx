@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/Providers";
 import Footer from "@/components/ui/Footer";
+import { AppLayoutWrapper } from "@/components/AppLayoutWrapper";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -42,9 +43,11 @@ export default function RootLayout({
       <body className={`${inter.variable} font-sans antialiased`} suppressHydrationWarning>
         <Providers>
           <div className="min-h-screen flex flex-col bg-gradient-to-br from-background via-secondary/30 to-accent/20">
-            <div className="flex-1 flex flex-col">
-              {children}
-            </div>
+            <AppLayoutWrapper>
+              <div className="flex-1 flex flex-col">
+                {children}
+              </div>
+            </AppLayoutWrapper>
             <Footer />
           </div>
         </Providers>

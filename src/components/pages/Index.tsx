@@ -230,7 +230,7 @@ const Index = () => {
           onLoginClick={() => setIsAuthModalOpen(true)}
           onLogout={handleLogout}
         />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-8 pt-16 md:pt-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-8">
           <AnalyticsTab students={students} />
         </div>
       </div>

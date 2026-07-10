@@ -491,3 +491,31 @@
 .text-body { @apply text-base md:text-lg; }
 .text-caption { @apply text-sm md:text-base; }
 .text-micro { @apply text-xs md:text-sm; }
+
+/* Collapsed Sidebar Styles */
+.collapsed-sidebar-icons span {
+  display: none !important;
+}
+.collapsed-sidebar-icons h3 {
+  display: none !important;
+}
+.collapsed-sidebar-icons .border-t {
+  border-top: none !important;
+  padding-top: 0 !important;
+}
+.collapsed-sidebar-icons > div {
+  padding-top: 0 !important;
+}
+.collapsed-sidebar-icons svg {
+  margin: 0 !important;
+  flex-shrink: 0;
+  width: 1.4rem;
+  height: 1.4rem;
+}
+.collapsed-sidebar-icons button {
+  justify-content: center !important;
+  padding-left: 0.5rem !important;
+  padding-right: 0.5rem !important;
+  width: 100% !important;
+  gap: 0 !important;
+}

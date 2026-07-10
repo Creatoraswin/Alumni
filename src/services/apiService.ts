@@ -524,6 +524,9 @@ export const authenticateDepartmentUser = async (username: string, password: str
     });
     const data = await response.json();
     if (data.success) {
+      if (typeof window !== 'undefined' && data.data && data.data.token) {
+        localStorage.setItem('token', data.data.token);
+      }
       return {
         success: true,
         user: {

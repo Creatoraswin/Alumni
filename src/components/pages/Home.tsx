@@ -482,9 +482,9 @@ const Home = () => {
         onLoginClick={() => setIsAuthModalOpen(true)}
       />
       {/* Hero Section - Mobile Design */}
-      <section className="relative overflow-hidden mt-14 sm:hidden">
+      <section className="relative overflow-hidden sm:hidden">
         {/* Mobile Hero */}
-        <div className="relative w-full min-h-[180px] h-[5vh]">
+        <div className="relative w-full" style={{ height: '180px' }}>
           <Image
             src="/Alumni_banner.webp"
             alt="Alumni Banner"
@@ -520,9 +520,9 @@ const Home = () => {
         </div>
       </section>
       {/* Hero Section - Tablet Design */}
-      <section className="relative overflow-hidden mt-16 hidden sm:block md:hidden">
+      <section className="relative overflow-hidden hidden sm:block md:hidden">
         {/* Tablet Hero */}
-        <div className="relative w-full min-h-[250px] h-[35vh]">
+        <div className="relative w-full" style={{ height: '280px' }}>
           <Image
             src="/Alumni_banner.webp"
             alt="Alumni Banner"
@@ -558,8 +558,8 @@ const Home = () => {
         </div>
       </section>
       {/* Hero Section - Desktop Design */}
-      <section className="relative overflow-hidden mt-16 hidden md:block">
-        <div className="relative w-full min-h-[500px] h-[80vh]">
+      <section className="relative overflow-hidden hidden md:block">
+        <div className="relative w-full" style={{ height: 'min(75vh, 600px)' }}>
           <Image
             src="/Alumni_banner.webp"
             alt="Alumni Banner"
