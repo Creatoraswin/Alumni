@@ -626,24 +626,19 @@ const ApprovalTab = (props: ApprovalTabProps) => {
                 onClick={() => setViewingStudent(student)}
               >
                 {/* Database Status Indicator in Top-Right Corner */}
-                <div className="absolute top-3.5 right-3.5 z-10">
-                  {isLoadingDb ? (
-                    <Badge variant="outline" className="text-[10px] bg-muted/20 text-muted-foreground border-muted-foreground/30 flex items-center gap-1 px-2.5 py-1 font-semibold shadow-sm backdrop-blur-md">
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                      <span>Checking DB</span>
-                    </Badge>
-                  ) : isStudentInDatabase(student.registrationNo) ? (
-                    <Badge variant="outline" className="text-[10px] bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/30 flex items-center gap-1 px-2.5 py-1 font-semibold shadow-sm backdrop-blur-md">
-                      <Database className="h-3 w-3 text-green-600 dark:text-green-400" />
-                      <span>In DB</span>
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline" className="text-[10px] bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/30 flex items-center gap-1 px-2.5 py-1 font-semibold shadow-sm backdrop-blur-md">
-                      <AlertCircle className="h-3 w-3 text-red-500" />
-                      <span>Not in DB</span>
-                    </Badge>
-                  )}
-                </div>
+                {isLoadingDb ? (
+                  <div className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full flex items-center justify-center bg-muted/20 backdrop-blur-sm border border-muted-foreground/30 shadow-sm animate-pulse">
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  </div>
+                ) : isStudentInDatabase(student.registrationNo) ? (
+                  <div className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full flex items-center justify-center bg-green-500/10 backdrop-blur-sm border border-green-500/30 shadow-sm hover:scale-110 transition-transform" title="In DB">
+                    <Database className="h-4 w-4 text-green-600 dark:text-green-400" />
+                  </div>
+                ) : (
+                  <div className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full flex items-center justify-center bg-red-500/10 backdrop-blur-sm border border-red-500/30 shadow-sm hover:scale-110 transition-transform" title="Not in DB">
+                    <Database className="h-4 w-4 text-red-500" />
+                  </div>
+                )}
 
                 {/* Header with photo and basic info */}
                 <div className="flex items-start space-x-4 mb-4 pr-24">
@@ -1275,44 +1270,48 @@ const ApprovalTab = (props: ApprovalTabProps) => {
                   </div>
 
                   {/* Professional Info */}
-                  <div className="space-y-3 p-4 rounded-xl bg-card border border-primary/5 shadow-sm">
-                    <h4 className="font-bold text-sm text-primary border-b border-primary/10 pb-1.5 flex items-center">
-                      <span className="w-2.5 h-2.5 bg-primary rounded-full mr-2"></span>
-                      Professional Details
-                    </h4>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground font-medium">Organisation:</span>
-                        <span className="text-right font-semibold">{viewingStudent.organisation || 'N/A'}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground font-medium">Designation:</span>
-                        <span className="text-right font-semibold">{viewingStudent.designation || 'N/A'}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground font-medium">Location:</span>
-                        <span className="text-right font-semibold">{viewingStudent.location || viewingStudent.placeOfWork || 'N/A'}</span>
+                  {(getCurrentStatus(viewingStudent).label !== "NA" || isAdmin) && (
+                    <div className="space-y-3 p-4 rounded-xl bg-card border border-primary/5 shadow-sm">
+                      <h4 className="font-bold text-sm text-primary border-b border-primary/10 pb-1.5 flex items-center">
+                        <span className="w-2.5 h-2.5 bg-primary rounded-full mr-2"></span>
+                        Professional Details
+                      </h4>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground font-medium">Organisation:</span>
+                          <span className="text-right font-semibold">{viewingStudent.organisation || 'N/A'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground font-medium">Designation:</span>
+                          <span className="text-right font-semibold">{viewingStudent.designation || 'N/A'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground font-medium">Location:</span>
+                          <span className="text-right font-semibold">{viewingStudent.location || viewingStudent.placeOfWork || 'N/A'}</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Academic Studies (if applicable) */}
-                  <div className="space-y-3 p-4 rounded-xl bg-card border border-primary/5 shadow-sm">
-                    <h4 className="font-bold text-sm text-primary border-b border-primary/10 pb-1.5 flex items-center">
-                      <span className="w-2.5 h-2.5 bg-primary rounded-full mr-2"></span>
-                      Higher Studies Info
-                    </h4>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground font-medium">University:</span>
-                        <span className="text-right font-semibold">{viewingStudent.universityName || 'N/A'}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground font-medium">Area of Study:</span>
-                        <span className="text-right font-semibold">{viewingStudent.areaOfStudy || 'N/A'}</span>
+                  {(getCurrentStatus(viewingStudent).label !== "NA" || isAdmin) && (
+                    <div className="space-y-3 p-4 rounded-xl bg-card border border-primary/5 shadow-sm">
+                      <h4 className="font-bold text-sm text-primary border-b border-primary/10 pb-1.5 flex items-center">
+                        <span className="w-2.5 h-2.5 bg-primary rounded-full mr-2"></span>
+                        Higher Studies Info
+                      </h4>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground font-medium">University:</span>
+                          <span className="text-right font-semibold">{viewingStudent.universityName || 'N/A'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground font-medium">Area of Study:</span>
+                          <span className="text-right font-semibold">{viewingStudent.areaOfStudy || 'N/A'}</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  )}
                 </div>
 
                 {/* Skills/Interests & Address */}
@@ -1343,7 +1342,7 @@ const ApprovalTab = (props: ApprovalTabProps) => {
                     </div>
                   )}
 
-                  {viewingStudent.feedback && viewingStudent.feedback !== "NA" && viewingStudent.feedback !== "Not specified" && (
+                  {isAdmin && viewingStudent.feedback && viewingStudent.feedback !== "NA" && viewingStudent.feedback !== "Not specified" && (
                     <div className="p-4 rounded-xl bg-card border border-primary/5 shadow-sm">
                       <h4 className="font-bold text-sm text-primary mb-2 flex items-center">
                         <span className="w-2.5 h-2.5 bg-primary rounded-full mr-2"></span>
