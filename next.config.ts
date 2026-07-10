@@ -17,6 +17,7 @@ const nextConfig: NextConfig = {
       },
     ],
     unoptimized: true,
+    qualities: [75, 80],
   },
   // Allow static export for Firebase Hosting compatibility
   // Remove this if deploying to Vercel

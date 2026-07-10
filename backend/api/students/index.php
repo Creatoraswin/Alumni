@@ -44,6 +44,7 @@ try {
             'mobile_no' => Validator::sanitizeString($input['mobile_no'] ?? ''),
             'dob' => $input['dob'] ?? null,
             'school' => Validator::sanitizeString($input['school'] ?? ''),
+            'department' => Validator::sanitizeString($input['department'] ?? ''),
             'programme' => Validator::sanitizeString($input['programme'] ?? ''),
             'year_of_graduation' => (int) ($input['year_of_graduation'] ?? 0),
             'current_position' => Validator::sanitizeString($input['current_position'] ?? ''),

@@ -150,7 +150,7 @@ const mapDbStudentToFrontend = (dbStudent: any): Student => {
     email: dbStudent.email || "NA",
     personalEmail: dbStudent.personal_email || "",
     phone: dbStudent.mobile_no || "NA",
-    department: deriveDepartment(dbStudent.programme),
+    department: dbStudent.department || deriveDepartment(dbStudent.programme),
     graduationYear: String(dbStudent.year_of_graduation || "NA"),
     currentPosition: dbStudent.current_position || "NA",
     currentJob: dbStudent.present_occupation || "NA",
@@ -314,6 +314,7 @@ export const updateStudentData = async (student: Student, userRole: "student" | 
     
     // Academic Info
     if (student.school !== undefined) updates.school = student.school;
+    if (student.department !== undefined) updates.department = student.department;
     if (student.programme !== undefined) updates.programme = student.programme;
     if (student.graduationYear !== undefined) updates.year_of_graduation = student.graduationYear;
     

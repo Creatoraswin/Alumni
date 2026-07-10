@@ -48,6 +48,7 @@ class Student
             mobile_no = :mobile_no,
             dob = :dob,
             school = :school,
+            department = :department,
             programme = :programme,
             year_of_graduation = :year_of_graduation,
             current_position = :current_position,
@@ -74,6 +75,7 @@ class Student
         $dob = Validator::convertDateToMysql($data['dob'] ?? null);
         $stmt->bindParam(':dob', $dob);
         $stmt->bindParam(':school', $data['school']);
+        $stmt->bindParam(':department', $data['department']);
         $stmt->bindParam(':programme', $data['programme']);
         $stmt->bindParam(':year_of_graduation', $data['year_of_graduation']);
         $stmt->bindParam(':current_position', $data['current_position']);
@@ -105,7 +107,7 @@ class Student
 
         $allowedFields = [
             'name', 'email', 'personal_email', 'mobile_no', 'dob',
-            'school', 'programme', 'year_of_graduation', 'current_position',
+            'school', 'department', 'programme', 'year_of_graduation', 'current_position',
             'designation', 'organisation', 'place_of_work', 'present_occupation',
             'university_name', 'area_of_study', 'area_of_interest', 'location',
             'address', 'linkedin_id', 'photo_url', 'feedback', 'status'

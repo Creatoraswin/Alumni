@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS students (
     
     -- Academic Info
     school VARCHAR(100),
+    department VARCHAR(255),
     programme VARCHAR(255),
     year_of_graduation INT,
     

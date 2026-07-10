@@ -12,7 +12,7 @@ import { toast } from "@/components/ui/use-toast";
 import { Badge } from "@/components/ui/badge";
 
 // Icons
-import { Check, Trash2, Search, Loader2, Edit, Save, Database, RefreshCw } from "lucide-react";
+import { Check, Trash2, Search, Loader2, Edit, Save, Database, RefreshCw, AlertCircle } from "lucide-react";
 
 // Local Components
 import { useAdminData } from "@/components/AdminLayout";
@@ -102,10 +102,12 @@ const ApprovalTab = (props: ApprovalTabProps) => {
   const [editingStudent, setEditingStudent] = useState<string | null>(null);
   const [editedData, setEditedData] = useState<Partial<Student>>({});
   const [saving, setSaving] = useState(false);
+  const [viewingStudent, setViewingStudent] = useState<Student | null>(null);
 
   // Student strength database state
   const [studentStrengthData, setStudentStrengthData] = useState<StudentStrength[]>([]);
   const [studentStrengthRegNos, setStudentStrengthRegNos] = useState<Set<string>>(new Set());
+  const [isLoadingDb, setIsLoadingDb] = useState(true);
 
   // Academic data state
   const [academicData, setAcademicData] = useState<AcademicInfo[]>([]);
@@ -169,6 +171,7 @@ const ApprovalTab = (props: ApprovalTabProps) => {
   useEffect(() => {
     const loadData = async () => {
       try {
+        setIsLoadingDb(true);
         const data = await analyticsDataCache.getData();
         setStudentStrengthData(data.studentStrength);
 
@@ -184,6 +187,8 @@ const ApprovalTab = (props: ApprovalTabProps) => {
         setAcademicData(academicData);
       } catch (error) {
         console.error('Error fetching data:', error);
+      } finally {
+        setIsLoadingDb(false);
       }
     };
 
@@ -617,10 +622,31 @@ const ApprovalTab = (props: ApprovalTabProps) => {
             {sortedStudents.map((student, index) => (
               <div
                 key={`${student.id}-${index}`}
-                className="border rounded-xl p-5 relative bg-card hover:shadow-lg transition-all duration-300 hover:-translate-y-1 card-enhanced overflow-hidden"
+                className="border rounded-xl p-5 relative bg-card hover:shadow-lg transition-all duration-300 hover:-translate-y-1 card-enhanced overflow-hidden cursor-pointer group"
+                onClick={() => setViewingStudent(student)}
               >
+                {/* Database Status Indicator in Top-Right Corner */}
+                <div className="absolute top-3 right-3 z-10">
+                  {isLoadingDb ? (
+                    <Badge variant="outline" className="text-xs bg-muted text-muted-foreground border-muted-foreground/30 flex items-center gap-1 px-2 py-0.5 font-medium shadow-sm">
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      <span className="hidden sm:inline">Checking DB</span>
+                    </Badge>
+                  ) : isStudentInDatabase(student.registrationNo) ? (
+                    <Badge variant="outline" className="text-xs bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/30 flex items-center gap-1 px-2 py-0.5 font-medium shadow-sm">
+                      <Database className="h-3 w-3 text-green-600 dark:text-green-400" />
+                      <span>In DB</span>
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-xs bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/30 flex items-center gap-1 px-2 py-0.5 font-medium shadow-sm">
+                      <AlertCircle className="h-3 w-3 text-red-500" />
+                      <span>Not in DB</span>
+                    </Badge>
+                  )}
+                </div>
+
                 {/* Header with photo and basic info */}
-                <div className="flex items-start space-x-4 mb-4">
+                <div className="flex items-start space-x-4 mb-4 pr-20">
                   <div className="flex-shrink-0">
                     <RobustImage
                       photoUrl={student.photoUrl}
@@ -631,13 +657,7 @@ const ApprovalTab = (props: ApprovalTabProps) => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-bold text-lg text-foreground truncate">{student.name}</h3>
-                      {isStudentInDatabase(student.registrationNo) && (
-                        <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-300 flex items-center gap-1 px-2 py-0.5 flex-shrink-0">
-                          <Database className="h-3 w-3" />
-                          <span className="hidden sm:inline">In DB</span>
-                        </Badge>
-                      )}
+                      <h3 className="font-bold text-lg text-foreground truncate group-hover:text-primary transition-colors">{student.name}</h3>
                     </div>
                     <p className="text-primary font-medium truncate">{student.programme}</p>
                     <div className="flex flex-wrap items-center gap-2 mt-1">
@@ -682,6 +702,7 @@ const ApprovalTab = (props: ApprovalTabProps) => {
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-primary hover:underline ml-1"
+                          onClick={(e) => e.stopPropagation()}
                         >
                           View Profile
                         </a>
@@ -724,7 +745,10 @@ const ApprovalTab = (props: ApprovalTabProps) => {
                         size="sm"
                         variant="outline"
                         className="h-8 text-xs bg-gradient-to-r from-destructive to-destructive/80 text-white font-bold shadow-sm hover:scale-105 border-0 rounded-lg"
-                        onClick={() => handleDeleteStudent(student.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteStudent(student.id);
+                        }}
                         disabled={processingId === student.id}
                       >
                         {processingId === student.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
@@ -735,7 +759,10 @@ const ApprovalTab = (props: ApprovalTabProps) => {
                       size="sm"
                       variant="outline"
                       className="h-8 text-xs bg-gradient-to-r from-primary to-primary/80 text-white font-bold shadow-sm hover:scale-105 border-0 rounded-lg"
-                      onClick={() => handleApproveStudent(student.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleApproveStudent(student.id);
+                      }}
                       disabled={processingId === student.id}
                     >
                       {processingId === student.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
@@ -746,7 +773,10 @@ const ApprovalTab = (props: ApprovalTabProps) => {
                         size="sm"
                         variant="outline"
                         className="h-8 text-xs bg-gradient-to-r from-secondary to-secondary/80 text-foreground font-bold shadow-sm hover:scale-105 border-0 rounded-lg"
-                        onClick={() => handleEditStudent(student.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditStudent(student.id);
+                        }}
                         disabled={editingStudent === student.id}
                       >
                         {editingStudent === student.id ? <Save className="h-3 w-3 animate-spin" /> : <Edit className="h-3 w-3" />}
@@ -1186,6 +1216,267 @@ const ApprovalTab = (props: ApprovalTabProps) => {
                 </Button>
               </DialogFooter>
             </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Detailed View Dialog */}
+        <Dialog open={!!viewingStudent} onOpenChange={(open) => {
+          if (!open) setViewingStudent(null);
+        }}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <DialogTitle className="text-2xl font-bold text-gradient-primary">
+                  Alumni Profile Details
+                </DialogTitle>
+                <div>
+                  {viewingStudent && (
+                    isStudentInDatabase(viewingStudent.registrationNo) ? (
+                      <Badge variant="outline" className="text-xs bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/30 flex items-center gap-1 px-2.5 py-1 font-medium shadow-sm">
+                        <Database className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
+                        <span>Verified in Database</span>
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-xs bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/30 flex items-center gap-1 px-2.5 py-1 font-medium shadow-sm">
+                        <AlertCircle className="h-3.5 w-3.5 text-red-500" />
+                        <span>Not in Database</span>
+                      </Badge>
+                    )
+                  )}
+                </div>
+              </div>
+              <DialogDescription>
+                Review full details for this applicant below.
+              </DialogDescription>
+            </DialogHeader>
+
+            {viewingStudent && (
+              <div className="space-y-6 py-4">
+                {/* Header Section */}
+                <div className="flex flex-col sm:flex-row items-center gap-4 p-4 bg-secondary/10 rounded-xl border border-primary/10">
+                  <RobustImage
+                    photoUrl={viewingStudent.photoUrl}
+                    studentName={viewingStudent.name}
+                    size="lg"
+                    className="rounded-xl border-2 border-primary/20"
+                  />
+                  <div className="text-center sm:text-left space-y-1">
+                    <h3 className="text-xl font-bold">{viewingStudent.name}</h3>
+                    <p className="text-primary font-medium">{viewingStudent.programme}</p>
+                    <div className="flex flex-wrap justify-center sm:justify-start gap-2 mt-2">
+                      <Badge variant="secondary" className="px-2.5 py-1">
+                        Reg: {viewingStudent.registrationNo || 'N/A'}
+                      </Badge>
+                      <Badge variant="outline" className="px-2.5 py-1">
+                        Graduation: {viewingStudent.graduationYear || 'N/A'}
+                      </Badge>
+                      <Badge variant={getCurrentStatus(viewingStudent).variant} className="px-2.5 py-1">
+                        {getCurrentStatus(viewingStudent).label}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Details Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Academic & Basic Info */}
+                  <div className="space-y-3 p-4 rounded-xl bg-card border border-primary/5 shadow-sm">
+                    <h4 className="font-bold text-sm text-primary border-b border-primary/10 pb-1.5 flex items-center">
+                      <span className="w-2.5 h-2.5 bg-primary rounded-full mr-2"></span>
+                      Academic & Personal Info
+                    </h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground font-medium">School:</span>
+                        <span className="text-right font-semibold">{viewingStudent.school || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground font-medium">Department:</span>
+                        <span className="text-right font-semibold">{viewingStudent.department || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground font-medium">Date of Birth:</span>
+                        <span className="text-right font-semibold">{formatDateForDisplay(viewingStudent.dob) || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground font-medium">Submission Time:</span>
+                        <span className="text-right font-semibold">{viewingStudent.Timestamp ? new Date(viewingStudent.Timestamp).toLocaleString() : 'N/A'}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Contact Info */}
+                  <div className="space-y-3 p-4 rounded-xl bg-card border border-primary/5 shadow-sm">
+                    <h4 className="font-bold text-sm text-primary border-b border-primary/10 pb-1.5 flex items-center">
+                      <span className="w-2.5 h-2.5 bg-primary rounded-full mr-2"></span>
+                      Contact Information
+                    </h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between items-center min-w-0">
+                        <span className="text-muted-foreground font-medium flex-shrink-0">Email:</span>
+                        <span className="font-semibold truncate max-w-[200px]" title={viewingStudent.email}>{viewingStudent.email || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between items-center min-w-0">
+                        <span className="text-muted-foreground font-medium flex-shrink-0">Personal Email:</span>
+                        <span className="font-semibold truncate max-w-[200px]" title={viewingStudent.personalEmail}>{viewingStudent.personalEmail || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground font-medium">Phone:</span>
+                        <span className="font-semibold">{viewingStudent.phone || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between items-center min-w-0">
+                        <span className="text-muted-foreground font-medium flex-shrink-0">LinkedIn:</span>
+                        <span className="font-semibold truncate max-w-[200px]">
+                          {viewingStudent.linkedinId && viewingStudent.linkedinId !== "NA" && viewingStudent.linkedinId !== "Not specified" ? (
+                            <a
+                              href={viewingStudent.linkedinId.startsWith('http') ? viewingStudent.linkedinId : `https://linkedin.com/in/${viewingStudent.linkedinId}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-primary hover:underline"
+                            >
+                              View Profile
+                            </a>
+                          ) : 'N/A'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Professional Info */}
+                  <div className="space-y-3 p-4 rounded-xl bg-card border border-primary/5 shadow-sm">
+                    <h4 className="font-bold text-sm text-primary border-b border-primary/10 pb-1.5 flex items-center">
+                      <span className="w-2.5 h-2.5 bg-primary rounded-full mr-2"></span>
+                      Professional Details
+                    </h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground font-medium">Organisation:</span>
+                        <span className="text-right font-semibold">{viewingStudent.organisation || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground font-medium">Designation:</span>
+                        <span className="text-right font-semibold">{viewingStudent.designation || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground font-medium">Location:</span>
+                        <span className="text-right font-semibold">{viewingStudent.location || viewingStudent.placeOfWork || 'N/A'}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Academic Studies (if applicable) */}
+                  <div className="space-y-3 p-4 rounded-xl bg-card border border-primary/5 shadow-sm">
+                    <h4 className="font-bold text-sm text-primary border-b border-primary/10 pb-1.5 flex items-center">
+                      <span className="w-2.5 h-2.5 bg-primary rounded-full mr-2"></span>
+                      Higher Studies Info
+                    </h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground font-medium">University:</span>
+                        <span className="text-right font-semibold">{viewingStudent.universityName || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground font-medium">Area of Study:</span>
+                        <span className="text-right font-semibold">{viewingStudent.areaOfStudy || 'N/A'}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Skills/Interests & Address */}
+                <div className="space-y-4">
+                  {viewingStudent.areaOfInterest && viewingStudent.areaOfInterest !== "NA" && viewingStudent.areaOfInterest !== "Not specified" && (
+                    <div className="p-4 rounded-xl bg-card border border-primary/5 shadow-sm">
+                      <h4 className="font-bold text-sm text-primary mb-2 flex items-center">
+                        <span className="w-2.5 h-2.5 bg-primary rounded-full mr-2"></span>
+                        Skills & Interests
+                      </h4>
+                      <div className="flex flex-wrap gap-1.5">
+                        {viewingStudent.areaOfInterest.split(',').map((skill, i) => (
+                          <span key={i} className="text-xs bg-gradient-to-r from-primary/20 to-secondary/20 text-foreground px-3 py-1 rounded-full font-medium shadow-sm">
+                            {skill.trim()}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {viewingStudent.address && viewingStudent.address !== "NA" && viewingStudent.address !== "Not specified" && (
+                    <div className="p-4 rounded-xl bg-card border border-primary/5 shadow-sm">
+                      <h4 className="font-bold text-sm text-primary mb-2 flex items-center">
+                        <span className="w-2.5 h-2.5 bg-primary rounded-full mr-2"></span>
+                        Address
+                      </h4>
+                      <p className="text-sm text-foreground/80 leading-relaxed font-medium">{viewingStudent.address}</p>
+                    </div>
+                  )}
+
+                  {viewingStudent.feedback && viewingStudent.feedback !== "NA" && viewingStudent.feedback !== "Not specified" && (
+                    <div className="p-4 rounded-xl bg-card border border-primary/5 shadow-sm">
+                      <h4 className="font-bold text-sm text-primary mb-2 flex items-center">
+                        <span className="w-2.5 h-2.5 bg-primary rounded-full mr-2"></span>
+                        Feedback / Remarks
+                      </h4>
+                      <p className="text-sm italic text-foreground/80 leading-relaxed">{viewingStudent.feedback}</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Dialog Footer Actions */}
+                <div className="flex flex-wrap items-center justify-end gap-3 pt-4 border-t border-primary/10">
+                  {isStrictAdmin && (
+                    <Button
+                      variant="outline"
+                      className="bg-red-500 hover:bg-red-600 text-white font-bold shadow-md border-0 rounded-xl px-4 py-2 flex items-center gap-1.5 transition-all duration-300 hover:scale-105"
+                      onClick={() => {
+                        const id = viewingStudent.id;
+                        setViewingStudent(null);
+                        handleDeleteStudent(id);
+                      }}
+                      disabled={processingId === viewingStudent.id}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      <span>Delete</span>
+                    </Button>
+                  )}
+
+                  <Button
+                    variant="outline"
+                    className="bg-yellow-500 hover:bg-yellow-600 text-black font-bold shadow-md border-0 rounded-xl px-4 py-2 flex items-center gap-1.5 transition-all duration-300 hover:scale-105"
+                    onClick={() => {
+                      const id = viewingStudent.id;
+                      setViewingStudent(null);
+                      handleEditStudent(id);
+                    }}
+                    disabled={editingStudent === viewingStudent.id}
+                  >
+                    <Edit className="h-4 w-4" />
+                    <span>Edit</span>
+                  </Button>
+
+                  <Button
+                    className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold shadow-md border-0 rounded-xl px-5 py-2 flex items-center gap-1.5 transition-all duration-300 hover:scale-105"
+                    onClick={() => {
+                      const id = viewingStudent.id;
+                      setViewingStudent(null);
+                      handleApproveStudent(id);
+                    }}
+                    disabled={processingId === viewingStudent.id}
+                  >
+                    <Check className="h-4 w-4" />
+                    <span>Approve</span>
+                  </Button>
+
+                  <Button 
+                    variant="ghost" 
+                    className="rounded-xl px-4 py-2 border border-primary/20 text-foreground font-semibold"
+                    onClick={() => setViewingStudent(null)}
+                  >
+                    Close
+                  </Button>
+                </div>
+              </div>
+            )}
           </DialogContent>
         </Dialog>
       </CardContent>
