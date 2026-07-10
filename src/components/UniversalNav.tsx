@@ -894,114 +894,111 @@ const UniversalNav = ({
         </div>
       );
     } else if (isLoggedIn && (userRole === "department" || userRole === "school")) {
+      const iconClass = `w-5 h-5 flex-shrink-0 ${isSidebarExpanded ? 'mr-3' : ''}`;
       return (
-        <div className="space-y-4">
+        <div className="w-full space-y-1">
           <button
+            title="Home"
             className={`flex items-center w-full p-3 rounded-lg transition-colors ${
               activeTab === "home" 
                 ? "bg-red-600 text-white shadow-lg" 
                 : "hover:bg-secondary/50"
-            }`}
+            } ${!isSidebarExpanded ? 'justify-center' : ''}`}
             onClick={() => handleNavigation("/")}
           >
-            <Home className="w-5 h-5 mr-3" />
-            <span>Home</span>
+            <Home className={iconClass} />
+            {isSidebarExpanded && <span>Home</span>}
           </button>
           <button
+            title="Dashboard"
             className={`flex items-center w-full p-3 rounded-lg transition-colors ${
               activeTab === "dashboard" 
                 ? "bg-red-600 text-white shadow-lg" 
                 : "hover:bg-secondary/50"
-            }`}
+            } ${!isSidebarExpanded ? 'justify-center' : ''}`}
             onClick={() => handleNavigation(userRole === "school" ? "/school" : "/department")}
           >
-            <Home className="w-5 h-5 mr-3" />
-            <span>Dashboard</span>
+            <LayoutDashboard className={iconClass} />
+            {isSidebarExpanded && <span>Dashboard</span>}
           </button>
           <button
+            title="Alumni Management"
             className={`flex items-center w-full p-3 rounded-lg transition-colors ${
               activeTab === "alumni" 
                 ? "bg-red-600 text-white shadow-lg" 
                 : "hover:bg-secondary/50"
-            }`}
+            } ${!isSidebarExpanded ? 'justify-center' : ''}`}
             onClick={() => handleNavigation(userRole === "school" ? "/school/alumni" : "/department/alumni")}
           >
-            <Users className="w-5 h-5 mr-3" />
-            <span>Alumni Management</span>
+            <Users className={iconClass} />
+            {isSidebarExpanded && <span>Alumni Management</span>}
           </button>
           <button
+            title="Basic Analytics"
             className={`flex items-center w-full p-3 rounded-lg transition-colors ${
               activeTab === "analytics" 
                 ? "bg-red-600 text-white shadow-lg" 
                 : "hover:bg-secondary/50"
-            }`}
+            } ${!isSidebarExpanded ? 'justify-center' : ''}`}
             onClick={() => handleNavigation(userRole === "school" ? "/school/analytics" : "/department/analytics")}
           >
-            <BarChart2 className="w-5 h-5 mr-3" />
-            <span>Basic Analytics</span>
+            <BarChart2 className={iconClass} />
+            {isSidebarExpanded && <span>Basic Analytics</span>}
           </button>
           <button
+            title="Detailed Analytics"
             className={`flex items-center w-full p-3 rounded-lg transition-colors ${
               activeTab === "detailed-analytics" 
                 ? "bg-red-600 text-white shadow-lg" 
                 : "hover:bg-secondary/50"
-            }`}
+            } ${!isSidebarExpanded ? 'justify-center' : ''}`}
             onClick={() => handleNavigation(userRole === "school" ? "/school/detailed-analytics" : "/department/detailed-analytics")}
           >
-            <BarChart2 className="w-5 h-5 mr-3" />
-            <span>Detailed Analytics</span>
-          </button>
-          {/* Alumni Talks link */}
-          <button
-            className={`flex items-center w-full p-3 rounded-lg transition-colors ${
-              activeTab === "alumni-talks" 
-                ? "bg-red-600 text-white shadow-lg" 
-                : "hover:bg-secondary/50"
-            }`}
-            onClick={() => handleNavigation("/alumni-talks")}
-          >
-            <Users className="w-5 h-5 mr-3" />
-            <span>Alumni Talks</span>
+            <TrendingUp className={iconClass} />
+            {isSidebarExpanded && <span>Detailed Analytics</span>}
           </button>
           
-          {/* Alumni Corner section for mobile */}
-          <div className="border-t border-gray-200 pt-4">
-            <h3 className="px-3 text-sm font-semibold text-gray-500 mb-2">Alumni Corner</h3>
+          {/* Alumni Corner section */}
+          <div className={`${isSidebarExpanded ? 'border-t border-gray-200 pt-3 mt-2' : 'border-t border-gray-200/50 pt-2 mt-1'}`}>
+            {isSidebarExpanded && <h3 className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Alumni Corner</h3>}
             <button
+              title="Alumni Talks"
               className={`flex items-center w-full p-3 rounded-lg transition-colors ${
                 activeTab === "alumni-talks" 
                   ? "bg-red-600 text-white shadow-lg" 
                   : "hover:bg-secondary/50"
-              }`}
+              } ${!isSidebarExpanded ? 'justify-center' : ''}`}
               onClick={() => handleNavigation("/alumni-talks")}
             >
-              <Users className="w-5 h-5 mr-3" />
-              <span>Alumni Talks</span>
+              <Mic2 className={iconClass} />
+              {isSidebarExpanded && <span>Alumni Talks</span>}
             </button>
             <button
+              title="Alumni Spotlight"
               className={`flex items-center w-full p-3 rounded-lg transition-colors ${
                 activeTab === "alumni-spotlight" 
                   ? "bg-red-600 text-white shadow-lg" 
                   : "hover:bg-secondary/50"
-              }`}
+              } ${!isSidebarExpanded ? 'justify-center' : ''}`}
               onClick={() => handleNavigation("/alumni-spotlight")}
             >
-              <Star className="w-5 h-5 mr-3" />
-              <span>Alumni Spotlight</span>
+              <Star className={iconClass} />
+              {isSidebarExpanded && <span>Alumni Spotlight</span>}
             </button>
           </div>
           
-          {/* News link for department/school users */}
+          {/* News link */}
           <button
+            title="News"
             className={`flex items-center w-full p-3 rounded-lg transition-colors ${
               activeTab === "news" 
                 ? "bg-red-600 text-white shadow-lg" 
                 : "hover:bg-secondary/50"
-            }`}
+            } ${!isSidebarExpanded ? 'justify-center' : ''}`}
             onClick={() => handleNavigation("/news")}
           >
-            <Youtube className="w-5 h-5 mr-3" />
-            <span>News</span>
+            <Newspaper className={iconClass} />
+            {isSidebarExpanded && <span>News</span>}
           </button>
         </div>
       );

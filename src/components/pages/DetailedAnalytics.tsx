@@ -13,6 +13,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { fetchStudentStrengthData, fetchStudentsData } from "@/services/apiService";
 import { StudentStrength } from "@/services/apiService";
 import { analyticsDataCache } from "@/services/analyticsDataCache";
+import CenturionLoader from "@/components/CenturionLoader";
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
 
@@ -55,7 +56,7 @@ const isDepartmentMatch = (userDept: string, recordDept: string): boolean => {
 };
 
 const DetailedAnalytics = () => {
-  const { students } = useAdminData();
+  const { students, allStudents } = useAdminData();
   const { isLoggedIn, userRole, currentDepartmentUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedProgramme, setSelectedProgramme] = useState("all");
@@ -68,7 +69,7 @@ const DetailedAnalytics = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch both datasets using cached data for improved performance
+  // Fetch student strength data using cached data for improved performance
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -82,7 +83,7 @@ const DetailedAnalytics = () => {
         const allYears = Array.from(new Set(data.studentStrength.map(s => s.passout_year).filter(Boolean))).sort();
 
         setStudentStrengthData(data.studentStrength);
-        setAlumniFormData(data.alumniForm);
+        setAlumniFormData(allStudents);
         setLoading(false);
       } catch (err) {
         console.error("Error fetching data:", err);
@@ -92,7 +93,7 @@ const DetailedAnalytics = () => {
     };
 
     fetchData();
-  }, []);
+  }, [allStudents]);
 
   // Set default global filter values based on user role when loaded
   useEffect(() => {
@@ -452,12 +453,7 @@ const DetailedAnalytics = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-        <span className="ml-3 text-lg">Loading student strength data...</span>
-      </div>
-    );
+    return <CenturionLoader message="Analyzing student strength and profile data..." />;
   }
 
   if (error) {

@@ -7,6 +7,8 @@ import { UserRole } from "@/contexts/auth-context";
 import UniversalNav from "@/components/UniversalNav";
 import { Student } from "@/services/apiService";
 
+import CenturionLoader from "@/components/CenturionLoader";
+
 interface AdminDataContextType {
   students: Student[];
   loading: boolean;
@@ -72,7 +74,7 @@ const AdminLayout = ({ children }: { children?: React.ReactNode }) => {
   }, [filteredStudents, allStudentsFromAuth]);
 
   if (loading) {
-    return <div className="p-8 text-center">Loading alumni data...</div>;
+    return <CenturionLoader message="Preparing Alumni Portal..." fullscreen />;
   }
 
   return (

@@ -1,20 +1,18 @@
-import { StudentStrength, fetchStudentStrengthData, fetchStudentsData } from './apiService';
+import { StudentStrength, fetchStudentStrengthData } from './apiService';
 
 // Cache configuration
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
 const STUDENT_STRENGTH_CACHE_KEY = 'student_strength_data_cache_v2';
-const ALUMNI_FORM_CACHE_KEY = 'alumni_form_data_cache_v2';
 const CACHE_TIMESTAMP_KEY = 'analytics_data_cache_timestamp_v2';
 
 interface AnalyticsCacheData {
   studentStrength: StudentStrength[];
-  alumniForm: any[];
   timestamp: number;
 }
 
 class AnalyticsDataCacheService {
   private memoryCache: AnalyticsCacheData | null = null;
-  private loadingPromise: Promise<{ studentStrength: StudentStrength[]; alumniForm: any[] }> | null = null;
+  private loadingPromise: Promise<{ studentStrength: StudentStrength[] }> | null = null;
 
   constructor() {
     // Initialize from localStorage on creation
@@ -28,16 +26,14 @@ class AnalyticsDataCacheService {
     if (typeof window === 'undefined') return;
     try {
       const cachedStudentStrength = localStorage.getItem(STUDENT_STRENGTH_CACHE_KEY);
-      const cachedAlumniForm = localStorage.getItem(ALUMNI_FORM_CACHE_KEY);
       const cachedTimestamp = localStorage.getItem(CACHE_TIMESTAMP_KEY);
       
-      if (cachedStudentStrength && cachedAlumniForm && cachedTimestamp) {
+      if (cachedStudentStrength && cachedTimestamp) {
         const timestamp = parseInt(cachedTimestamp, 10);
         const studentStrength = JSON.parse(cachedStudentStrength) as StudentStrength[];
-        const alumniForm = JSON.parse(cachedAlumniForm) as any[];
         
         if (this.isValidCache(timestamp)) {
-          this.memoryCache = { studentStrength, alumniForm, timestamp };
+          this.memoryCache = { studentStrength, timestamp };
         } else {
           this.clearStorage();
         }
@@ -54,14 +50,12 @@ class AnalyticsDataCacheService {
     if (typeof window === 'undefined') return;
     try {
       localStorage.setItem(STUDENT_STRENGTH_CACHE_KEY, JSON.stringify(data.studentStrength));
-      localStorage.setItem(ALUMNI_FORM_CACHE_KEY, JSON.stringify(data.alumniForm));
       localStorage.setItem(CACHE_TIMESTAMP_KEY, data.timestamp.toString());
     } catch (error) {
       // If localStorage is full, clear it and try again
       this.clearStorage();
       try {
         localStorage.setItem(STUDENT_STRENGTH_CACHE_KEY, JSON.stringify(data.studentStrength));
-        localStorage.setItem(ALUMNI_FORM_CACHE_KEY, JSON.stringify(data.alumniForm));
         localStorage.setItem(CACHE_TIMESTAMP_KEY, data.timestamp.toString());
       } catch (retryError) {
         // Failed to save cache even after clearing
@@ -76,7 +70,6 @@ class AnalyticsDataCacheService {
     if (typeof window === 'undefined') return;
     try {
       localStorage.removeItem(STUDENT_STRENGTH_CACHE_KEY);
-      localStorage.removeItem(ALUMNI_FORM_CACHE_KEY);
       localStorage.removeItem(CACHE_TIMESTAMP_KEY);
     } catch (error) {
       // Error clearing cache storage
@@ -93,11 +86,10 @@ class AnalyticsDataCacheService {
   /**
    * Get cached data if available and valid
    */
-  getCachedData(): { studentStrength: StudentStrength[]; alumniForm: any[] } | null {
+  getCachedData(): { studentStrength: StudentStrength[] } | null {
     if (this.memoryCache && this.isValidCache(this.memoryCache.timestamp)) {
       return {
-        studentStrength: this.memoryCache.studentStrength,
-        alumniForm: this.memoryCache.alumniForm
+        studentStrength: this.memoryCache.studentStrength
       };
     }
     
@@ -114,10 +106,9 @@ class AnalyticsDataCacheService {
   /**
    * Cache new data
    */
-  cacheData(studentStrength: StudentStrength[], alumniForm: any[]): void {
+  cacheData(studentStrength: StudentStrength[]): void {
     const cacheData: AnalyticsCacheData = {
       studentStrength: studentStrength,
-      alumniForm: alumniForm,
       timestamp: Date.now()
     };
     
@@ -128,7 +119,7 @@ class AnalyticsDataCacheService {
   /**
    * Get data with caching logic - returns cached data or fetches new data
    */
-  async getData(forceRefresh: boolean = false): Promise<{ studentStrength: StudentStrength[]; alumniForm: any[] }> {
+  async getData(forceRefresh: boolean = false): Promise<{ studentStrength: StudentStrength[] }> {
     // Return cached data if available and not forcing refresh
     if (!forceRefresh && this.hasValidCache()) {
       const cached = this.getCachedData();
@@ -142,15 +133,12 @@ class AnalyticsDataCacheService {
       return this.loadingPromise;
     }
 
-    this.loadingPromise = Promise.all([
-      fetchStudentStrengthData(),
-      fetchStudentsData(true) // true to get all data including unapproved
-    ])
-      .then(([studentStrength, alumniForm]) => {
-      this.cacheData(studentStrength, alumniForm);
-      this.loadingPromise = null;
-      return { studentStrength, alumniForm };
-    })
+    this.loadingPromise = fetchStudentStrengthData()
+      .then((studentStrength) => {
+        this.cacheData(studentStrength);
+        this.loadingPromise = null;
+        return { studentStrength };
+      })
       .catch((error) => {
         this.loadingPromise = null;
         
@@ -158,8 +146,7 @@ class AnalyticsDataCacheService {
         const cachedData = this.memoryCache;
         if (cachedData) {
           return {
-            studentStrength: cachedData.studentStrength,
-            alumniForm: cachedData.alumniForm
+            studentStrength: cachedData.studentStrength
           };
         }
         
@@ -184,7 +171,6 @@ class AnalyticsDataCacheService {
     hasCache: boolean;
     cacheAge: number;
     studentStrengthSize: number;
-    alumniFormSize: number;
     isExpired: boolean;
   } {
     if (!this.memoryCache) {
@@ -192,7 +178,6 @@ class AnalyticsDataCacheService {
         hasCache: false,
         cacheAge: 0,
         studentStrengthSize: 0,
-        alumniFormSize: 0,
         isExpired: true
       };
     }
@@ -202,7 +187,6 @@ class AnalyticsDataCacheService {
       hasCache: true,
       cacheAge: age,
       studentStrengthSize: this.memoryCache.studentStrength.length,
-      alumniFormSize: this.memoryCache.alumniForm.length,
       isExpired: !this.isValidCache(this.memoryCache.timestamp)
     };
   }
@@ -222,7 +206,7 @@ class AnalyticsDataCacheService {
   /**
    * Force refresh the cache with fresh data
    */
-  async refreshCache(): Promise<{ studentStrength: StudentStrength[]; alumniForm: any[] }> {
+  async refreshCache(): Promise<{ studentStrength: StudentStrength[] }> {
     return this.getData(true);
   }
 }
