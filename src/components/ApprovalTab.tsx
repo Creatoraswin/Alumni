@@ -12,7 +12,7 @@ import { toast } from "@/components/ui/use-toast";
 import { Badge } from "@/components/ui/badge";
 
 // Icons
-import { Check, Trash2, Search, Loader2, Edit, Save, Database, RefreshCw, AlertCircle } from "lucide-react";
+import { Check, Trash2, Search, Loader2, Edit, Save, Database, RefreshCw, AlertCircle, Mail, Phone, Linkedin, GraduationCap, Building2, BookOpen } from "lucide-react";
 
 // Local Components
 import { useAdminData } from "@/components/AdminLayout";
@@ -622,23 +622,23 @@ const ApprovalTab = (props: ApprovalTabProps) => {
             {sortedStudents.map((student, index) => (
               <div
                 key={`${student.id}-${index}`}
-                className="border rounded-xl p-5 relative bg-card hover:shadow-lg transition-all duration-300 hover:-translate-y-1 card-enhanced overflow-hidden cursor-pointer group"
+                className="border rounded-xl p-5 relative bg-gradient-to-b from-card to-card/95 hover:shadow-xl transition-all duration-300 hover:-translate-y-1.5 card-enhanced overflow-hidden cursor-pointer group border-primary/10 shadow-soft"
                 onClick={() => setViewingStudent(student)}
               >
                 {/* Database Status Indicator in Top-Right Corner */}
-                <div className="absolute top-3 right-3 z-10">
+                <div className="absolute top-3.5 right-3.5 z-10">
                   {isLoadingDb ? (
-                    <Badge variant="outline" className="text-xs bg-muted text-muted-foreground border-muted-foreground/30 flex items-center gap-1 px-2 py-0.5 font-medium shadow-sm">
+                    <Badge variant="outline" className="text-[10px] bg-muted/20 text-muted-foreground border-muted-foreground/30 flex items-center gap-1 px-2.5 py-1 font-semibold shadow-sm backdrop-blur-md">
                       <Loader2 className="h-3 w-3 animate-spin" />
-                      <span className="hidden sm:inline">Checking DB</span>
+                      <span>Checking DB</span>
                     </Badge>
                   ) : isStudentInDatabase(student.registrationNo) ? (
-                    <Badge variant="outline" className="text-xs bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/30 flex items-center gap-1 px-2 py-0.5 font-medium shadow-sm">
+                    <Badge variant="outline" className="text-[10px] bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/30 flex items-center gap-1 px-2.5 py-1 font-semibold shadow-sm backdrop-blur-md">
                       <Database className="h-3 w-3 text-green-600 dark:text-green-400" />
                       <span>In DB</span>
                     </Badge>
                   ) : (
-                    <Badge variant="outline" className="text-xs bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/30 flex items-center gap-1 px-2 py-0.5 font-medium shadow-sm">
+                    <Badge variant="outline" className="text-[10px] bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/30 flex items-center gap-1 px-2.5 py-1 font-semibold shadow-sm backdrop-blur-md">
                       <AlertCircle className="h-3 w-3 text-red-500" />
                       <span>Not in DB</span>
                     </Badge>
@@ -646,95 +646,84 @@ const ApprovalTab = (props: ApprovalTabProps) => {
                 </div>
 
                 {/* Header with photo and basic info */}
-                <div className="flex items-start space-x-4 mb-4 pr-20">
+                <div className="flex items-start space-x-4 mb-4 pr-24">
                   <div className="flex-shrink-0">
                     <RobustImage
                       photoUrl={student.photoUrl}
                       studentName={student.name}
                       size="md"
-                      className="rounded-xl border-2 border-primary/20"
+                      className="rounded-xl border-2 border-primary/20 group-hover:border-primary/50 transition-all duration-300 shadow-sm"
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-bold text-lg text-foreground truncate group-hover:text-primary transition-colors">{student.name}</h3>
-                    </div>
-                    <p className="text-primary font-medium truncate">{student.programme}</p>
-                    <div className="flex flex-wrap items-center gap-2 mt-1">
-                      <span className="text-xs bg-secondary text-secondary-foreground px-2 py-1 rounded-full">
+                    <h3 className="font-bold text-lg text-foreground truncate group-hover:text-primary transition-colors leading-tight mb-1" title={student.name}>
+                      {student.name}
+                    </h3>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="text-[10px] font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-md border border-primary/25">
                         Reg: {student.registrationNo || '-'}
                       </span>
-                      <span className="text-xs bg-accent text-accent-foreground px-2 py-1 rounded-full">
-                        {student.graduationYear || '-'}
+                      <span className="text-[10px] font-bold bg-secondary text-secondary-foreground px-2 py-0.5 rounded-md border border-secondary-foreground/10 truncate max-w-[120px]" title={student.programme}>
+                        {student.programme || '-'}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                {/* Contact Information */}
-                <div className="mb-4 p-3 rounded-lg bg-secondary/20">
-                  <h4 className="font-semibold text-sm text-primary mb-2 flex items-center">
-                    <span className="w-2 h-2 bg-primary rounded-full mr-2"></span>
-                    Contact Information
-                  </h4>
-                  <div className="grid grid-cols-1 gap-1 text-xs">
-                    <p className="truncate"><span className="font-medium">Email:</span> {student.email || '-'}</p>
-                    <p className="truncate"><span className="font-medium">Personal Email:</span> {student.personalEmail || '-'}</p>
-                    <p className="truncate"><span className="font-medium">Phone:</span> {student.phone || '-'}</p>
-                    <p className="truncate"><span className="font-medium">DOB:</span> {formatDateForDisplay(student.dob) || '-'}</p>
+                {/* Academic Information (School & Department) */}
+                <div className="space-y-2 border-t border-primary/15 pt-3.5 mb-3.5">
+                  <div className="flex items-center text-xs text-muted-foreground gap-2 min-w-0">
+                    <Building2 className="h-3.5 w-3.5 text-primary/70 flex-shrink-0" />
+                    <span className="font-semibold text-foreground/90 truncate" title={student.school}>
+                      School: {student.school || 'N/A'}
+                    </span>
+                  </div>
+                  <div className="flex items-center text-xs text-muted-foreground gap-2 min-w-0">
+                    <BookOpen className="h-3.5 w-3.5 text-primary/70 flex-shrink-0" />
+                    <span className="font-semibold text-foreground/90 truncate" title={student.department}>
+                      Dept: {student.department || 'N/A'}
+                    </span>
                   </div>
                 </div>
 
-                {/* Professional Information */}
-                <div className="mb-4 p-3 rounded-lg bg-secondary/20">
-                  <h4 className="font-semibold text-sm text-primary mb-2 flex items-center">
-                    <span className="w-2 h-2 bg-primary rounded-full mr-2"></span>
-                    Professional Information
-                  </h4>
-                  <div className="grid grid-cols-1 gap-1 text-xs">
-                    <p className="truncate"><span className="font-medium">Organisation:</span> {student.organisation || '-'}</p>
-                    <p className="truncate"><span className="font-medium">Location:</span> {student.location || student.placeOfWork || '-'}</p>
-                    <p className="truncate">
-                      <span className="font-medium">LinkedIn:</span>
-                      {student.linkedinId && student.linkedinId !== "NA" && student.linkedinId !== "Not specified" ? (
-                        <a
-                          href={student.linkedinId.startsWith('http') ? student.linkedinId : `https://linkedin.com/in/${student.linkedinId}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-primary hover:underline ml-1"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          View Profile
-                        </a>
-                      ) : 'Not provided'}
-                    </p>
+                {/* Contact & Socials (Email, Phone, LinkedIn) */}
+                <div className="mb-4 p-3.5 rounded-xl bg-secondary/15 border border-primary/5 space-y-2">
+                  <div className="flex items-center text-xs text-muted-foreground gap-2.5 min-w-0">
+                    <Mail className="h-3.5 w-3.5 text-primary/60 flex-shrink-0" />
+                    <span className="truncate hover:text-primary transition-colors text-foreground font-medium" title={student.email}>
+                      {student.email || '-'}
+                    </span>
                   </div>
-                </div>
-
-                {/* Skills/Interests */}
-                <div className="mb-4">
-                  <h4 className="font-semibold text-sm text-primary mb-2 flex items-center">
-                    <span className="w-2 h-2 bg-primary rounded-full mr-2"></span>
-                    Skills/Interests
-                  </h4>
-                  <div className="flex flex-wrap gap-1">
-                    {student.areaOfInterest && student.areaOfInterest !== "NA" && student.areaOfInterest !== "Not specified" ? (
-                      student.areaOfInterest.split(',').map((skill, i) => (
-                        <span key={i} className="text-xs bg-gradient-to-r from-primary/20 to-secondary/20 text-foreground px-2 py-1 rounded-full font-medium">
-                          {skill.trim()}
-                        </span>
-                      ))
-                    ) : (
-                      <span className="text-xs text-muted-foreground italic">Not specified</span>
-                    )}
+                  <div className="flex items-center text-xs text-muted-foreground gap-2.5 min-w-0">
+                    <Phone className="h-3.5 w-3.5 text-primary/60 flex-shrink-0" />
+                    <span className="text-foreground font-medium">{student.phone || '-'}</span>
                   </div>
+                  {student.linkedinId && student.linkedinId !== "NA" && student.linkedinId !== "Not specified" ? (
+                    <div className="flex items-center text-xs gap-2.5 pt-2 border-t border-primary/5 mt-1.5">
+                      <Linkedin className="h-3.5 w-3.5 text-[#0A66C2] flex-shrink-0" />
+                      <a
+                        href={student.linkedinId.startsWith('http') ? student.linkedinId : `https://linkedin.com/in/${student.linkedinId}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline font-bold flex items-center gap-1"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        LinkedIn Profile
+                      </a>
+                    </div>
+                  ) : (
+                    <div className="flex items-center text-xs text-muted-foreground/60 gap-2.5 pt-2 border-t border-primary/5 mt-1.5">
+                      <Linkedin className="h-3.5 w-3.5 text-muted-foreground/40 flex-shrink-0" />
+                      <span className="italic">No LinkedIn provided</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Status and Actions */}
                 <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-primary/10">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium">Status:</span>
-                    <Badge variant={getCurrentStatus(student).variant} className="text-xs">
+                    <span className="text-xs font-semibold text-muted-foreground">Status:</span>
+                    <Badge variant={getCurrentStatus(student).variant} className="text-xs font-bold px-2 py-0.5">
                       {getCurrentStatus(student).label}
                     </Badge>
                   </div>
