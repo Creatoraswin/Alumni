@@ -54,7 +54,17 @@ const RobustImage = ({ photoUrl, studentName, className = "", size = "md" }: Rob
     }
     
     // For non-Google Drive URLs, just return the original URL resolved
-    return [getDirectImageUrl(url)];
+    const resolved = getDirectImageUrl(url);
+    if (resolved.includes('/Uploads/')) {
+      // Build fallback cascade across common image extensions
+      const exts = ['.webp', '.jpg', '.jpeg', '.png'];
+      const base = resolved.replace(/\.(webp|jpg|jpeg|png|gif)$/i, '');
+      const currentExt = (resolved.match(/\.(webp|jpg|jpeg|png|gif)$/i) || [''])[0].toLowerCase();
+      // Start with original, then try other extensions
+      const variants = [resolved, ...exts.filter(e => e !== currentExt).map(e => base + e)];
+      return variants;
+    }
+    return [resolved];
   };
 
   const urlFormats = generateUrlFormats(photoUrl);

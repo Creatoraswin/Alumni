@@ -273,7 +273,11 @@ const Index = () => {
               students={filteredStudents} 
               isLoggedIn={isLoggedIn} 
               loading={loading && students.length === 0} 
-              currentUserInfo={getCurrentUserInfo()} 
+              currentUserInfo={getCurrentUserInfo()}
+              userRole={userRole || undefined}
+              onStudentDeleted={(deletedId) => {
+                setStudents(students.filter((s: { id: string }) => s.id !== deletedId));
+              }}
             />
           </>
         )}

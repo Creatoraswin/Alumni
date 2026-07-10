@@ -85,6 +85,7 @@ class FileUpload
     {
         switch ($type) {
             case 'photo':
+            case 'student_photo':
                 if (!is_dir(UPLOAD_PHOTOS_PATH)) {
                     mkdir(UPLOAD_PHOTOS_PATH, 0755, true);
                 }

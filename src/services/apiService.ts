@@ -403,7 +403,7 @@ export const registerStudent = async (studentData: Record<string, any>, setUploa
     let photoUrl = "";
     if (studentData.photo && studentData.photo instanceof File) {
       if (setUploadingImage) setUploadingImage(true);
-      photoUrl = await uploadImageToDrive(studentData.photo, studentData.registrationNo);
+      photoUrl = await uploadImageToDrive(studentData.photo, 'student_photo', studentData.registrationNo);
       if (setUploadingImage) setUploadingImage(false);
     }
     

@@ -87,6 +87,7 @@ const ApprovalTab = (props: ApprovalTabProps) => {
   const adminData = useAdminData();
   const authContext = useAuth(); // Get auth context to access refreshData
   const isAdmin = props.userRole === "admin" || props.userRole === "alumni-manager";
+  const isStrictAdmin = props.userRole === "admin"; // Only true admin, not alumni-manager
   const students = props.students ?? (isAdmin ? adminData.students : []);
   const onStudentUpdate = props.onStudentUpdate ?? (isAdmin ? (updatedStudent: Student) => adminData.setStudents(prev => prev.map(s => s.id === updatedStudent.id ? updatedStudent : s)) : undefined);
 
@@ -110,6 +111,33 @@ const ApprovalTab = (props: ApprovalTabProps) => {
   const [academicData, setAcademicData] = useState<AcademicInfo[]>([]);
 
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Photo upload state
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string>("");
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+
+  const handlePhotoFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPhotoFile(file);
+    const preview = URL.createObjectURL(file);
+    setPhotoPreview(preview);
+    // Immediately upload so the URL is ready when saving
+    try {
+      setUploadingPhoto(true);
+      const { uploadImageToDrive } = await import('@/services/apiService');
+      const url = await uploadImageToDrive(file, 'student_photo', editedData.registrationNo);
+      setEditedData(prev => ({ ...prev, photoUrl: url }));
+      setPhotoPreview("");
+      URL.revokeObjectURL(preview);
+    } catch (err) {
+      console.error('Photo upload failed:', err);
+    } finally {
+      setUploadingPhoto(false);
+      setPhotoFile(null);
+    }
+  };
 
   const handleRefresh = async () => {
     try {
@@ -684,16 +712,18 @@ const ApprovalTab = (props: ApprovalTabProps) => {
                   </div>
 
                   <div className="flex flex-wrap gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-8 text-xs bg-gradient-to-r from-destructive to-destructive/80 text-white font-bold shadow-sm hover:scale-105 border-0 rounded-lg"
-                      onClick={() => handleDeleteStudent(student.id)}
-                      disabled={processingId === student.id}
-                    >
-                      {processingId === student.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
-                      <span className="ml-1 hidden sm:inline">Delete</span>
-                    </Button>
+                    {isStrictAdmin && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 text-xs bg-gradient-to-r from-destructive to-destructive/80 text-white font-bold shadow-sm hover:scale-105 border-0 rounded-lg"
+                        onClick={() => handleDeleteStudent(student.id)}
+                        disabled={processingId === student.id}
+                      >
+                        {processingId === student.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
+                        <span className="ml-1 hidden sm:inline">Delete</span>
+                      </Button>
+                    )}
                     <Button
                       size="sm"
                       variant="outline"
@@ -754,11 +784,26 @@ const ApprovalTab = (props: ApprovalTabProps) => {
               <div className="flex flex-col items-center gap-4 p-6 bg-secondary/10 rounded-xl">
                 <div className="relative">
                   <RobustImage
-                    photoUrl={editedData.photoUrl || ''}
+                    photoUrl={photoPreview || editedData.photoUrl || ''}
                     studentName={editedData.name || ''}
                     size="lg"
                   />
+                  {uploadingPhoto && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full">
+                      <Loader2 className="h-6 w-6 text-white animate-spin" />
+                    </div>
+                  )}
                 </div>
+                <label className="cursor-pointer flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg font-semibold text-sm hover:bg-primary/90 transition-all shadow-md">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handlePhotoFileChange}
+                    className="hidden"
+                    disabled={uploadingPhoto}
+                  />
+                  {uploadingPhoto ? 'Uploading...' : (editedData.photoUrl ? 'Change Photo' : 'Upload Photo')}
+                </label>
                 <div className="text-center">
                   <h3 className="font-bold text-xl">{editedData.name || 'Alumni Name'}</h3>
                   <p className="text-muted-foreground">{editedData.programme || 'Programme'}</p>
@@ -889,30 +934,50 @@ const ApprovalTab = (props: ApprovalTabProps) => {
                   <Label htmlFor="department" className="font-medium">
                     Department
                   </Label>
-                  <select
-                    id="department"
-                    value={editedData.department || ""}
-                    onChange={(e) => setEditedData(prev => ({ ...prev, department: e.target.value, programme: "" }))}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <option value="">Select Department</option>
-                    {uniqueDepartments.map(d => <option key={d} value={d}>{d}</option>)}
-                  </select>
+                  {uniqueDepartments.length > 0 ? (
+                    <select
+                      id="department"
+                      value={editedData.department || ""}
+                      onChange={(e) => setEditedData(prev => ({ ...prev, department: e.target.value, programme: "" }))}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    >
+                      <option value="">Select Department</option>
+                      {uniqueDepartments.map(d => <option key={d} value={d}>{d}</option>)}
+                    </select>
+                  ) : (
+                    <Input
+                      id="department"
+                      value={editedData.department || ""}
+                      onChange={(e) => setEditedData(prev => ({ ...prev, department: e.target.value }))}
+                      className="h-10"
+                      placeholder="Enter department"
+                    />
+                  )}
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="programme" className="font-medium">
                     Programme
                   </Label>
-                  <select
-                    id="programme"
-                    value={editedData.programme || ""}
-                    onChange={(e) => setEditedData(prev => ({ ...prev, programme: e.target.value }))}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <option value="">Select Programme</option>
-                    {uniqueProgrammes.map(p => <option key={p} value={p}>{p}</option>)}
-                  </select>
+                  {uniqueProgrammes.length > 0 ? (
+                    <select
+                      id="programme"
+                      value={editedData.programme || ""}
+                      onChange={(e) => setEditedData(prev => ({ ...prev, programme: e.target.value }))}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    >
+                      <option value="">Select Programme</option>
+                      {uniqueProgrammes.map(p => <option key={p} value={p}>{p}</option>)}
+                    </select>
+                  ) : (
+                    <Input
+                      id="programme"
+                      value={editedData.programme || ""}
+                      onChange={(e) => setEditedData(prev => ({ ...prev, programme: e.target.value }))}
+                      className="h-10"
+                      placeholder="Enter programme"
+                    />
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -930,20 +995,6 @@ const ApprovalTab = (props: ApprovalTabProps) => {
                   </select>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="department" className="font-medium">
-                    Department
-                  </Label>
-                  <Input
-                    id="department"
-                    value={editedData.department || ""}
-                    onChange={(e) => setEditedData(prev => ({ ...prev, department: e.target.value }))}
-                    className="bg-gray-100 cursor-not-allowed h-10"
-                    placeholder="Enter department"
-                    readOnly
-                    disabled
-                  />
-                </div>
 
                 {/* Professional Information Section */}
                 <div className="md:col-span-2 mt-6">
