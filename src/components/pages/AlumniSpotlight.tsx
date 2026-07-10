@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo, useState, useEffect } from 'react';
-import { fetchAlumniSpotlight, createAlumniSpotlight, updateAlumniSpotlight, deleteAlumniSpotlight, AlumniSpotlightItem, fetchStudentsData, uploadImageToDrive } from '@/services/apiService';
+import { fetchAlumniSpotlight, createAlumniSpotlight, updateAlumniSpotlight, deleteAlumniSpotlight, AlumniSpotlightItem, fetchStudentsData, uploadImageToDrive, getDirectImageUrl } from '@/services/apiService';
 import { useAuth } from '@/contexts/useAuth';
 import UniversalNav from '@/components/UniversalNav';
 import { useRouter } from 'next/navigation';
@@ -142,7 +142,7 @@ const AlumniSpotlight: React.FC = () => {
     if (!file) return;
     setUploadingImage(true);
     try {
-      const url = await uploadImageToDrive(file);
+      const url = await uploadImageToDrive(file, 'alumni_spotlight_photo');
       setForm(prev => ({ ...prev, photoUrl: url }));
     } finally {
       setUploadingImage(false);
@@ -214,7 +214,7 @@ const AlumniSpotlight: React.FC = () => {
     setSaving(true);
     try {
       const target = spotlights[editingIndex];
-      await updateAlumniSpotlight({ rowIndex: target.rowIndex }, form);
+      await updateAlumniSpotlight({ id: target.id }, form);
       setEditingIndex(null);
       resetForm();
       setShowForm(false);
@@ -228,12 +228,11 @@ const AlumniSpotlight: React.FC = () => {
     if (!target) return;
     setSaving(true);
     try {
-      await deleteAlumniSpotlight({ rowIndex: target.rowIndex });
+      await deleteAlumniSpotlight({ id: target.id });
       const next = await fetchAlumniSpotlight();
       queryClient.setQueryData(['alumniSpotlight'], next);
     } finally { setSaving(false); }
   };
-
   const grouped = useMemo(() => {
     // Create a memoized date parser for better performance
     const dateCache = new Map<string, number>();
@@ -465,19 +464,40 @@ const AlumniSpotlight: React.FC = () => {
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground">Photo URL</label>
-                <div className="flex items-center gap-2">
-                  <input
-                    className="flex-1 p-3 border border-input rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all"
-                    placeholder="Photo URL"
-                    value={form.photoUrl}
-                    onChange={e => setForm({ ...form, photoUrl: e.target.value })}
-                  />
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    className="file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-white hover:file:bg-primary/90"
-                  />
+                <div className="flex flex-col gap-3">
+                  {form.photoUrl && (
+                    <div className="relative w-32 h-32 rounded-xl overflow-hidden border bg-gray-50 flex items-center justify-center">
+                      <img
+                        src={getDirectImageUrl(form.photoUrl)}
+                        alt="Profile Preview"
+                        className="w-full h-full object-cover"
+                        style={{ objectFit: 'cover' }}
+                        onError={(e) => {
+                          const img = e.target as HTMLImageElement;
+                          if (img.src.includes('drive.google.com') || img.src.includes('googleusercontent.com')) {
+                            const match = img.src.match(/\/d\/([a-zA-Z0-9_-]+)/) || img.src.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+                            if (match && match[1]) {
+                              img.src = `https://lh3.googleusercontent.com/d/${match[1]}=w300-h300-c`;
+                            }
+                          }
+                        }}
+                      />
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <input
+                      className="flex-1 p-3 border border-input rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all text-xs"
+                      placeholder="Photo URL"
+                      value={form.photoUrl}
+                      onChange={e => setForm({ ...form, photoUrl: e.target.value })}
+                    />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-white hover:file:bg-primary/90"
+                    />
+                  </div>
                 </div>
               </div>
               <div className="space-y-2 md:col-span-2">
@@ -598,12 +618,13 @@ const AlumniSpotlight: React.FC = () => {
                     className="flex flex-col md:flex-row border rounded-xl bg-white shadow-elegant overflow-hidden hover:shadow-lg transition-all duration-300 transform md:hover:-translate-y-1"
                   >
                     {/* Image (Top/Left) */}
-                    <div className="relative bg-black aspect-[16/9] md:aspect-auto md:basis-2/5 flex-shrink-0 min-h-[200px]">
+                    <div className="relative bg-black aspect-[16/9] md:aspect-auto md:basis-2/5 flex-shrink-0 min-h-[200px] overflow-hidden">
                       {spotlight.photoUrl ? (
                         <img
-                          src={spotlight.photoUrl}
+                          src={getDirectImageUrl(spotlight.photoUrl)}
                           alt={spotlight.name}
                           className="absolute inset-0 w-full h-full object-cover"
+                          style={{ objectFit: 'cover', objectPosition: 'center' }}
                           onError={(e) => {
                             // Try alternative Google Drive URL formats if the first one fails
                             const img = e.target as HTMLImageElement;
@@ -643,6 +664,14 @@ const AlumniSpotlight: React.FC = () => {
                                     break;
                                   }
                                 }
+                              }
+                            } else if (url.includes('/Uploads/')) {
+                              if (url.endsWith('.webp')) {
+                                img.src = url.replace(/\.webp$/i, '.jpg');
+                              } else if (url.endsWith('.jpg')) {
+                                img.src = url.replace(/\.jpg$/i, '.png');
+                              } else if (url.endsWith('.png')) {
+                                img.src = url.replace(/\.png$/i, '.jpeg');
                               }
                             }
                           }}

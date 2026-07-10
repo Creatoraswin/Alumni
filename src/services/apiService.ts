@@ -340,11 +340,11 @@ export const deleteStudentData = async (student: Student): Promise<{ status: str
   }
 };
 
-export const uploadImageToDrive = async (file: File, registrationNo?: string): Promise<string> => {
+export const uploadImageToDrive = async (file: File, type: string = 'photo', registrationNo?: string): Promise<string> => {
   try {
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('type', 'photo');
+    formData.append('type', type);
     if (registrationNo) {
       formData.append('registration_no', registrationNo);
     }
@@ -500,35 +500,150 @@ export const authenticateDepartmentUser = async (username: string, password: str
 
 export const updateAlumniTalk = async (criteria: any, updates: any) => {
   try {
+    const mappedUpdates: any = {};
+    if (updates.date !== undefined) mappedUpdates.date_of_event = updates.date;
+    if (updates.name !== undefined) mappedUpdates.name_of_alumni = updates.name;
+    if (updates.school !== undefined) mappedUpdates.school = updates.school;
+    if (updates.department !== undefined) mappedUpdates.department = updates.department;
+    if (updates.registrationNo !== undefined) mappedUpdates.registration_no = updates.registrationNo;
+    if (updates.bannerPhotoUrl !== undefined) mappedUpdates.banner_photo_url = updates.bannerPhotoUrl;
+    if (updates.talkon !== undefined) mappedUpdates.talk_on = updates.talkon;
+    if (updates.galleryLink !== undefined) mappedUpdates.gallery_link = updates.galleryLink;
+
+    const mappedCriteria: any = {};
+    if (criteria.id !== undefined) mappedCriteria.id = criteria.id;
+    if (criteria.registrationNo !== undefined) mappedCriteria.registration_no = criteria.registrationNo;
+    if (criteria.name !== undefined) mappedCriteria.name_of_alumni = criteria.name;
+
     const response = await fetch(`${API_URL}/alumni-talks/index.php`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'update', criteria, updates })
+      body: JSON.stringify({ action: 'update', criteria: mappedCriteria, updates: mappedUpdates })
     });
     return await response.json();
   } catch (e) {
-    return { status: 'error', message: 'Failed' };
+    return { status: 'error', message: 'Failed to update alumni talk' };
   }
 };
 
 export const updateAlumniSpotlight = async (criteria: any, updates: any) => {
   try {
+    const mappedUpdates: any = {};
+    if (updates.dateAdded !== undefined) mappedUpdates.date_added = updates.dateAdded;
+    if (updates.name !== undefined) mappedUpdates.name_of_alumni = updates.name;
+    if (updates.yearOfGraduation !== undefined) mappedUpdates.year_of_graduation = updates.yearOfGraduation;
+    if (updates.school !== undefined) mappedUpdates.school = updates.school;
+    if (updates.department !== undefined) mappedUpdates.department = updates.department;
+    if (updates.registrationNo !== undefined) mappedUpdates.registration_no = updates.registrationNo;
+    if (updates.currentPosition !== undefined) mappedUpdates.current_position = updates.currentPosition;
+    if (updates.company !== undefined) mappedUpdates.company_organization = updates.company;
+    if (updates.photoUrl !== undefined) mappedUpdates.photo_url = updates.photoUrl;
+    if (updates.achievement !== undefined) mappedUpdates.achievement_story = updates.achievement;
+    if (updates.galleryLink !== undefined) mappedUpdates.gallery_link = updates.galleryLink;
+    if (updates.status !== undefined) mappedUpdates.status = updates.status;
+
+    const mappedCriteria: any = {};
+    if (criteria.id !== undefined) mappedCriteria.id = criteria.id;
+    if (criteria.registrationNo !== undefined) mappedCriteria.registration_no = criteria.registrationNo;
+    if (criteria.name !== undefined) mappedCriteria.name_of_alumni = criteria.name;
+
     const response = await fetch(`${API_URL}/alumni-spotlight/index.php`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'update', criteria, updates })
+      body: JSON.stringify({ action: 'update', criteria: mappedCriteria, updates: mappedUpdates })
     });
     return await response.json();
   } catch (e) {
-    return { status: 'error', message: 'Failed' };
+    return { status: 'error', message: 'Failed to update alumni spotlight' };
   }
 };
 
-// Stubs for remaining exports to prevent build errors
-export const createAlumniTalk = async (talk: any) => ({ status: 'success', message: '' });
-export const deleteAlumniTalk = async (criteria: any) => ({ status: 'success', message: '' });
-export const createAlumniSpotlight = async (s: any) => ({ status: 'success', message: '' });
-export const deleteAlumniSpotlight = async (c: any) => ({ status: 'success', message: '' });
+// Functions for Alumni Talks
+export const createAlumniTalk = async (talk: any) => {
+  try {
+    const talkData = {
+      date_of_event: talk.date,
+      name_of_alumni: talk.name,
+      school: talk.school,
+      department: talk.department,
+      registration_no: talk.registrationNo,
+      banner_photo_url: talk.bannerPhotoUrl,
+      talk_on: talk.talkon,
+      gallery_link: talk.galleryLink
+    };
+    const response = await fetch(`${API_URL}/alumni-talks/index.php`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'create', talk: talkData })
+    });
+    return await response.json();
+  } catch (e) {
+    return { status: 'error', message: 'Failed to create alumni talk' };
+  }
+};
+
+export const deleteAlumniTalk = async (criteria: any) => {
+  try {
+    const mappedCriteria: any = {};
+    if (criteria.id !== undefined) mappedCriteria.id = criteria.id;
+    if (criteria.registrationNo !== undefined) mappedCriteria.registration_no = criteria.registrationNo;
+    if (criteria.name !== undefined) mappedCriteria.name_of_alumni = criteria.name;
+
+    const response = await fetch(`${API_URL}/alumni-talks/index.php`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'delete', criteria: mappedCriteria })
+    });
+    return await response.json();
+  } catch (e) {
+    return { status: 'error', message: 'Failed to delete alumni talk' };
+  }
+};
+
+export const createAlumniSpotlight = async (s: any) => {
+  try {
+    const spotlightData = {
+      date_added: s.dateAdded,
+      name_of_alumni: s.name,
+      year_of_graduation: s.yearOfGraduation,
+      school: s.school,
+      department: s.department,
+      registration_no: s.registrationNo,
+      current_position: s.currentPosition,
+      company_organization: s.company,
+      photo_url: s.photoUrl,
+      achievement_story: s.achievement,
+      gallery_link: s.galleryLink,
+      status: s.status
+    };
+    const response = await fetch(`${API_URL}/alumni-spotlight/index.php`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'create', spotlight: spotlightData })
+    });
+    return await response.json();
+  } catch (e) {
+    return { status: 'error', message: 'Failed to create alumni spotlight' };
+  }
+};
+
+export const deleteAlumniSpotlight = async (criteria: any) => {
+  try {
+    const mappedCriteria: any = {};
+    if (criteria.id !== undefined) mappedCriteria.id = criteria.id;
+    if (criteria.registrationNo !== undefined) mappedCriteria.registration_no = criteria.registrationNo;
+    if (criteria.name !== undefined) mappedCriteria.name_of_alumni = criteria.name;
+
+    const response = await fetch(`${API_URL}/alumni-spotlight/index.php`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'delete', criteria: mappedCriteria })
+    });
+    return await response.json();
+  } catch (e) {
+    return { status: 'error', message: 'Failed to delete alumni spotlight' };
+  }
+};
 export const fetchAlumniMeets = async () => [];
 export const createAlumniMeet = async (m: any) => ({ status: 'success', message: '' });
 export const updateAlumniMeet = async (c: any, u: any) => ({ status: 'success', message: '' });

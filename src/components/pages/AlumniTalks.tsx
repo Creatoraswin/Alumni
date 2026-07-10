@@ -79,7 +79,7 @@ const AlumniTalks: React.FC = () => {
     if (!file) return;
     setUploadingImage(true);
     try {
-      const url = await uploadImageToDrive(file);
+      const url = await uploadImageToDrive(file, 'alumni_talk_banner');
       setForm(prev => ({ ...prev, bannerPhotoUrl: url }));
     } finally { setUploadingImage(false); }
   };
@@ -145,7 +145,7 @@ const AlumniTalks: React.FC = () => {
     setSaving(true);
     try {
       const target = talks[editingIndex];
-      await updateAlumniTalk({ rowIndex: target.rowIndex }, form);
+      await updateAlumniTalk({ id: target.id }, form);
       setEditingIndex(null);
       resetForm();
       setShowForm(false);
@@ -159,7 +159,7 @@ const AlumniTalks: React.FC = () => {
     if (!target) return;
     setSaving(true);
     try {
-      await deleteAlumniTalk({ rowIndex: target.rowIndex });
+      await deleteAlumniTalk({ id: target.id });
       const next = await fetchAlumniTalks();
       queryClient.setQueryData(['alumniTalks'], next);
     } finally { setSaving(false); }
@@ -512,19 +512,40 @@ const AlumniTalks: React.FC = () => {
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-foreground">Banner Photo</label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        className="flex-1 p-3 border border-input rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all"
-                        placeholder="Banner Photo URL"
-                        value={form.bannerPhotoUrl}
-                        onChange={e => setForm({ ...form, bannerPhotoUrl: e.target.value })}
-                      />
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageChange}
-                        className="file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-white hover:file:bg-primary/90"
-                      />
+                    <div className="flex flex-col gap-3">
+                      {form.bannerPhotoUrl && (
+                        <div className="relative w-full max-w-md aspect-[16/9] rounded-lg overflow-hidden border bg-gray-50 flex items-center justify-center">
+                          <img
+                            src={getDirectImageUrl(form.bannerPhotoUrl)}
+                            alt="Banner Preview"
+                            className="w-full h-full object-cover"
+                            style={{ objectFit: 'cover' }}
+                            onError={(e) => {
+                              const img = e.target as HTMLImageElement;
+                              if (img.src.includes('drive.google.com') || img.src.includes('googleusercontent.com')) {
+                                const match = img.src.match(/\/d\/([a-zA-Z0-9_-]+)/) || img.src.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+                                if (match && match[1]) {
+                                  img.src = `https://lh3.googleusercontent.com/d/${match[1]}=w800-h400-c`;
+                                }
+                              }
+                            }}
+                          />
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2">
+                        <input
+                          className="flex-1 p-3 border border-input rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all text-xs"
+                          placeholder="Banner Photo URL"
+                          value={form.bannerPhotoUrl}
+                          onChange={e => setForm({ ...form, bannerPhotoUrl: e.target.value })}
+                        />
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageChange}
+                          className="file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-white hover:file:bg-primary/90"
+                        />
+                      </div>
                     </div>
                   </div>
                   <div className="space-y-2">
@@ -617,6 +638,24 @@ const AlumniTalks: React.FC = () => {
                             src={getDirectImageUrlSized(t.bannerPhotoUrl, 1080, 1350, 'c')}
                             alt={t.name}
                             className="absolute inset-0 w-full h-full object-cover"
+                            onError={(e) => {
+                              const img = e.target as HTMLImageElement;
+                              const url = img.src;
+                              if (url.includes('drive.google.com') || url.includes('googleusercontent.com')) {
+                                const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+                                if (match && match[1]) {
+                                  img.src = `https://lh3.googleusercontent.com/d/${match[1]}=w800-h400-c`;
+                                }
+                              } else if (url.includes('/Uploads/')) {
+                                if (url.endsWith('.webp')) {
+                                  img.src = url.replace(/\.webp$/i, '.jpg');
+                                } else if (url.endsWith('.jpg')) {
+                                  img.src = url.replace(/\.jpg$/i, '.png');
+                                } else if (url.endsWith('.png')) {
+                                  img.src = url.replace(/\.png$/i, '.jpeg');
+                                }
+                              }
+                            }}
                           />
                         ) : (
                           <div className="absolute inset-0 bg-gray-200 flex items-center justify-center">
