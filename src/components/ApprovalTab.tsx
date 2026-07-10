@@ -656,50 +656,49 @@ const ApprovalTab = (props: ApprovalTabProps) => {
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-lg text-foreground truncate group-hover:text-primary transition-colors leading-tight mb-1" title={student.name}>
+                    <h3 className="font-extrabold text-xl text-foreground group-hover:text-primary transition-colors leading-tight mb-2">
                       {student.name}
                     </h3>
                     <div className="flex flex-wrap items-center gap-1.5">
                       <span className="text-[10px] font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-md border border-primary/25">
                         Reg: {student.registrationNo || '-'}
                       </span>
-                      <span className="text-[10px] font-bold bg-secondary text-secondary-foreground px-2 py-0.5 rounded-md border border-secondary-foreground/10 truncate max-w-[120px]" title={student.programme}>
+                      <span className="text-[10px] font-bold bg-secondary text-secondary-foreground px-2 py-0.5 rounded-md border border-secondary-foreground/10">
                         {student.programme || '-'}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                {/* Academic Information (School & Department) */}
-                <div className="space-y-2 border-t border-primary/15 pt-3.5 mb-3.5">
-                  <div className="flex items-center text-xs text-muted-foreground gap-2 min-w-0">
+                {/* Academic Information (School & Department in One Row) */}
+                <div className="border-t border-primary/15 pt-3 mb-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1.5 min-w-0">
                     <Building2 className="h-3.5 w-3.5 text-primary/70 flex-shrink-0" />
-                    <span className="font-semibold text-foreground/90 truncate" title={student.school}>
-                      School: {student.school || 'N/A'}
+                    <span className="font-semibold text-foreground/90">
+                      {student.school || 'N/A'}
                     </span>
                   </div>
-                  <div className="flex items-center text-xs text-muted-foreground gap-2 min-w-0">
+                  <span className="text-muted-foreground/30 select-none hidden xs:inline">•</span>
+                  <div className="flex items-center gap-1.5 min-w-0">
                     <BookOpen className="h-3.5 w-3.5 text-primary/70 flex-shrink-0" />
-                    <span className="font-semibold text-foreground/90 truncate" title={student.department}>
-                      Dept: {student.department || 'N/A'}
+                    <span className="font-semibold text-foreground/90">
+                      {student.department || 'N/A'}
                     </span>
                   </div>
                 </div>
 
-                {/* Contact & Socials (Email, Phone, LinkedIn) */}
-                <div className="mb-4 p-3.5 rounded-xl bg-secondary/15 border border-primary/5 space-y-2">
-                  <div className="flex items-center text-xs text-muted-foreground gap-2.5 min-w-0">
-                    <Mail className="h-3.5 w-3.5 text-primary/60 flex-shrink-0" />
-                    <span className="truncate hover:text-primary transition-colors text-foreground font-medium" title={student.email}>
-                      {student.email || '-'}
-                    </span>
+                {/* Contact Box (Phone, Mail, LinkedIn) */}
+                <div className="p-4 rounded-xl bg-secondary/20 border border-primary/10 space-y-2.5 shadow-sm">
+                  <div className="flex items-center text-xs gap-2.5 min-w-0">
+                    <Phone className="h-3.5 w-3.5 text-primary/70 flex-shrink-0" />
+                    <span className="text-foreground font-semibold break-all">{student.phone || '-'}</span>
                   </div>
-                  <div className="flex items-center text-xs text-muted-foreground gap-2.5 min-w-0">
-                    <Phone className="h-3.5 w-3.5 text-primary/60 flex-shrink-0" />
-                    <span className="text-foreground font-medium">{student.phone || '-'}</span>
+                  <div className="flex items-center text-xs gap-2.5 min-w-0">
+                    <Mail className="h-3.5 w-3.5 text-primary/70 flex-shrink-0" />
+                    <span className="text-foreground font-semibold break-all">{student.email || '-'}</span>
                   </div>
                   {student.linkedinId && student.linkedinId !== "NA" && student.linkedinId !== "Not specified" ? (
-                    <div className="flex items-center text-xs gap-2.5 pt-2 border-t border-primary/5 mt-1.5">
+                    <div className="flex items-center text-xs gap-2.5 pt-2 border-t border-primary/10 mt-1.5">
                       <Linkedin className="h-3.5 w-3.5 text-[#0A66C2] flex-shrink-0" />
                       <a
                         href={student.linkedinId.startsWith('http') ? student.linkedinId : `https://linkedin.com/in/${student.linkedinId}`}
@@ -712,67 +711,11 @@ const ApprovalTab = (props: ApprovalTabProps) => {
                       </a>
                     </div>
                   ) : (
-                    <div className="flex items-center text-xs text-muted-foreground/60 gap-2.5 pt-2 border-t border-primary/5 mt-1.5">
-                      <Linkedin className="h-3.5 w-3.5 text-muted-foreground/40 flex-shrink-0" />
-                      <span className="italic">No LinkedIn provided</span>
+                    <div className="flex items-center text-xs text-muted-foreground/60 gap-2.5 pt-2 border-t border-primary/10 mt-1.5">
+                      <Linkedin className="h-3.5 w-3.5 text-muted-foreground/45 flex-shrink-0" />
+                      <span className="italic font-medium">No LinkedIn profile</span>
                     </div>
                   )}
-                </div>
-
-                {/* Status and Actions */}
-                <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-primary/10">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-semibold text-muted-foreground">Status:</span>
-                    <Badge variant={getCurrentStatus(student).variant} className="text-xs font-bold px-2 py-0.5">
-                      {getCurrentStatus(student).label}
-                    </Badge>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2">
-                    {isStrictAdmin && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-8 text-xs bg-gradient-to-r from-destructive to-destructive/80 text-white font-bold shadow-sm hover:scale-105 border-0 rounded-lg"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteStudent(student.id);
-                        }}
-                        disabled={processingId === student.id}
-                      >
-                        {processingId === student.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
-                        <span className="ml-1 hidden sm:inline">Delete</span>
-                      </Button>
-                    )}
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-8 text-xs bg-gradient-to-r from-primary to-primary/80 text-white font-bold shadow-sm hover:scale-105 border-0 rounded-lg"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleApproveStudent(student.id);
-                      }}
-                      disabled={processingId === student.id}
-                    >
-                      {processingId === student.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
-                      <span className="ml-1 hidden sm:inline">Approve</span>
-                    </Button>
-                    {isAdmin && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-8 text-xs bg-gradient-to-r from-secondary to-secondary/80 text-foreground font-bold shadow-sm hover:scale-105 border-0 rounded-lg"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEditStudent(student.id);
-                        }}
-                        disabled={editingStudent === student.id}
-                      >
-                        {editingStudent === student.id ? <Save className="h-3 w-3 animate-spin" /> : <Edit className="h-3 w-3" />}
-                        <span className="ml-1 hidden sm:inline">Edit</span>
-                      </Button>
-                    )}
-                  </div>
                 </div>
               </div>
             ))}
