@@ -650,15 +650,17 @@ const ApprovalTab = (props: ApprovalTabProps) => {
                       className="rounded-xl border-2 border-primary/20 group-hover:border-primary/50 transition-all duration-300 shadow-sm"
                     />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-extrabold text-xl text-foreground group-hover:text-primary transition-colors leading-tight mb-2">
+                  <div className="flex-1 min-w-0 space-y-2">
+                    <h3 className="font-extrabold text-xl text-foreground group-hover:text-primary transition-colors leading-tight">
                       {student.name}
                     </h3>
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="text-[10px] font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-md border border-primary/25">
+                    <div className="flex">
+                      <span className="text-xs font-bold bg-primary/10 text-primary px-2.5 py-1 rounded-md border border-primary/25">
                         Reg: {student.registrationNo || '-'}
                       </span>
-                      <span className="text-[10px] font-bold bg-secondary text-secondary-foreground px-2 py-0.5 rounded-md border border-secondary-foreground/10">
+                    </div>
+                    <div className="flex">
+                      <span className="text-xs font-bold bg-secondary text-secondary-foreground px-2.5 py-1 rounded-md border border-secondary-foreground/10">
                         {student.programme || '-'}
                       </span>
                     </div>
@@ -670,6 +672,7 @@ const ApprovalTab = (props: ApprovalTabProps) => {
                   <div className="flex items-center gap-1.5 min-w-0">
                     <Building2 className="h-3.5 w-3.5 text-primary/70 flex-shrink-0" />
                     <span className="font-semibold text-foreground/90">
+                      <span className="hidden md:inline text-muted-foreground/80 font-normal mr-0.5">School: </span>
                       {student.school || 'N/A'}
                     </span>
                   </div>
@@ -677,6 +680,7 @@ const ApprovalTab = (props: ApprovalTabProps) => {
                   <div className="flex items-center gap-1.5 min-w-0">
                     <BookOpen className="h-3.5 w-3.5 text-primary/70 flex-shrink-0" />
                     <span className="font-semibold text-foreground/90">
+                      <span className="hidden md:inline text-muted-foreground/80 font-normal mr-0.5">Dept: </span>
                       {student.department || 'N/A'}
                     </span>
                   </div>
