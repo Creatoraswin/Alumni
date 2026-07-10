@@ -1226,6 +1226,10 @@ const ApprovalTab = (props: ApprovalTabProps) => {
                         <span className="text-right font-semibold">{viewingStudent.department || 'N/A'}</span>
                       </div>
                       <div className="flex justify-between">
+                        <span className="text-muted-foreground font-medium">Graduation Year:</span>
+                        <span className="text-right font-semibold">{viewingStudent.graduationYear || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between">
                         <span className="text-muted-foreground font-medium">Date of Birth:</span>
                         <span className="text-right font-semibold">{formatDateForDisplay(viewingStudent.dob) || 'N/A'}</span>
                       </div>
@@ -1358,11 +1362,11 @@ const ApprovalTab = (props: ApprovalTabProps) => {
                 </div>
 
                 {/* Dialog Footer Actions */}
-                <div className="flex flex-wrap items-center justify-end gap-3 pt-4 border-t border-primary/10">
+                <div className="flex flex-wrap items-center justify-end gap-4 pt-5 mt-6 border-t border-primary/10">
                   {isStrictAdmin && (
                     <Button
                       variant="outline"
-                      className="bg-red-500 hover:bg-red-600 text-white font-bold shadow-md border-0 rounded-xl px-4 py-2 flex items-center gap-1.5 transition-all duration-300 hover:scale-105"
+                      className="bg-red-500 hover:bg-red-600 text-white font-bold shadow-md border-0 rounded-xl px-5 py-2 flex items-center gap-1.5 transition-all duration-300 hover:scale-105"
                       onClick={() => {
                         const id = viewingStudent.id;
                         setViewingStudent(null);
@@ -1377,7 +1381,7 @@ const ApprovalTab = (props: ApprovalTabProps) => {
 
                   <Button
                     variant="outline"
-                    className="bg-yellow-500 hover:bg-yellow-600 text-black font-bold shadow-md border-0 rounded-xl px-4 py-2 flex items-center gap-1.5 transition-all duration-300 hover:scale-105"
+                    className="bg-yellow-500 hover:bg-yellow-600 text-black font-bold shadow-md border-0 rounded-xl px-5 py-2 flex items-center gap-1.5 transition-all duration-300 hover:scale-105"
                     onClick={() => {
                       const id = viewingStudent.id;
                       setViewingStudent(null);
@@ -1390,7 +1394,7 @@ const ApprovalTab = (props: ApprovalTabProps) => {
                   </Button>
 
                   <Button
-                    className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold shadow-md border-0 rounded-xl px-5 py-2 flex items-center gap-1.5 transition-all duration-300 hover:scale-105"
+                    className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold shadow-md border-0 rounded-xl px-6 py-2 flex items-center gap-1.5 transition-all duration-300 hover:scale-105"
                     onClick={() => {
                       const id = viewingStudent.id;
                       setViewingStudent(null);
@@ -1403,8 +1407,8 @@ const ApprovalTab = (props: ApprovalTabProps) => {
                   </Button>
 
                   <Button
-                    variant="ghost"
-                    className="rounded-xl px-4 py-2 border border-primary/20 text-foreground font-semibold"
+                    variant="outline"
+                    className="rounded-xl px-6 py-2 border border-primary/20 hover:border-primary text-foreground font-bold shadow-sm transition-all duration-300 hover:scale-105 hover:bg-secondary/20"
                     onClick={() => setViewingStudent(null)}
                   >
                     Close
