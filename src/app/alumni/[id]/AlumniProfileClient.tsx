@@ -1,14 +1,11 @@
 "use client";
 
 import React, { Suspense, useMemo } from 'react';
-import { useSearchParams } from 'next/navigation';
 import StudentProfileView from '@/components/pages/StudentProfileView';
 import UniversalNav from '@/components/UniversalNav';
 import { useAuth } from '@/contexts/useAuth';
 
-function StudentProfileWrapper() {
-  const searchParams = useSearchParams();
-  const registrationNo = searchParams.get('id');
+function StudentProfileWrapper({ registrationNo }: { registrationNo: string }) {
   const { students, isLoggedIn, userRole, currentStudent, currentDepartmentUser, logout } = useAuth();
 
   const student = useMemo(() => {
@@ -46,10 +43,10 @@ function StudentProfileWrapper() {
   return <StudentProfileView student={student} />;
 }
 
-export default function StudentPage() {
+export default function AlumniProfileClient({ registrationNo }: { registrationNo: string }) {
   return (
     <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
-      <StudentProfileWrapper />
+      <StudentProfileWrapper registrationNo={registrationNo} />
     </Suspense>
   );
 }

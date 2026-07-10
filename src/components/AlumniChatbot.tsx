@@ -19,7 +19,7 @@ function normalizeStr(s: string) {
 /** Profile page link */
 const ProfileLink = ({ student }: { student: Student }) => (
   <a
-    href={`/alumni-directory/detail?id=${encodeURIComponent(student.registrationNo)}`}
+    href={`/alumni/${encodeURIComponent(student.registrationNo)}`}
     target="_blank"
     rel="noopener noreferrer"
     className="inline-flex items-center gap-1 mt-1 text-xs font-semibold text-blue-600 hover:text-blue-800 underline underline-offset-2"
@@ -90,7 +90,7 @@ function StudentRow({ student, index }: { student: Student; index: number }) {
         <span className="font-mono ml-1 text-blue-600"> [{student.registrationNo}]</span>
       </span>
       <a
-        href={`/alumni-directory/detail?id=${encodeURIComponent(student.registrationNo)}`}
+        href={`/alumni/${encodeURIComponent(student.registrationNo)}`}
         target="_blank"
         rel="noopener noreferrer"
         className="shrink-0 text-[10px] font-semibold text-blue-600 hover:text-blue-800 border border-blue-300 rounded px-1.5 py-0.5 hover:bg-blue-50 transition"
@@ -314,7 +314,7 @@ function buildReply(query: string, students: Student[], canViewContact: boolean)
           <strong>{found.length}</strong> alumni work at "{found[0].organisation}":<br />
           {found.slice(0, 8).map((s) => (
             <span key={s.id} className="block text-xs">• {s.name} ({s.programme}, {s.graduationYear})
-              &nbsp;<a href={`/alumni-directory/detail?id=${s.registrationNo}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">profile</a>
+              &nbsp;<a href={`/alumni/${s.registrationNo}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">profile</a>
             </span>
           ))}
           {found.length > 8 && <em className="text-xs">…and {found.length - 8} more.</em>}

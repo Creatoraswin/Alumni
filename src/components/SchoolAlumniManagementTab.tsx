@@ -267,7 +267,7 @@ const SchoolAlumniManagementTab = (props: AlumniManagementTabProps) => {
             // Removed hover-lift class to fix white on hover issue
             (<div
               key={`${student.id}-${index}`}
-              onClick={() => router.push(`/alumni-directory/detail?id=${student.registrationNo}`)}
+              onClick={() => router.push(`/alumni/${student.registrationNo}`)}
               className="border rounded-lg p-4 relative bg-card card-enhanced cursor-pointer hover:shadow-lg transition-shadow"
             >
               {/* Edit button at top right - only show for department admin */}
