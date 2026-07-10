@@ -196,14 +196,14 @@ const ApprovalTab = (props: ApprovalTabProps) => {
   }, []);
 
   const uniqueSchools = Array.from(new Set(academicData.map(a => a.school)));
-  const uniqueDepartments = editedData.school 
-    ? Array.from(new Set(academicData.filter(a => (a.school || "").toLowerCase() === (editedData.school || "").toLowerCase()).map(a => a.department))) 
+  const uniqueDepartments = editedData.school
+    ? Array.from(new Set(academicData.filter(a => (a.school || "").toLowerCase() === (editedData.school || "").toLowerCase()).map(a => a.department)))
     : [];
-  const uniqueProgrammes = editedData.department 
-    ? Array.from(new Set(academicData.filter(a => 
-        (a.school || "").toLowerCase() === (editedData.school || "").toLowerCase() && 
-        (a.department || "").toLowerCase() === (editedData.department || "").toLowerCase()
-      ).map(a => a.programme))) 
+  const uniqueProgrammes = editedData.department
+    ? Array.from(new Set(academicData.filter(a =>
+      (a.school || "").toLowerCase() === (editedData.school || "").toLowerCase() &&
+      (a.department || "").toLowerCase() === (editedData.department || "").toLowerCase()
+    ).map(a => a.programme)))
     : [];
 
 
@@ -581,10 +581,10 @@ const ApprovalTab = (props: ApprovalTabProps) => {
                 {sortedStudents.length} {sortedStudents.length === 1 ? 'student' : 'students'} pending approval
               </span>
             </div>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleRefresh} 
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRefresh}
               disabled={isRefreshing}
               className="w-full sm:w-auto flex items-center justify-center gap-2"
             >
@@ -641,7 +641,7 @@ const ApprovalTab = (props: ApprovalTabProps) => {
                 )}
 
                 {/* Header with photo and basic info */}
-                <div className="flex items-start space-x-4 mb-4 pr-24">
+                <div className="flex items-start space-x-4 mb-4 pr-12">
                   <div className="flex-shrink-0">
                     <RobustImage
                       photoUrl={student.photoUrl}
@@ -1398,8 +1398,8 @@ const ApprovalTab = (props: ApprovalTabProps) => {
                     <span>Approve</span>
                   </Button>
 
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     className="rounded-xl px-4 py-2 border border-primary/20 text-foreground font-semibold"
                     onClick={() => setViewingStudent(null)}
                   >
