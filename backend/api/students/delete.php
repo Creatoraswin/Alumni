@@ -10,6 +10,7 @@ require_once __DIR__ . '/../../models/Student.php';
 require_once __DIR__ . '/../../models/LinkedInStatus.php';
 require_once __DIR__ . '/../../utils/Response.php';
 require_once __DIR__ . '/../../utils/FileUpload.php';
+require_once __DIR__ . '/../../middleware/AuthMiddleware.php';
 
 Response::setCorsHeaders();
 
@@ -18,6 +19,9 @@ try {
     if ($method !== 'DELETE' && $method !== 'POST') {
         Response::error('Method not allowed', 405);
     }
+    
+    // Protect endpoint
+    $payload = AuthMiddleware::authenticate(['admin', 'cadmin']);
 
     $input = json_decode(file_get_contents('php://input'), true);
     if (!isset($input['registrationNo']) && !isset($input['registration_no'])) {

@@ -3,6 +3,15 @@ import { ReactNode } from 'react';
 // API configuration
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://alumni.sparvixainnovations.com/backend/api";
 
+export const fetchWithAuth = async (url: string, options: RequestInit = {}): Promise<Response> => {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  const headers = new Headers(options.headers || {});
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+  return fetch(url, { ...options, headers });
+};
+
 const parseDateString = (d: string): number => {
   if (!d) return 0;
   
@@ -183,7 +192,7 @@ const mapDbStudentToFrontend = (dbStudent: any): Student => {
 export const fetchStudentsData = async (showAll: boolean = false): Promise<Student[]> => {
   try {
     const ts = new Date().getTime();
-    const response = await fetch(`${API_URL}/students/index.php?showAll=${showAll}&t=${ts}`, { cache: 'no-store' });
+    const response = await fetchWithAuth(`${API_URL}/students/index.php?showAll=${showAll}&t=${ts}`, { cache: 'no-store' });
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     const data = await response.json();
     if (data.success && data.data) {
@@ -198,7 +207,7 @@ export const fetchStudentsData = async (showAll: boolean = false): Promise<Stude
 
 export const fetchStudentStrengthData = async (): Promise<StudentStrength[]> => {
   try {
-    const response = await fetch(`${API_URL}/studentdb/index.php`);
+    const response = await fetchWithAuth(`${API_URL}/studentdb/index.php`);
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     const data = await response.json();
     if (data.success && data.data) {
@@ -213,7 +222,7 @@ export const fetchStudentStrengthData = async (): Promise<StudentStrength[]> => 
 
 export const fetchAlumniTalks = async (): Promise<AlumniTalkItem[]> => {
   try {
-    const response = await fetch(`${API_URL}/alumni-talks/index.php?nocache=true&t=${Date.now()}`);
+    const response = await fetchWithAuth(`${API_URL}/alumni-talks/index.php?nocache=true&t=${Date.now()}`);
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     const data = await response.json();
     if (data.success && data.data) {
@@ -259,7 +268,7 @@ export const fetchAlumniTalks = async (): Promise<AlumniTalkItem[]> => {
 
 export const fetchAlumniSpotlight = async (showAll: boolean = false): Promise<AlumniSpotlightItem[]> => {
   try {
-    const response = await fetch(`${API_URL}/alumni-spotlight/index.php?showAll=${showAll}&t=${Date.now()}`);
+    const response = await fetchWithAuth(`${API_URL}/alumni-spotlight/index.php?showAll=${showAll}&t=${Date.now()}`);
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     const data = await response.json();
     if (data.success && data.data) {
@@ -343,7 +352,7 @@ export const updateStudentData = async (student: Student, userRole: "student" | 
     if (student.photoUrl !== undefined) updates.photo_url = student.photoUrl;
     if (student.feedback !== undefined) updates.feedback = student.feedback;
     
-    const response = await fetch(`${API_URL}/students/update.php`, {
+    const response = await fetchWithAuth(`${API_URL}/students/update.php`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -362,7 +371,7 @@ export const updateStudentData = async (student: Student, userRole: "student" | 
 
 export const deleteStudentData = async (student: Student): Promise<{ status: string; message: string }> => {
   try {
-    const response = await fetch(`${API_URL}/students/delete.php`, {
+    const response = await fetchWithAuth(`${API_URL}/students/delete.php`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ registrationNo: student.registrationNo })
@@ -383,7 +392,7 @@ export const uploadImageToDrive = async (file: File, type: string = 'photo', reg
       formData.append('registration_no', registrationNo);
     }
     
-    const response = await fetch(`${API_URL}/upload/index.php`, {
+    const response = await fetchWithAuth(`${API_URL}/upload/index.php`, {
       method: 'POST',
       body: formData
     });
@@ -432,7 +441,7 @@ export const registerStudent = async (studentData: Record<string, any>, setUploa
       feedback: studentData.feedback
     };
     
-    const response = await fetch(`${API_URL}/students/index.php`, {
+    const response = await fetchWithAuth(`${API_URL}/students/index.php`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -467,7 +476,7 @@ export function getDirectImageUrlSized(url: unknown, width: number, height: numb
 export const authenticateStudent = async (email: string, password: string): Promise<Student | null> => {
   try {
     // Note: The modal passes password as DD/MM/YYYY
-    const response = await fetch(`${API_URL}/students/index.php`);
+    const response = await fetchWithAuth(`${API_URL}/students/index.php`);
     const data = await response.json();
     
     if (!data.success) return null;
@@ -508,7 +517,7 @@ export const authenticateStudent = async (email: string, password: string): Prom
 
 export const authenticateDepartmentUser = async (username: string, password: string): Promise<any> => {
   try {
-    const response = await fetch(`${API_URL}/auth/login.php`, {
+    const response = await fetchWithAuth(`${API_URL}/auth/login.php`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password })
@@ -549,7 +558,7 @@ export const updateAlumniTalk = async (criteria: any, updates: any) => {
     if (criteria.registrationNo !== undefined) mappedCriteria.registration_no = criteria.registrationNo;
     if (criteria.name !== undefined) mappedCriteria.name_of_alumni = criteria.name;
 
-    const response = await fetch(`${API_URL}/alumni-talks/index.php`, {
+    const response = await fetchWithAuth(`${API_URL}/alumni-talks/index.php`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'update', criteria: mappedCriteria, updates: mappedUpdates })
@@ -581,7 +590,7 @@ export const updateAlumniSpotlight = async (criteria: any, updates: any) => {
     if (criteria.registrationNo !== undefined) mappedCriteria.registration_no = criteria.registrationNo;
     if (criteria.name !== undefined) mappedCriteria.name_of_alumni = criteria.name;
 
-    const response = await fetch(`${API_URL}/alumni-spotlight/index.php`, {
+    const response = await fetchWithAuth(`${API_URL}/alumni-spotlight/index.php`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'update', criteria: mappedCriteria, updates: mappedUpdates })
@@ -605,7 +614,7 @@ export const createAlumniTalk = async (talk: any) => {
       talk_on: talk.talkon,
       gallery_link: talk.galleryLink
     };
-    const response = await fetch(`${API_URL}/alumni-talks/index.php`, {
+    const response = await fetchWithAuth(`${API_URL}/alumni-talks/index.php`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'create', talk: talkData })
@@ -623,7 +632,7 @@ export const deleteAlumniTalk = async (criteria: any) => {
     if (criteria.registrationNo !== undefined) mappedCriteria.registration_no = criteria.registrationNo;
     if (criteria.name !== undefined) mappedCriteria.name_of_alumni = criteria.name;
 
-    const response = await fetch(`${API_URL}/alumni-talks/index.php`, {
+    const response = await fetchWithAuth(`${API_URL}/alumni-talks/index.php`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'delete', criteria: mappedCriteria })
@@ -650,7 +659,7 @@ export const createAlumniSpotlight = async (s: any) => {
       gallery_link: s.galleryLink,
       status: s.status
     };
-    const response = await fetch(`${API_URL}/alumni-spotlight/index.php`, {
+    const response = await fetchWithAuth(`${API_URL}/alumni-spotlight/index.php`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'create', spotlight: spotlightData })
@@ -668,7 +677,7 @@ export const deleteAlumniSpotlight = async (criteria: any) => {
     if (criteria.registrationNo !== undefined) mappedCriteria.registration_no = criteria.registrationNo;
     if (criteria.name !== undefined) mappedCriteria.name_of_alumni = criteria.name;
 
-    const response = await fetch(`${API_URL}/alumni-spotlight/index.php`, {
+    const response = await fetchWithAuth(`${API_URL}/alumni-spotlight/index.php`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'delete', criteria: mappedCriteria })
@@ -688,7 +697,7 @@ export const uploadReportToDrive = async (file: File): Promise<string> => {
     formData.append('file', file);
     formData.append('type', 'alumni_talk_report');
     
-    const response = await fetch(`${API_URL}/upload/index.php`, {
+    const response = await fetchWithAuth(`${API_URL}/upload/index.php`, {
       method: 'POST',
       body: formData
     });
@@ -724,7 +733,7 @@ export interface AcademicInfo {
 
 export const fetchAcademicInfo = async (): Promise<AcademicInfo[]> => {
   try {
-    const response = await fetch(`${API_URL}/academic/index.php`);
+    const response = await fetchWithAuth(`${API_URL}/academic/index.php`);
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     const data = await response.json();
     return data.success ? data.data : [];
@@ -736,7 +745,7 @@ export const fetchAcademicInfo = async (): Promise<AcademicInfo[]> => {
 
 export const addAcademicInfo = async (info: AcademicInfo) => {
   try {
-    const response = await fetch(`${API_URL}/academic/index.php`, {
+    const response = await fetchWithAuth(`${API_URL}/academic/index.php`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(info)
@@ -749,7 +758,7 @@ export const addAcademicInfo = async (info: AcademicInfo) => {
 
 export const updateAcademicInfo = async (info: AcademicInfo) => {
   try {
-    const response = await fetch(`${API_URL}/academic/index.php`, {
+    const response = await fetchWithAuth(`${API_URL}/academic/index.php`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(info)
@@ -762,7 +771,7 @@ export const updateAcademicInfo = async (info: AcademicInfo) => {
 
 export const deleteAcademicInfo = async (id: number) => {
   try {
-    const response = await fetch(`${API_URL}/academic/index.php?id=${id}`, {
+    const response = await fetchWithAuth(`${API_URL}/academic/index.php?id=${id}`, {
       method: 'DELETE'
     });
     return await response.json();
@@ -778,7 +787,7 @@ export const deleteAcademicInfo = async (id: number) => {
 
 export const fetchStudentStrength = async (): Promise<StudentStrength[]> => {
   try {
-    const response = await fetch(`${API_URL}/student_strength/`);
+    const response = await fetchWithAuth(`${API_URL}/student_strength/`);
     if (!response.ok) throw new Error("Network response was not ok");
     const result = await response.json();
     return result.success === true ? result.data : [];
@@ -790,7 +799,7 @@ export const fetchStudentStrength = async (): Promise<StudentStrength[]> => {
 
 export const addStudentStrength = async (data: StudentStrength): Promise<{ status: string; message: string; data?: any }> => {
   try {
-    const response = await fetch(`${API_URL}/student_strength/`, {
+    const response = await fetchWithAuth(`${API_URL}/student_strength/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
@@ -804,7 +813,7 @@ export const addStudentStrength = async (data: StudentStrength): Promise<{ statu
 
 export const updateStudentStrength = async (data: StudentStrength): Promise<{ status: string; message: string }> => {
   try {
-    const response = await fetch(`${API_URL}/student_strength/`, {
+    const response = await fetchWithAuth(`${API_URL}/student_strength/`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
@@ -818,7 +827,7 @@ export const updateStudentStrength = async (data: StudentStrength): Promise<{ st
 
 export const deleteStudentStrength = async (id: string): Promise<{ status: string; message: string }> => {
   try {
-    const response = await fetch(`${API_URL}/student_strength/?id=${id}`, {
+    const response = await fetchWithAuth(`${API_URL}/student_strength/?id=${id}`, {
       method: "DELETE",
     });
     return await response.json();
@@ -830,7 +839,7 @@ export const deleteStudentStrength = async (id: string): Promise<{ status: strin
 
 export const bulkUploadStudentStrength = async (data: StudentStrength[]): Promise<{ status: string; message: string; data?: any }> => {
   try {
-    const response = await fetch(`${API_URL}/student_strength/?action=bulk`, {
+    const response = await fetchWithAuth(`${API_URL}/student_strength/?action=bulk`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
@@ -858,7 +867,7 @@ export interface SystemUser {
 
 export const fetchSystemUsers = async (): Promise<SystemUser[]> => {
   try {
-    const response = await fetch(`${API_URL}/users/index.php`);
+    const response = await fetchWithAuth(`${API_URL}/users/index.php`);
     if (!response.ok) throw new Error("Network response was not ok");
     const result = await response.json();
     return result.success === true ? result.data : [];
@@ -870,7 +879,7 @@ export const fetchSystemUsers = async (): Promise<SystemUser[]> => {
 
 export const addSystemUser = async (user: SystemUser): Promise<{ success: boolean; message: string }> => {
   try {
-    const response = await fetch(`${API_URL}/users/index.php`, {
+    const response = await fetchWithAuth(`${API_URL}/users/index.php`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(user),
@@ -884,7 +893,7 @@ export const addSystemUser = async (user: SystemUser): Promise<{ success: boolea
 
 export const updateSystemUser = async (user: SystemUser): Promise<{ success: boolean; message: string }> => {
   try {
-    const response = await fetch(`${API_URL}/users/index.php`, {
+    const response = await fetchWithAuth(`${API_URL}/users/index.php`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(user),
@@ -898,7 +907,7 @@ export const updateSystemUser = async (user: SystemUser): Promise<{ success: boo
 
 export const deleteSystemUser = async (username: string): Promise<{ success: boolean; message: string }> => {
   try {
-    const response = await fetch(`${API_URL}/users/index.php?username=${encodeURIComponent(username)}`, {
+    const response = await fetchWithAuth(`${API_URL}/users/index.php?username=${encodeURIComponent(username)}`, {
       method: "DELETE",
     });
     return await response.json();

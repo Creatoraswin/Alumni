@@ -109,7 +109,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     loadStudents();
   }, []);
 
-  const login = (role: "student" | "admin" | "department" | "school" | "alumni-manager" | "cadmin", student?: Student, departmentUser?: DepartmentUser) => {
+  const login = (role: "student" | "admin" | "department" | "school" | "alumni-manager" | "cadmin", student?: Student, departmentUser?: DepartmentUser, token?: string) => {
     // Default to student role if not specified
     if (!role) {
       role = "student";
@@ -118,6 +118,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     // Store login info in localStorage for persistence
     localStorage.setItem('isLoggedIn', 'true');
     localStorage.setItem('userRole', role);
+    if (token) {
+      localStorage.setItem('token', token);
+    }
     
     setIsLoggedIn(true);
     setUserRole(role);
@@ -146,6 +149,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     localStorage.removeItem('userRole');
     localStorage.removeItem('currentStudent');
     localStorage.removeItem('currentDepartmentUser');
+    localStorage.removeItem('token');
     
     // Update state
     setIsLoggedIn(false);
@@ -155,8 +159,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   // Implementation of the AuthContextType interface functions
-  const handleLogin = (role: "student" | "admin" | "department" | "school" | "alumni-manager" | "cadmin", student?: Student, departmentUser?: DepartmentUser) => {
-    login(role, student, departmentUser);
+  const handleLogin = (role: "student" | "admin" | "department" | "school" | "alumni-manager" | "cadmin", student?: Student, departmentUser?: DepartmentUser, token?: string) => {
+    login(role, student, departmentUser, token);
   };
 
   const handleLogout = () => {

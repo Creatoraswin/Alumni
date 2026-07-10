@@ -20,6 +20,9 @@ try {
         Response::success($data, 'Academic information retrieved successfully');
 
     } elseif ($method === 'POST') {
+        require_once __DIR__ . '/../../middleware/AuthMiddleware.php';
+        AuthMiddleware::authenticate(['admin', 'cadmin', 'alumni-manager']);
+        
         $input = json_decode(file_get_contents('php://input'), true);
         
         $requiredFields = ['school', 'department', 'programme'];
@@ -39,6 +42,9 @@ try {
         }
 
     } elseif ($method === 'PUT') {
+        require_once __DIR__ . '/../../middleware/AuthMiddleware.php';
+        AuthMiddleware::authenticate(['admin', 'cadmin', 'alumni-manager']);
+        
         $input = json_decode(file_get_contents('php://input'), true);
         
         $requiredFields = ['id', 'school', 'department', 'programme'];
@@ -52,6 +58,9 @@ try {
         }
 
     } elseif ($method === 'DELETE') {
+        require_once __DIR__ . '/../../middleware/AuthMiddleware.php';
+        AuthMiddleware::authenticate(['admin', 'cadmin', 'alumni-manager']);
+        
         $id = isset($_GET['id']) ? $_GET['id'] : null;
         if (!$id) {
             // Also check raw input for DELETE body

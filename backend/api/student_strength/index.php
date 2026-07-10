@@ -20,6 +20,9 @@ try {
         Response::success($data, 'Student strength retrieved successfully');
 
     } elseif ($method === 'POST') {
+        require_once __DIR__ . '/../../middleware/AuthMiddleware.php';
+        AuthMiddleware::authenticate(['admin', 'cadmin', 'department', 'school']);
+        
         $input = json_decode(file_get_contents('php://input'), true);
 
         // Check for Bulk action
@@ -93,6 +96,9 @@ try {
         }
 
     } elseif ($method === 'PUT') {
+        require_once __DIR__ . '/../../middleware/AuthMiddleware.php';
+        AuthMiddleware::authenticate(['admin', 'cadmin', 'department', 'school']);
+        
         $input = json_decode(file_get_contents('php://input'), true);
         
         $requiredFields = ['id', 'registration_no', 'name'];
@@ -115,6 +121,9 @@ try {
         }
 
     } elseif ($method === 'DELETE') {
+        require_once __DIR__ . '/../../middleware/AuthMiddleware.php';
+        AuthMiddleware::authenticate(['admin', 'cadmin', 'department', 'school']);
+        
         $id = isset($_GET['id']) ? $_GET['id'] : null;
         if (!$id) {
             $input = json_decode(file_get_contents('php://input'), true);

@@ -9,6 +9,7 @@ require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../utils/Response.php';
 require_once __DIR__ . '/../../utils/FileUpload.php';
+require_once __DIR__ . '/../../middleware/AuthMiddleware.php';
 
 Response::setCorsHeaders();
 
@@ -17,6 +18,12 @@ try {
     if (!isset($_FILES['file'])) { Response::error('No file uploaded', 400); }
 
     $type = $_POST['type'] ?? 'photo';
+    
+    // Protect endpoint, but allow anonymous uploads for student profile photos during sign-up
+    if ($type !== 'student_photo' && $type !== 'photo') {
+        $payload = AuthMiddleware::authenticate(['admin', 'department', 'school', 'alumni-manager', 'cadmin', 'student']);
+    }
+
     $metadata = [];
 
     if (isset($_POST['registration_no'])) {

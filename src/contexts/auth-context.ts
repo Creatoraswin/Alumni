@@ -26,9 +26,9 @@ export interface AuthContextType {
   loading: boolean;
   dataLoaded: boolean;
   refreshData: (forceRefresh?: boolean) => Promise<Student[]>;
-  login: (role: UserRole, student?: Student, departmentUser?: DepartmentUser) => void;
+  login: (role: UserRole, student?: Student, departmentUser?: DepartmentUser, token?: string) => void;
   logout: () => void;
-  onLoginClick: (role: UserRole, student?: Student, departmentUser?: DepartmentUser) => void;
+  onLoginClick: (role: UserRole, student?: Student, departmentUser?: DepartmentUser, token?: string) => void;
   onLogout: () => void;
   isAuthReady: boolean;
 }

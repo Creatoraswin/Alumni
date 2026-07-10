@@ -9,8 +9,12 @@ require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../models/User.php';
 require_once __DIR__ . '/../../utils/Response.php';
+require_once __DIR__ . '/../../middleware/AuthMiddleware.php';
 
 Response::setCorsHeaders();
+
+// Only admin and cadmin can manage users
+AuthMiddleware::authenticate(['admin', 'cadmin']);
 
 try {
     $database = new Database();

@@ -26,7 +26,16 @@ try {
     $user = $userModel->authenticate($input['username'], $input['password']);
 
     if ($user) {
-        $token = bin2hex(random_bytes(32));
+        require_once __DIR__ . '/../../utils/JwtHandler.php';
+        $jwtHandler = new JwtHandler(JWT_SECRET_KEY);
+        $payload = [
+            'id' => $user['id'],
+            'username' => $user['username'],
+            'role' => $user['role'] ?? 'student',
+            'iat' => time(),
+            'exp' => time() + JWT_EXPIRATION
+        ];
+        $token = $jwtHandler->encode($payload);
         Response::success(['user' => $user, 'token' => $token], 'Login successful');
     } else {
         Response::error('Invalid username or password', 401);

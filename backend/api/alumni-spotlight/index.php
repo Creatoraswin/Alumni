@@ -29,6 +29,9 @@ try {
         Response::success($spotlights, 'Alumni spotlights retrieved successfully');
 
     } elseif ($method === 'POST') {
+        require_once __DIR__ . '/../../middleware/AuthMiddleware.php';
+        AuthMiddleware::authenticate(['admin', 'cadmin', 'department', 'school', 'alumni-manager']);
+        
         $input = json_decode(file_get_contents('php://input'), true);
 
         if (isset($input['action'])) {
