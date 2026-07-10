@@ -191,8 +191,15 @@ const ApprovalTab = (props: ApprovalTabProps) => {
   }, []);
 
   const uniqueSchools = Array.from(new Set(academicData.map(a => a.school)));
-  const uniqueDepartments = editedData.school ? Array.from(new Set(academicData.filter(a => a.school === editedData.school).map(a => a.department))) : [];
-  const uniqueProgrammes = editedData.department ? Array.from(new Set(academicData.filter(a => a.school === editedData.school && a.department === editedData.department).map(a => a.programme))) : [];
+  const uniqueDepartments = editedData.school 
+    ? Array.from(new Set(academicData.filter(a => (a.school || "").toLowerCase() === (editedData.school || "").toLowerCase()).map(a => a.department))) 
+    : [];
+  const uniqueProgrammes = editedData.department 
+    ? Array.from(new Set(academicData.filter(a => 
+        (a.school || "").toLowerCase() === (editedData.school || "").toLowerCase() && 
+        (a.department || "").toLowerCase() === (editedData.department || "").toLowerCase()
+      ).map(a => a.programme))) 
+    : [];
 
 
   // Helper function to check if student is in database
@@ -921,7 +928,7 @@ const ApprovalTab = (props: ApprovalTabProps) => {
                   </Label>
                   <select
                     id="school"
-                    value={editedData.school || ""}
+                    value={uniqueSchools.find(s => s.toLowerCase() === (editedData.school || "").toLowerCase()) || editedData.school || ""}
                     onChange={(e) => setEditedData(prev => ({ ...prev, school: e.target.value, department: "", programme: "" }))}
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   >
@@ -937,7 +944,7 @@ const ApprovalTab = (props: ApprovalTabProps) => {
                   {uniqueDepartments.length > 0 ? (
                     <select
                       id="department"
-                      value={editedData.department || ""}
+                      value={uniqueDepartments.find(d => d.toLowerCase() === (editedData.department || "").toLowerCase()) || editedData.department || ""}
                       onChange={(e) => setEditedData(prev => ({ ...prev, department: e.target.value, programme: "" }))}
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                     >
@@ -962,7 +969,7 @@ const ApprovalTab = (props: ApprovalTabProps) => {
                   {uniqueProgrammes.length > 0 ? (
                     <select
                       id="programme"
-                      value={editedData.programme || ""}
+                      value={uniqueProgrammes.find(p => p.toLowerCase() === (editedData.programme || "").toLowerCase()) || editedData.programme || ""}
                       onChange={(e) => setEditedData(prev => ({ ...prev, programme: e.target.value }))}
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                     >

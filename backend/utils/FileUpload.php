@@ -46,20 +46,68 @@ class FileUpload
 
             $uploadPath = self::getUploadPath($type, $metadata);
 
+            // Clean up any existing files with the same base name (e.g. old jpeg/png if we are webp)
+            if (isset($metadata['filename_base']) && !empty($metadata['filename_base'])) {
+                $filenameBase = preg_replace('/[^a-zA-Z0-9_-]/', '', $metadata['filename_base']);
+                foreach (['jpg', 'jpeg', 'png', 'gif', 'webp'] as $ext) {
+                    $existingFile = $uploadPath . $filenameBase . '.' . $ext;
+                    if (file_exists($existingFile)) {
+                        @unlink($existingFile);
+                    }
+                }
+            }
+
             $timestamp = time();
             $randomString = bin2hex(random_bytes(8));
             
+            // Check if GD webp is available and it's an image we want to convert
+            $isImage = in_array($mimeType, ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']);
+            $shouldConvertToWebp = $isImage && function_exists('imagewebp');
+
+            if ($shouldConvertToWebp) {
+                $targetExtension = 'webp';
+            } else {
+                $targetExtension = $extension;
+            }
+
             if (isset($metadata['filename_base']) && !empty($metadata['filename_base'])) {
                 $filenameBase = preg_replace('/[^a-zA-Z0-9_-]/', '', $metadata['filename_base']);
-                $filename = "{$filenameBase}.{$extension}";
+                $filename = "{$filenameBase}.{$targetExtension}";
             } else {
-                $filename = "{$type}_{$timestamp}_{$randomString}.{$extension}";
+                $filename = "{$type}_{$timestamp}_{$randomString}.{$targetExtension}";
             }
             
             $filePath = $uploadPath . $filename;
 
-            if (!move_uploaded_file($file['tmp_name'], $filePath)) {
-                throw new Exception('Failed to save uploaded file');
+            if ($shouldConvertToWebp) {
+                // First save temporary/original file
+                $tempOriginalPath = $uploadPath . 'temp_' . $timestamp . '_' . $randomString . '.' . $extension;
+                if (!move_uploaded_file($file['tmp_name'], $tempOriginalPath)) {
+                    throw new Exception('Failed to save uploaded file');
+                }
+                
+                // Convert to WebP
+                $converted = self::convertToWebp($tempOriginalPath, $filePath);
+                
+                if (!$converted) {
+                    // Fall back to original format if conversion failed
+                    if (isset($metadata['filename_base']) && !empty($metadata['filename_base'])) {
+                        $filename = "{$filenameBase}.{$extension}";
+                    } else {
+                        $filename = "{$type}_{$timestamp}_{$randomString}.{$extension}";
+                    }
+                    $filePath = $uploadPath . $filename;
+                    if (!rename($tempOriginalPath, $filePath)) {
+                        @unlink($tempOriginalPath);
+                        throw new Exception('Failed to save fallback uploaded file');
+                    }
+                } else {
+                    @unlink($tempOriginalPath); // Clean up temp file
+                }
+            } else {
+                if (!move_uploaded_file($file['tmp_name'], $filePath)) {
+                    throw new Exception('Failed to save uploaded file');
+                }
             }
 
             $webPath = str_replace(dirname(__DIR__, 2) . '/', '', $filePath);
@@ -137,5 +185,49 @@ class FileUpload
             return unlink($filePath);
         }
         return false;
+    }
+
+    private static function convertToWebp($sourcePath, $destinationPath, $quality = 80)
+    {
+        if (!function_exists('imagewebp')) {
+            return false;
+        }
+
+        $info = @getimagesize($sourcePath);
+        if ($info === false) {
+            return false;
+        }
+
+        $mime = $info['mime'];
+        switch ($mime) {
+            case 'image/jpeg':
+            case 'image/jpg':
+                $image = @imagecreatefromjpeg($sourcePath);
+                break;
+            case 'image/png':
+                $image = @imagecreatefrompng($sourcePath);
+                if ($image) {
+                    imagepalettetotruecolor($image);
+                    imagealphablending($image, true);
+                    imagesavealpha($image, true);
+                }
+                break;
+            case 'image/gif':
+                $image = @imagecreatefromgif($sourcePath);
+                break;
+            case 'image/webp':
+                $image = @imagecreatefromwebp($sourcePath);
+                break;
+            default:
+                return false;
+        }
+
+        if (!$image) {
+            return false;
+        }
+
+        $result = @imagewebp($image, $destinationPath, $quality);
+        @imagedestroy($image);
+        return $result;
     }
 }

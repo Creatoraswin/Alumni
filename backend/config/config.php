@@ -26,9 +26,9 @@ define('UPLOAD_TEMP_PATH', UPLOAD_BASE_PATH . 'Temp/');
 // File Upload Restrictions
 define('MAX_FILE_SIZE', 5 * 1024 * 1024); // 5MB for images
 define('MAX_PDF_SIZE', 10 * 1024 * 1024); // 10MB for PDFs
-define('ALLOWED_IMAGE_TYPES', ['image/jpeg', 'image/jpg', 'image/png', 'image/gif']);
+define('ALLOWED_IMAGE_TYPES', ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']);
 define('ALLOWED_DOCUMENT_TYPES', ['application/pdf']);
-define('ALLOWED_EXTENSIONS', ['jpg', 'jpeg', 'png', 'gif', 'pdf']);
+define('ALLOWED_EXTENSIONS', ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'webp']);
 
 // Security Settings
 define('API_SECRET_KEY', 'sk_alumni_4K8vP3nQ9xR2mL7wY5jH1aB6');
