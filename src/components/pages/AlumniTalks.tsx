@@ -473,7 +473,7 @@ const AlumniTalks: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <>
       <UniversalNav
         isLoggedIn={isLoggedIn}
         userRole={userRole}
@@ -482,17 +482,8 @@ const AlumniTalks: React.FC = () => {
         onLoginClick={() => { router.push('/alumni-directory?login=1'); }}
         onLogout={logout}
       />
-      <div className="w-full px-4 md:px-6 lg:px-8 py-6 pt-24">
+      <div className="w-full px-4 md:px-6 lg:px-8 py-6 pt-20">
         <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between mb-6">
-            <button
-              onClick={() => router.push('/')}
-              className="flex items-center text-primary hover:text-primary/80 transition-colors font-medium"
-            >
-              <ChevronLeft className="h-5 w-5 mr-1" />
-              Back
-            </button>
-          </div>
           <h1 className="text-2xl md:text-3xl font-bold text-center text-primary mb-6">Alumni Talks</h1>
 
           <TalksFilterSection
@@ -823,7 +814,7 @@ const AlumniTalks: React.FC = () => {
           )}
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

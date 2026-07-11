@@ -174,7 +174,7 @@ const AlumniTalkDetail: React.FC = () => {
   const regDisplay = (talk.registrationNo && String(talk.registrationNo).trim()) || (source?.registrationNo && String(source.registrationNo).trim()) || '-';
 
   return (
-    <div className="min-h-screen bg-background">
+    <>
       <UniversalNav
         isLoggedIn={isLoggedIn}
         userRole={userRole}
@@ -185,15 +185,6 @@ const AlumniTalkDetail: React.FC = () => {
       />
       <div className="w-full px-4 md:px-6 lg:px-8 py-6 pt-20">
         <div className="max-w-7xl mx-auto">
-          <Button
-            onClick={() => router.push('/alumni-talks')}
-            variant="outline"
-            className="mb-6 flex items-center gap-2 border-primary/30 hover:gradient-accent hover:text-dark"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Alumni Talks
-          </Button>
-
           {/* Three Column Layout: Banner | Talk Info | Alumni Info */}
           <div className="bg-white/80 rounded-2xl shadow-elegant overflow-hidden p-6 md:p-8 mb-8">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -351,7 +342,7 @@ const AlumniTalkDetail: React.FC = () => {
           })()}
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

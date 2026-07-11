@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Home, Users, BarChart2, User, Youtube, GraduationCap, Menu, Star, ChevronLeft, ChevronRight, LayoutDashboard, TrendingUp, MessageSquare, UserCheck, Mic2, Newspaper, UserCog, BarChart3 } from "lucide-react";
 import { Student, getDirectImageUrl } from "@/services/apiService";
@@ -40,6 +40,21 @@ const UniversalNav = ({
   const [isAlumniCornerOpen, setIsAlumniCornerOpen] = useState(false);
   const [isAnalyticsDropdownOpen, setIsAnalyticsDropdownOpen] = useState(false);
 
+  // Ref for the sidebar scroll container
+  const sidebarScrollRef = useRef<HTMLDivElement>(null);
+
+  // Scroll the currently active sidebar button into view (only if needed)
+  const scrollActiveIntoView = useCallback(() => {
+    requestAnimationFrame(() => {
+      const container = sidebarScrollRef.current;
+      if (!container) return;
+      const activeEl = container.querySelector('[data-sidebar-active="true"]') as HTMLElement | null;
+      if (activeEl) {
+        activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    });
+  }, []);
+
   // Determine active tab based on path
   const getActiveTab = (): "home" | "alumni" | "news" | "alumni-talks" | "alumni-meets" | "alumni-spotlight" | "youtube" | "profile" | "analytics" | "detailed-analytics" | "alumni-management" | "approval" | "feedback" | "dashboard" | "academic" | "student-strength" | "users" => {
     if (pathname === "/") return "home";
@@ -72,6 +87,7 @@ const UniversalNav = ({
       if (pathname.includes("/alumni")) return "alumni";
       if (pathname.includes("/detailed-analytics")) return "detailed-analytics";
       if (pathname.includes("/analytics")) return "analytics";
+      if (pathname.includes("/feedback")) return "feedback";
       return "dashboard";
     }
     
@@ -83,8 +99,8 @@ const UniversalNav = ({
   // Handle navigation and close mobile menu
   const handleNavigation = (path: string) => {
     router.push(path);
-    setIsMenuOpen(false); // Close mobile menu after navigation
-    setIsAlumniCornerOpen(false); // Close alumni corner dropdown
+    setIsMenuOpen(false);
+    setIsAlumniCornerOpen(false);
   };
 
   // Toggle alumni corner dropdown
@@ -104,6 +120,19 @@ const UniversalNav = ({
       document.removeEventListener('click', handleClickOutside);
     };
   }, [isAlumniCornerOpen, isAnalyticsDropdownOpen]);
+
+  // After each navigation, scroll the active sidebar item into view
+  // Uses block:'nearest' so it only scrolls if the item is already out of view
+  useEffect(() => {
+    scrollActiveIntoView();
+  }, [pathname, scrollActiveIntoView]);
+
+  // Also run on mount so the active item is visible on first load
+  useEffect(() => {
+    scrollActiveIntoView();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
 
   // Render desktop navigation items based on user role
   const renderDesktopNavItems = () => {
@@ -447,6 +476,19 @@ const UniversalNav = ({
               </div>
             )}
           </div>
+          {/* Feedback for school/department */}
+          <button
+            className={`flex items-center justify-center px-3 py-2 rounded-md transition-all text-sm font-semibold focus:outline-none ${
+              activeTab === "feedback" 
+                ? "bg-red-600 text-white shadow-lg" 
+                : "text-muted-foreground hover:text-red-600 hover:shadow-sm hover:scale-105"
+            }`}
+            onClick={() => router.push(userRole === "school" ? "/school/feedback" : "/department/feedback")}
+            title="Feedback"
+          >
+            <MessageSquare className="w-5 h-5" />
+            <span className="hidden md:inline ml-1">Feedback</span>
+          </button>
           {/* Alumni Corner dropdown */}
           <div className="relative">
             <button
@@ -718,6 +760,7 @@ const UniversalNav = ({
         <div className="w-full space-y-1">
           <button
             title="Home"
+            data-sidebar-active={activeTab === "home" ? "true" : "false"}
             className={`flex items-center w-full p-3 rounded-lg transition-colors ${
               activeTab === "home" 
                 ? "bg-red-600 text-white shadow-lg" 
@@ -730,6 +773,7 @@ const UniversalNav = ({
           </button>
           <button
             title="Dashboard"
+            data-sidebar-active={activeTab === "dashboard" ? "true" : "false"}
             className={`flex items-center w-full p-3 rounded-lg transition-colors ${
               activeTab === "dashboard" 
                 ? "bg-red-600 text-white shadow-lg" 
@@ -742,6 +786,7 @@ const UniversalNav = ({
           </button>
           <button
             title="Alumni Management"
+            data-sidebar-active={activeTab === "alumni-management" ? "true" : "false"}
             className={`flex items-center w-full p-3 rounded-lg transition-colors ${
               activeTab === "alumni-management" 
                 ? "bg-red-600 text-white shadow-lg" 
@@ -754,6 +799,7 @@ const UniversalNav = ({
           </button>
           <button
             title="Basic Analytics"
+            data-sidebar-active={activeTab === "analytics" ? "true" : "false"}
             className={`flex items-center w-full p-3 rounded-lg transition-colors ${
               activeTab === "analytics" 
                 ? "bg-red-600 text-white shadow-lg" 
@@ -767,6 +813,7 @@ const UniversalNav = ({
           {(userRole === "admin" || userRole === "alumni-manager") && (
             <button
               title="Detailed Analytics"
+              data-sidebar-active={activeTab === "detailed-analytics" ? "true" : "false"}
               className={`flex items-center w-full p-3 rounded-lg transition-colors ${
                 activeTab === "detailed-analytics" 
                   ? "bg-red-600 text-white shadow-lg" 
@@ -781,6 +828,7 @@ const UniversalNav = ({
           {(userRole === "admin" || userRole === "alumni-manager" || userRole === "cadmin") && (
             <button
               title="Feedback"
+              data-sidebar-active={activeTab === "feedback" ? "true" : "false"}
               className={`flex items-center w-full p-3 rounded-lg transition-colors ${
                 activeTab === "feedback" 
                   ? "bg-red-600 text-white shadow-lg" 
@@ -795,6 +843,7 @@ const UniversalNav = ({
           {(userRole === "admin" || userRole === "alumni-manager") && (
             <button
               title="Approval"
+              data-sidebar-active={activeTab === "approval" ? "true" : "false"}
               className={`flex items-center w-full p-3 rounded-lg transition-colors ${
                 activeTab === "approval" 
                   ? "bg-red-600 text-white shadow-lg" 
@@ -812,6 +861,7 @@ const UniversalNav = ({
             {isSidebarExpanded && <h3 className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Alumni Corner</h3>}
             <button
               title="Alumni Talks"
+              data-sidebar-active={activeTab === "alumni-talks" ? "true" : "false"}
               className={`flex items-center w-full p-3 rounded-lg transition-colors ${
                 activeTab === "alumni-talks" 
                   ? "bg-red-600 text-white shadow-lg" 
@@ -824,6 +874,7 @@ const UniversalNav = ({
             </button>
             <button
               title="Alumni Spotlight"
+              data-sidebar-active={activeTab === "alumni-spotlight" ? "true" : "false"}
               className={`flex items-center w-full p-3 rounded-lg transition-colors ${
                 activeTab === "alumni-spotlight" 
                   ? "bg-red-600 text-white shadow-lg" 
@@ -837,6 +888,7 @@ const UniversalNav = ({
             {(userRole === "admin" || userRole === "alumni-manager") && (
               <button
                 title="Academic"
+                data-sidebar-active={activeTab === "academic" ? "true" : "false"}
                 className={`flex items-center w-full p-3 rounded-lg transition-colors ${
                   activeTab === "academic" 
                     ? "bg-red-600 text-white shadow-lg" 
@@ -851,6 +903,7 @@ const UniversalNav = ({
             {userRole === "admin" && (
               <button
                 title="Student Strength"
+                data-sidebar-active={activeTab === "student-strength" ? "true" : "false"}
                 className={`flex items-center w-full p-3 rounded-lg transition-colors ${
                   activeTab === "student-strength" 
                     ? "bg-red-600 text-white shadow-lg" 
@@ -865,6 +918,7 @@ const UniversalNav = ({
             {userRole === "admin" && (
               <button
                 title="Users"
+                data-sidebar-active={activeTab === "users" ? "true" : "false"}
                 className={`flex items-center w-full p-3 rounded-lg transition-colors ${
                   activeTab === "users" 
                     ? "bg-red-600 text-white shadow-lg" 
@@ -881,6 +935,7 @@ const UniversalNav = ({
           {/* News link */}
           <button
             title="News"
+            data-sidebar-active={activeTab === "news" ? "true" : "false"}
             className={`flex items-center w-full p-3 rounded-lg transition-colors ${
               activeTab === "news" 
                 ? "bg-red-600 text-white shadow-lg" 
@@ -899,6 +954,7 @@ const UniversalNav = ({
         <div className="w-full space-y-1">
           <button
             title="Home"
+            data-sidebar-active={activeTab === "home" ? "true" : "false"}
             className={`flex items-center w-full p-3 rounded-lg transition-colors ${
               activeTab === "home" 
                 ? "bg-red-600 text-white shadow-lg" 
@@ -911,6 +967,7 @@ const UniversalNav = ({
           </button>
           <button
             title="Dashboard"
+            data-sidebar-active={activeTab === "dashboard" ? "true" : "false"}
             className={`flex items-center w-full p-3 rounded-lg transition-colors ${
               activeTab === "dashboard" 
                 ? "bg-red-600 text-white shadow-lg" 
@@ -923,6 +980,7 @@ const UniversalNav = ({
           </button>
           <button
             title="Alumni Management"
+            data-sidebar-active={activeTab === "alumni" ? "true" : "false"}
             className={`flex items-center w-full p-3 rounded-lg transition-colors ${
               activeTab === "alumni" 
                 ? "bg-red-600 text-white shadow-lg" 
@@ -935,6 +993,7 @@ const UniversalNav = ({
           </button>
           <button
             title="Basic Analytics"
+            data-sidebar-active={activeTab === "analytics" ? "true" : "false"}
             className={`flex items-center w-full p-3 rounded-lg transition-colors ${
               activeTab === "analytics" 
                 ? "bg-red-600 text-white shadow-lg" 
@@ -947,6 +1006,7 @@ const UniversalNav = ({
           </button>
           <button
             title="Detailed Analytics"
+            data-sidebar-active={activeTab === "detailed-analytics" ? "true" : "false"}
             className={`flex items-center w-full p-3 rounded-lg transition-colors ${
               activeTab === "detailed-analytics" 
                 ? "bg-red-600 text-white shadow-lg" 
@@ -958,11 +1018,27 @@ const UniversalNav = ({
             {isSidebarExpanded && <span>Detailed Analytics</span>}
           </button>
           
+          {/* Feedback */}
+          <button
+            title="Feedback"
+            data-sidebar-active={activeTab === "feedback" ? "true" : "false"}
+            className={`flex items-center w-full p-3 rounded-lg transition-colors ${
+              activeTab === "feedback" 
+                ? "bg-red-600 text-white shadow-lg" 
+                : "hover:bg-secondary/50"
+            } ${!isSidebarExpanded ? 'justify-center' : ''}`}
+            onClick={() => handleNavigation(userRole === "school" ? "/school/feedback" : "/department/feedback")}
+          >
+            <MessageSquare className={iconClass} />
+            {isSidebarExpanded && <span>Feedback</span>}
+          </button>
+
           {/* Alumni Corner section */}
           <div className={`${isSidebarExpanded ? 'border-t border-gray-200 pt-3 mt-2' : 'border-t border-gray-200/50 pt-2 mt-1'}`}>
             {isSidebarExpanded && <h3 className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Alumni Corner</h3>}
             <button
               title="Alumni Talks"
+              data-sidebar-active={activeTab === "alumni-talks" ? "true" : "false"}
               className={`flex items-center w-full p-3 rounded-lg transition-colors ${
                 activeTab === "alumni-talks" 
                   ? "bg-red-600 text-white shadow-lg" 
@@ -975,6 +1051,7 @@ const UniversalNav = ({
             </button>
             <button
               title="Alumni Spotlight"
+              data-sidebar-active={activeTab === "alumni-spotlight" ? "true" : "false"}
               className={`flex items-center w-full p-3 rounded-lg transition-colors ${
                 activeTab === "alumni-spotlight" 
                   ? "bg-red-600 text-white shadow-lg" 
@@ -990,6 +1067,7 @@ const UniversalNav = ({
           {/* News link */}
           <button
             title="News"
+            data-sidebar-active={activeTab === "news" ? "true" : "false"}
             className={`flex items-center w-full p-3 rounded-lg transition-colors ${
               activeTab === "news" 
                 ? "bg-red-600 text-white shadow-lg" 
@@ -1006,6 +1084,7 @@ const UniversalNav = ({
       return (
         <div className="space-y-4">
           <button
+            data-sidebar-active={activeTab === "home" ? "true" : "false"}
             className={`flex items-center w-full p-3 rounded-lg transition-colors ${
               activeTab === "home" 
                 ? "bg-red-600 text-white shadow-lg" 
@@ -1017,6 +1096,7 @@ const UniversalNav = ({
             <span>Home</span>
           </button>
           <button
+            data-sidebar-active={activeTab === "alumni" ? "true" : "false"}
             className={`flex items-center w-full p-3 rounded-lg transition-colors ${
               activeTab === "alumni" 
                 ? "bg-red-600 text-white shadow-lg" 
@@ -1032,6 +1112,7 @@ const UniversalNav = ({
           <div className="border-t border-gray-200 pt-4">
             <h3 className="px-3 text-sm font-semibold text-gray-500 mb-2">Alumni Corner</h3>
             <button
+              data-sidebar-active={activeTab === "alumni-talks" ? "true" : "false"}
               className={`flex items-center w-full p-3 rounded-lg transition-colors ${
                 activeTab === "alumni-talks" 
                   ? "bg-red-600 text-white shadow-lg" 
@@ -1043,6 +1124,7 @@ const UniversalNav = ({
               <span>Alumni Talks</span>
             </button>
             <button
+              data-sidebar-active={activeTab === "alumni-spotlight" ? "true" : "false"}
               className={`flex items-center w-full p-3 rounded-lg transition-colors ${
                 activeTab === "alumni-spotlight" 
                   ? "bg-red-600 text-white shadow-lg" 
@@ -1056,6 +1138,7 @@ const UniversalNav = ({
           </div>
           
           <button
+            data-sidebar-active={activeTab === "news" ? "true" : "false"}
             className={`flex items-center w-full p-3 rounded-lg transition-colors ${
               activeTab === "news" 
                 ? "bg-red-600 text-white shadow-lg" 
@@ -1063,10 +1146,11 @@ const UniversalNav = ({
             }`}
             onClick={() => handleNavigation("/news")}
           >
-            <Youtube className="w-5 h-5 mr-3" />
+            <Newspaper className="w-5 h-5 mr-3" />
             <span>News</span>
           </button>
           <button
+            data-sidebar-active={activeTab === "youtube" ? "true" : "false"}
             className={`flex items-center w-full p-3 rounded-lg transition-colors ${
               activeTab === "youtube" 
                 ? "bg-red-600 text-white shadow-lg" 
@@ -1078,6 +1162,7 @@ const UniversalNav = ({
             <span>YouTube</span>
           </button>
           <button
+            data-sidebar-active={activeTab === "profile" ? "true" : "false"}
             className={`flex items-center w-full p-3 rounded-lg transition-colors ${
               activeTab === "profile" 
                 ? "bg-red-600 text-white shadow-lg" 
@@ -1262,10 +1347,25 @@ const UniversalNav = ({
                     </Button>
                   </SheetTrigger>
                   <SheetContent side="right" className="w-[300px] p-0 flex flex-col">
-                    <div className="p-4 border-b"><SheetTitle>Menu</SheetTitle></div>
+                    <SheetDescription className="sr-only">Navigation menu</SheetDescription>
+                    <div className="p-4 border-b">
+                      <SheetTitle>Menu</SheetTitle>
+                      {currentDepartmentUser && (
+                        <div className="mt-2">
+                          <p className="text-sm font-semibold text-foreground">{currentDepartmentUser.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {userRole === 'school' ? `${currentDepartmentUser.department} School` :
+                             userRole === 'department' ? `${currentDepartmentUser.department.toUpperCase()} Department` :
+                             userRole === 'admin' ? 'Administrator' :
+                             userRole === 'cadmin' ? 'Higher Management' :
+                             userRole === 'alumni-manager' ? 'Alumni Manager' : currentDepartmentUser.role}
+                          </p>
+                        </div>
+                      )}
+                    </div>
                     <div className="flex-1 overflow-y-auto p-4 space-y-2">{renderMobileNavItems()}</div>
                     <div className="p-4 border-t">
-                      <Button variant="outline" className="w-full hover:bg-red-50 hover:text-red-600 transition-colors border-red-100" onClick={onLogout}>Logout</Button>
+                      <Button className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold transition-colors" onClick={onLogout}>Logout</Button>
                     </div>
                   </SheetContent>
                 </Sheet>
@@ -1279,6 +1379,7 @@ const UniversalNav = ({
           <aside className={`hidden lg:flex fixed top-0 left-0 h-screen ${isSidebarExpanded ? 'w-64' : 'w-20'} transition-all duration-300 flex-col bg-white/95 backdrop-blur-md shadow-elegant border-r border-border/50 z-50`}>
             {/* Toggle Button */}
             <button 
+              type="button"
               onClick={toggleSidebar}
               className="absolute -right-3 top-6 bg-white border border-border rounded-full p-1 shadow-md hover:bg-secondary/20 z-50 transition-colors"
             >
@@ -1298,7 +1399,7 @@ const UniversalNav = ({
             </div>
 
             {/* Nav Items */}
-            <div className={`flex-1 overflow-y-auto ${isSidebarExpanded ? 'p-4' : 'p-2'} custom-scrollbar`}>
+            <div ref={sidebarScrollRef} className={`flex-1 overflow-y-auto ${isSidebarExpanded ? 'p-4' : 'p-2'} custom-scrollbar`}>
               <div className={`${isSidebarExpanded ? 'space-y-1' : 'flex flex-col items-center gap-1 w-full'}`}>
                 {renderMobileNavItems()}
               </div>
@@ -1308,21 +1409,37 @@ const UniversalNav = ({
             <div className={`border-t border-border/50 bg-gray-50/50 shrink-0 ${isSidebarExpanded ? 'p-4' : 'px-2 py-4'}`}>
               {isSidebarExpanded ? (
                 <div className="flex flex-col space-y-3">
-                  {!currentStudent && !currentDepartmentUser && (
-                    <div className="bg-white p-2 rounded-lg shadow-sm text-center">
+                  <div className="bg-white p-3 rounded-lg shadow-sm text-center">
+                    {currentDepartmentUser ? (
+                      <>
+                        <p className="text-sm font-bold text-foreground truncate">{currentDepartmentUser.name}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {userRole === 'school' ? `${currentDepartmentUser.department} School` :
+                           userRole === 'department' ? `${currentDepartmentUser.department.toUpperCase()} Dept` :
+                           userRole === 'admin' ? 'Administrator' :
+                           userRole === 'cadmin' ? 'Higher Management' :
+                           userRole === 'alumni-manager' ? 'Alumni Manager' : currentDepartmentUser.role}
+                        </p>
+                      </>
+                    ) : currentStudent ? (
+                      <>
+                        <p className="text-sm font-bold text-foreground truncate">{currentStudent.name}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Alumni</p>
+                      </>
+                    ) : (
                       <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">
                         {userRole === 'admin' ? 'Administrator' : 
-                         userRole === 'cadmin' ? 'Higher Mgmt' : 
-                         userRole === 'alumni-manager' ? 'Alumni Mgr' : 'User'}
+                         userRole === 'cadmin' ? 'Higher Management' : 
+                         userRole === 'alumni-manager' ? 'Alumni Manager' : 'User'}
                       </p>
-                    </div>
-                  )}
-                  <Button variant="outline" className="w-full hover:bg-red-50 hover:text-red-600 transition-colors border-red-100" onClick={onLogout}>
+                    )}
+                  </div>
+                  <Button className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold transition-colors" onClick={onLogout}>
                     Logout
                   </Button>
                 </div>
               ) : (
-                <Button variant="outline" size="icon" className="w-10 h-10 mx-auto hover:bg-red-50 hover:text-red-600 transition-colors border-red-100 rounded-full flex" onClick={onLogout} title="Logout">
+                <Button className="w-10 h-10 mx-auto bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center" onClick={onLogout} title="Logout">
                   <User className="w-5 h-5" />
                 </Button>
               )}

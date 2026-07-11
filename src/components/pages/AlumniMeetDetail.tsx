@@ -94,7 +94,7 @@ const AlumniMeetDetail: React.FC = () => {
 
 
   return (
-    <div className="min-h-screen bg-background">
+    <>
       <UniversalNav
         isLoggedIn={isLoggedIn}
         userRole={userRole}
@@ -105,15 +105,6 @@ const AlumniMeetDetail: React.FC = () => {
       />
       <div className="w-full px-4 md:px-6 lg:px-8 py-6 pt-20">
         <div className="max-w-7xl mx-auto">
-          <Button
-            onClick={() => router.push('/alumni-meets')}
-            variant="outline"
-            className="mb-6 flex items-center gap-2 border-primary/30 hover:gradient-accent hover:text-dark"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Alumni Meets
-          </Button>
-
           <div className="bg-white/80 rounded-2xl shadow-elegant overflow-hidden p-6 md:p-8 mb-8">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="relative w-full aspect-[4/3] md:aspect-auto md:h-[500px] bg-slate-50 rounded-xl overflow-hidden p-2 flex items-center justify-center">
@@ -161,7 +152,7 @@ const AlumniMeetDetail: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

@@ -88,7 +88,7 @@ const AdminLayout = ({ children }: { children?: React.ReactNode }) => {
           onLoginClick={() => {}}
           onLogout={logout}
         />
-        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-10 pt-20 md:pt-24">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
           {children}
         </div>
       </div>
