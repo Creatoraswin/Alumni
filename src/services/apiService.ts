@@ -919,3 +919,197 @@ export const deleteSystemUser = async (username: string): Promise<{ success: boo
     return { success: false, message: "Network error" };
   }
 };
+
+// ─── Alumni Team ────────────────────────────────────────────────────────────
+
+export interface AlumniTeamMember {
+  id?: number;
+  photoUrl: string;
+  name: string;
+  school: string;
+  branch: string;
+  designation: string;
+  writeup: string;
+  sortOrder?: number;
+}
+
+export const fetchAlumniTeam = async (): Promise<AlumniTeamMember[]> => {
+  try {
+    const response = await fetchWithAuth(`${API_URL}/alumni-team/index.php?t=${Date.now()}`);
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    const data = await response.json();
+    if (data.success && data.data) {
+      return data.data.map((item: any): AlumniTeamMember => ({
+        id: item.id,
+        photoUrl: (item.photo_url || '').replace(/\.(jpg|jpeg|png)$/i, '.webp'),
+        name: item.name || '',
+        school: item.school || '',
+        branch: item.branch || '',
+        designation: item.designation || '',
+        writeup: item.writeup || '',
+        sortOrder: item.sort_order ?? 0,
+      }));
+    }
+    return [];
+  } catch (error) {
+    console.error('Error fetching alumni team:', error);
+    return [];
+  }
+};
+
+export const createAlumniTeamMember = async (member: AlumniTeamMember): Promise<{ success: boolean; id?: number; message: string }> => {
+  try {
+    const response = await fetchWithAuth(`${API_URL}/alumni-team/index.php`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'create',
+        member: {
+          photo_url: member.photoUrl,
+          name: member.name,
+          school: member.school,
+          branch: member.branch,
+          designation: member.designation,
+          writeup: member.writeup,
+          sort_order: member.sortOrder ?? 0,
+        },
+      }),
+    });
+    const data = await response.json();
+    return { success: data.success, id: data.data?.id, message: data.message };
+  } catch (error) {
+    return { success: false, message: 'Failed to create team member' };
+  }
+};
+
+export const updateAlumniTeamMember = async (id: number, updates: Partial<AlumniTeamMember>): Promise<{ success: boolean; message: string }> => {
+  try {
+    const mapped: any = {};
+    if (updates.photoUrl !== undefined) mapped.photo_url = updates.photoUrl;
+    if (updates.name !== undefined) mapped.name = updates.name;
+    if (updates.school !== undefined) mapped.school = updates.school;
+    if (updates.branch !== undefined) mapped.branch = updates.branch;
+    if (updates.designation !== undefined) mapped.designation = updates.designation;
+    if (updates.writeup !== undefined) mapped.writeup = updates.writeup;
+    if (updates.sortOrder !== undefined) mapped.sort_order = updates.sortOrder;
+
+    const response = await fetchWithAuth(`${API_URL}/alumni-team/index.php`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'update', id, updates: mapped }),
+    });
+    const data = await response.json();
+    return { success: data.success, message: data.message };
+  } catch (error) {
+    return { success: false, message: 'Failed to update team member' };
+  }
+};
+
+export const deleteAlumniTeamMember = async (id: number): Promise<{ success: boolean; message: string }> => {
+  try {
+    const response = await fetchWithAuth(`${API_URL}/alumni-team/index.php`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'delete', id }),
+    });
+    const data = await response.json();
+    return { success: data.success, message: data.message };
+  } catch (error) {
+    return { success: false, message: 'Failed to delete team member' };
+  }
+};
+
+// ─── Student Coordinators ───────────────────────────────────────────────────
+
+export interface StudentCoordinatorItem {
+  id?: number;
+  photoUrl: string;
+  name: string;
+  school: string;
+  branch: string;
+  registrationNo: string;
+  sortOrder?: number;
+}
+
+export const fetchStudentCoordinators = async (): Promise<StudentCoordinatorItem[]> => {
+  try {
+    const response = await fetchWithAuth(`${API_URL}/student-coordinators/index.php?t=${Date.now()}`);
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    const data = await response.json();
+    if (data.success && data.data) {
+      return data.data.map((item: any): StudentCoordinatorItem => ({
+        id: item.id,
+        photoUrl: (item.photo_url || '').replace(/\.(jpg|jpeg|png)$/i, '.webp'),
+        name: item.name || '',
+        school: item.school || '',
+        branch: item.branch || '',
+        registrationNo: item.registration_no || '',
+        sortOrder: item.sort_order ?? 0,
+      }));
+    }
+    return [];
+  } catch (error) {
+    console.error('Error fetching student coordinators:', error);
+    return [];
+  }
+};
+
+export const createStudentCoordinator = async (coord: StudentCoordinatorItem): Promise<{ success: boolean; id?: number; message: string }> => {
+  try {
+    const response = await fetchWithAuth(`${API_URL}/student-coordinators/index.php`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'create',
+        coordinator: {
+          photo_url: coord.photoUrl,
+          name: coord.name,
+          school: coord.school,
+          branch: coord.branch,
+          registration_no: coord.registrationNo,
+          sort_order: coord.sortOrder ?? 0,
+        },
+      }),
+    });
+    const data = await response.json();
+    return { success: data.success, id: data.data?.id, message: data.message };
+  } catch (error) {
+    return { success: false, message: 'Failed to create student coordinator' };
+  }
+};
+
+export const updateStudentCoordinator = async (id: number, updates: Partial<StudentCoordinatorItem>): Promise<{ success: boolean; message: string }> => {
+  try {
+    const mapped: any = {};
+    if (updates.photoUrl !== undefined) mapped.photo_url = updates.photoUrl;
+    if (updates.name !== undefined) mapped.name = updates.name;
+    if (updates.school !== undefined) mapped.school = updates.school;
+    if (updates.branch !== undefined) mapped.branch = updates.branch;
+    if (updates.registrationNo !== undefined) mapped.registration_no = updates.registrationNo;
+    if (updates.sortOrder !== undefined) mapped.sort_order = updates.sortOrder;
+
+    const response = await fetchWithAuth(`${API_URL}/student-coordinators/index.php`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'update', id, updates: mapped }),
+    });
+    const data = await response.json();
+    return { success: data.success, message: data.message };
+  } catch (error) {
+    return { success: false, message: 'Failed to update student coordinator' };
+  }
+};
+
+export const deleteStudentCoordinator = async (id: number): Promise<{ success: boolean; message: string }> => {
+  try {
+    const response = await fetchWithAuth(`${API_URL}/student-coordinators/index.php`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'delete', id }),
+    });
+    const data = await response.json();
+    return { success: data.success, message: data.message };
+  } catch (error) {
+    return { success: false, message: 'Failed to delete student coordinator' };
+  }
+};

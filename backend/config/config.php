@@ -21,6 +21,8 @@ define('UPLOAD_BASE_PATH', dirname(__DIR__, 2) . '/Uploads/');
 define('UPLOAD_PHOTOS_PATH', UPLOAD_BASE_PATH . 'Photos/');
 define('UPLOAD_ALUMNI_TALK_PATH', UPLOAD_BASE_PATH . 'AlumniTalk/');
 define('UPLOAD_ALUMNI_SPOTLIGHT_PATH', UPLOAD_BASE_PATH . 'AlumniSpotlight/');
+define('UPLOAD_ALUMNI_TEAM_PATH', UPLOAD_BASE_PATH . 'AlumniTeam/');
+define('UPLOAD_STUDENT_COORD_PATH', UPLOAD_BASE_PATH . 'StudentCoord/');
 define('UPLOAD_TEMP_PATH', UPLOAD_BASE_PATH . 'Temp/');
 
 // File Upload Restrictions
@@ -57,6 +59,8 @@ $uploadDirs = [
     UPLOAD_ALUMNI_SPOTLIGHT_PATH,
     UPLOAD_ALUMNI_SPOTLIGHT_PATH . 'Photos/',
     UPLOAD_ALUMNI_SPOTLIGHT_PATH . 'Galleries/',
+    UPLOAD_ALUMNI_TEAM_PATH,
+    UPLOAD_STUDENT_COORD_PATH,
     UPLOAD_TEMP_PATH
 ];
 

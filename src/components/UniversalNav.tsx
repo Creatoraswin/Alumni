@@ -56,13 +56,14 @@ const UniversalNav = ({
   }, []);
 
   // Determine active tab based on path
-  const getActiveTab = (): "home" | "alumni" | "news" | "alumni-talks" | "alumni-meets" | "alumni-spotlight" | "youtube" | "profile" | "analytics" | "detailed-analytics" | "alumni-management" | "approval" | "feedback" | "dashboard" | "academic" | "student-strength" | "users" => {
+  const getActiveTab = (): "home" | "alumni" | "news" | "alumni-talks" | "alumni-meets" | "alumni-spotlight" | "alumni-team" | "youtube" | "profile" | "analytics" | "detailed-analytics" | "alumni-management" | "approval" | "feedback" | "dashboard" | "academic" | "student-strength" | "users" => {
     if (pathname === "/") return "home";
     if (pathname === "/alumni-directory") return "alumni";
     if (pathname === "/news") return "news";
     if (pathname === "/alumni-talks") return "alumni-talks";
     if (pathname === "/alumni-meets") return "alumni-meets";
     if (pathname === "/alumni-spotlight") return "alumni-spotlight";
+    if (pathname.startsWith("/alumni-team")) return "alumni-team";
     if (pathname === "/youtube") return "youtube";
     if (pathname === "/profile") return "profile";
     
@@ -77,6 +78,7 @@ const UniversalNav = ({
       if (pathname.includes("/approval")) return "approval";
       if (pathname.includes("/feedback")) return "feedback";
       if (pathname.includes("/academic")) return "academic";
+      if (pathname.includes("/alumni-team")) return "alumni-team";
       if (pathname.includes("/users")) return "users";
       return "dashboard";
     }
@@ -272,7 +274,7 @@ const UniversalNav = ({
           <div className="relative">
             <button
               className={`flex items-center justify-center px-3 py-2 rounded-md transition-all text-sm font-semibold focus:outline-none ${
-                (activeTab === "alumni-talks" || activeTab === "alumni-spotlight" || activeTab === "academic" || activeTab === "users") 
+                (activeTab === "alumni-talks" || activeTab === "alumni-spotlight" || activeTab === "alumni-team" || activeTab === "academic" || activeTab === "users") 
                   ? "bg-red-600 text-white shadow-lg" 
                   : "text-muted-foreground hover:text-red-600 hover:shadow-sm hover:scale-105"
               }`}
@@ -296,7 +298,8 @@ const UniversalNav = ({
             
             {isAlumniCornerOpen && (
               <div 
-                className="absolute left-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200"
+                id="analytics-dropdown"
+                className="absolute left-0 mt-2 w-56 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200"
                 onClick={(e) => e.stopPropagation()}
               >
                 <button
@@ -318,6 +321,24 @@ const UniversalNav = ({
                   onClick={() => handleNavigation("/alumni-spotlight")}
                 >
                   Alumni Spotlight
+                </button>
+                <button
+                  className={`block w-full text-left px-4 py-2 text-sm ${
+                    activeTab === "alumni-team" 
+                      ? "bg-red-600 text-white" 
+                      : "text-gray-700 hover:bg-gray-100"
+                  }`}
+                  onClick={() => {
+                    if (userRole === "admin" || userRole === "alumni-manager") {
+                      router.push(userRole === "admin" ? "/admin/alumni-team" : "/alumni-manager/alumni-team");
+                    } else {
+                      handleNavigation("/alumni-team");
+                    }
+                    setIsAlumniCornerOpen(false);
+                    setIsMenuOpen(false);
+                  }}
+                >
+                  Alumni Team
                 </button>
                 {(userRole === "admin" || userRole === "alumni-manager") && (
                   <button
@@ -517,7 +538,7 @@ const UniversalNav = ({
             
             {isAlumniCornerOpen && (
               <div 
-                className="absolute left-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200"
+                className="absolute left-0 mt-2 w-56 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200"
                 onClick={(e) => e.stopPropagation()}
               >
                 <button
@@ -539,6 +560,16 @@ const UniversalNav = ({
                   onClick={() => handleNavigation("/alumni-spotlight")}
                 >
                   Alumni Spotlight
+                </button>
+                <button
+                  className={`block w-full text-left px-4 py-2 text-sm ${
+                    activeTab === "alumni-team" 
+                      ? "bg-red-600 text-white" 
+                      : "text-gray-700 hover:bg-gray-100"
+                  }`}
+                  onClick={() => handleNavigation("/alumni-team")}
+                >
+                  Alumni Team
                 </button>
               </div>
             )}
@@ -601,7 +632,7 @@ const UniversalNav = ({
             
             {isAlumniCornerOpen && (
               <div 
-                className="absolute left-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200"
+                className="absolute left-0 mt-2 w-56 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200"
                 onClick={(e) => e.stopPropagation()}
               >
                 <button
@@ -623,6 +654,16 @@ const UniversalNav = ({
                   onClick={() => handleNavigation("/alumni-spotlight")}
                 >
                   Alumni Spotlight
+                </button>
+                <button
+                  className={`block w-full text-left px-4 py-2 text-sm ${
+                    activeTab === "alumni-team" 
+                      ? "bg-red-600 text-white" 
+                      : "text-gray-700 hover:bg-gray-100"
+                  }`}
+                  onClick={() => handleNavigation("/alumni-team")}
+                >
+                  Alumni Team
                 </button>
               </div>
             )}
@@ -685,7 +726,7 @@ const UniversalNav = ({
           <div className="relative">
             <button
               className={`flex items-center justify-center px-2 sm:px-3 py-2 rounded-md transition-all text-sm font-semibold focus:outline-none ${
-                (activeTab === "alumni-talks" || activeTab === "alumni-spotlight") 
+                (activeTab === "alumni-talks" || activeTab === "alumni-spotlight" || activeTab === "alumni-team") 
                   ? "bg-red-600 text-white shadow-lg" 
                   : "text-muted-foreground hover:text-red-600 hover:shadow-sm hover:scale-105"
               }`}
@@ -709,7 +750,7 @@ const UniversalNav = ({
             
             {isAlumniCornerOpen && (
               <div 
-                className="absolute left-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200"
+                className="absolute left-0 mt-2 w-56 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200"
                 onClick={(e) => e.stopPropagation()}
               >
                 <button
@@ -731,6 +772,16 @@ const UniversalNav = ({
                   onClick={() => handleNavigation("/alumni-spotlight")}
                 >
                   Alumni Spotlight
+                </button>
+                <button
+                  className={`block w-full text-left px-4 py-2 text-sm ${
+                    activeTab === "alumni-team" 
+                      ? "bg-red-600 text-white" 
+                      : "text-gray-700 hover:bg-gray-100"
+                  }`}
+                  onClick={() => handleNavigation("/alumni-team")}
+                >
+                  Alumni Team
                 </button>
               </div>
             )}
@@ -885,6 +936,21 @@ const UniversalNav = ({
               <Star className={iconClass} />
               {isSidebarExpanded && <span>Alumni Spotlight</span>}
             </button>
+            {(userRole === "admin" || userRole === "alumni-manager") && (
+              <button
+                title="Alumni Team"
+                data-sidebar-active={activeTab === "alumni-team" ? "true" : "false"}
+                className={`flex items-center w-full p-3 rounded-lg transition-colors ${
+                  activeTab === "alumni-team" 
+                    ? "bg-red-600 text-white shadow-lg" 
+                    : "hover:bg-secondary/50"
+                } ${!isSidebarExpanded ? 'justify-center' : ''}`}
+                onClick={() => handleNavigation(userRole === "admin" ? "/admin/alumni-team" : "/alumni-manager/alumni-team")}
+              >
+                <Users className={iconClass} />
+                {isSidebarExpanded && <span>Alumni Team</span>}
+              </button>
+            )}
             {(userRole === "admin" || userRole === "alumni-manager") && (
               <button
                 title="Academic"

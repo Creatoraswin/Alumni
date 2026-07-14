@@ -1,0 +1,29 @@
+-- Alumni Team Tables Migration
+-- Run this SQL against the u336570575_alumni database
+
+-- Table: alumni_team
+CREATE TABLE IF NOT EXISTS `alumni_team` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `photo_url` VARCHAR(500) DEFAULT NULL,
+  `name` VARCHAR(255) NOT NULL,
+  `school` VARCHAR(255) DEFAULT NULL,
+  `branch` VARCHAR(255) DEFAULT NULL,
+  `designation` VARCHAR(255) DEFAULT NULL,
+  `writeup` TEXT DEFAULT NULL,
+  `sort_order` INT DEFAULT 0,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Table: student_coordinators
+CREATE TABLE IF NOT EXISTS `student_coordinators` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `photo_url` VARCHAR(500) DEFAULT NULL,
+  `name` VARCHAR(255) NOT NULL,
+  `school` VARCHAR(255) DEFAULT NULL,
+  `branch` VARCHAR(255) DEFAULT NULL,
+  `registration_no` VARCHAR(100) DEFAULT NULL,
+  `sort_order` INT DEFAULT 0,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
