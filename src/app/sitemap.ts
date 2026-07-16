@@ -21,7 +21,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let dynamicRoutes: MetadataRoute.Sitemap = []
   
   try {
-    const res = await fetch(`${API_URL}/students/index.php?showAll=true`, { cache: 'no-store' })
+    const res = await fetch(`${API_URL}/students/index.php?showAll=true`)
     if (res.ok) {
       const responseData = await res.json()
       if (responseData.success && Array.isArray(responseData.data)) {

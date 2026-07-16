@@ -4,8 +4,9 @@ import React, { useState, useRef, useMemo, useCallback } from 'react';
 import {
   fetchAlumniTeam, createAlumniTeamMember, updateAlumniTeamMember, deleteAlumniTeamMember,
   fetchStudentCoordinators, createStudentCoordinator, updateStudentCoordinator, deleteStudentCoordinator,
+  fetchStudentAmbassadors, createStudentAmbassador, updateStudentAmbassador, deleteStudentAmbassador,
   uploadImageToDrive, getDirectImageUrl,
-  AlumniTeamMember, StudentCoordinatorItem, fetchWithAuth,
+  AlumniTeamMember, StudentCoordinatorItem, StudentAmbassador, fetchWithAuth,
 } from '@/services/apiService';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -13,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  Plus, Pencil, Trash2, X, Save, Upload, Award, Users, AlertCircle, CheckCircle2, IdCard, Building2, BookOpen, ChevronDown
+  Plus, Pencil, Trash2, X, Save, Upload, Award, Users, AlertCircle, CheckCircle2, IdCard, Building2, BookOpen, ChevronDown, Phone, Linkedin, Instagram
 } from 'lucide-react';
 
 // ─── Academic Info ────────────────────────────────────────────────────────────
@@ -54,8 +55,8 @@ function SelectField({ id, label, value, onChange, options, placeholder, disable
   );
 }
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-type SubTab = 'team' | 'coordinators';
+// ─── Types ───────────────────────────────────────────────────────────────
+type SubTab = 'team' | 'coordinators' | 'ambassadors';
 
 interface Toast { type: 'success' | 'error'; message: string }
 
@@ -472,6 +473,146 @@ function CoordForm({ initial, onSave, onClose, saving }: CoordFormProps) {
   );
 }
 
+// ─── Ambassador Form ──────────────────────────────────────────────────────────
+interface AmbassadorFormProps {
+  initial?: StudentAmbassador;
+  onSave: (data: StudentAmbassador, photoFile?: File) => Promise<void>;
+  onClose: () => void;
+  saving: boolean;
+}
+
+function AmbassadorForm({ initial, onSave, onClose, saving }: AmbassadorFormProps) {
+  const emptyForm: StudentAmbassador = { photoUrl: '', name: '', school: '', department: '', phone: '', linkedinId: '', instagramId: '', sortOrder: 0 };
+  const [form, setForm] = useState<StudentAmbassador>(initial ?? emptyForm);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string>(initial?.photoUrl ? getDirectImageUrl(initial.photoUrl) : '');
+  const [error, setError] = useState('');
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const { data: academic = [] } = useQuery<AcademicRow[]>({
+    queryKey: ['academicInfo'],
+    queryFn: fetchAcademicInfo,
+    staleTime: 1000 * 60 * 10,
+  });
+
+  const schools = useMemo(() => [...new Set(academic.map(r => r.school))].sort(), [academic]);
+  const departments = useMemo(() =>
+    form.school ? [...new Set(academic.filter(r => r.school === form.school).map(r => r.department))].sort() : [],
+    [academic, form.school]
+  );
+
+  const handleSchoolChange = (school: string) => setForm(f => ({ ...f, school, department: '' }));
+
+  const handlePhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.name.trim()) { setError('Name is required.'); return; }
+    setError('');
+    await onSave(form, photoFile ?? undefined);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={onClose}>
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <div className="sticky top-0 bg-white rounded-t-3xl px-6 pt-6 pb-3 border-b border-gray-100 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-gray-900">{initial ? 'Edit' : 'Add'} Student Ambassador</h2>
+          <button onClick={onClose} className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors" aria-label="Close">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
+          {/* Photo */}
+          <div className="flex flex-col items-center gap-3">
+            <div className="relative">
+              {photoPreview ? (
+                <img src={photoPreview} alt="Preview" className="w-24 h-24 rounded-full object-cover ring-4 ring-gray-100 shadow" />
+              ) : (
+                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-violet-100 to-purple-200 flex items-center justify-center ring-4 ring-gray-100">
+                  <Upload className="w-7 h-7 text-violet-400" />
+                </div>
+              )}
+            </div>
+            <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()}>
+              <Upload className="w-3.5 h-3.5 mr-1.5" />
+              {photoPreview ? 'Change Photo' : 'Upload Photo'}
+            </Button>
+            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handlePhoto} />
+          </div>
+
+          {/* Name */}
+          <div>
+            <Label htmlFor="amb-name" className="text-xs font-semibold text-gray-600 mb-1 block">Name *</Label>
+            <Input id="amb-name" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Full name" required />
+          </div>
+
+          {/* School cascade */}
+          <SelectField
+            id="amb-school" label="School"
+            value={form.school}
+            onChange={handleSchoolChange}
+            options={schools}
+            placeholder="Select School"
+          />
+          <SelectField
+            id="amb-dept" label="Department"
+            value={form.department}
+            onChange={v => setForm(f => ({ ...f, department: v }))}
+            options={departments}
+            placeholder={form.school ? 'Select Department' : 'Select School first'}
+            disabled={!form.school}
+          />
+
+          {/* Phone */}
+          <div>
+            <Label htmlFor="amb-phone" className="text-xs font-semibold text-gray-600 mb-1 block">
+              <Phone className="w-3 h-3 inline mr-1" />Phone No.
+            </Label>
+            <Input id="amb-phone" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder="+91 9876543210" />
+          </div>
+
+          {/* LinkedIn */}
+          <div>
+            <Label htmlFor="amb-linkedin" className="text-xs font-semibold text-gray-600 mb-1 block">
+              <Linkedin className="w-3 h-3 inline mr-1" />LinkedIn ID / URL
+            </Label>
+            <Input id="amb-linkedin" value={form.linkedinId} onChange={e => setForm(f => ({ ...f, linkedinId: e.target.value }))} placeholder="username or full URL" />
+          </div>
+
+          {/* Instagram */}
+          <div>
+            <Label htmlFor="amb-instagram" className="text-xs font-semibold text-gray-600 mb-1 block">
+              <Instagram className="w-3 h-3 inline mr-1" />Instagram ID
+            </Label>
+            <Input id="amb-instagram" value={form.instagramId} onChange={e => setForm(f => ({ ...f, instagramId: e.target.value }))} placeholder="@username" />
+          </div>
+
+          {/* Sort order */}
+          <div>
+            <Label htmlFor="amb-sort" className="text-xs font-semibold text-gray-600 mb-1 block">Sort Order</Label>
+            <Input id="amb-sort" type="number" value={form.sortOrder ?? 0} onChange={e => setForm(f => ({ ...f, sortOrder: parseInt(e.target.value) || 0 }))} min={0} />
+          </div>
+
+          {error && <p className="text-xs text-red-600 flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5" />{error}</p>}
+
+          <div className="flex gap-3 pt-2">
+            <Button type="button" variant="outline" className="flex-1" onClick={onClose} disabled={saving}>Cancel</Button>
+            <Button type="submit" disabled={saving} className="flex-1 bg-gradient-to-r from-violet-500 to-purple-600 text-white hover:from-violet-600 hover:to-purple-700">
+              {saving ? <span className="flex items-center gap-2"><span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />Saving…</span> : <><Save className="w-3.5 h-3.5 mr-1.5" />Save</>}
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Management Tab ──────────────────────────────────────────────────────
 interface AlumniTeamManagementTabProps {
   userRole: 'admin' | 'alumni-manager';
@@ -493,6 +634,11 @@ const AlumniTeamManagementTab: React.FC<AlumniTeamManagementTabProps> = ({ userR
   const [editingCoord, setEditingCoord] = useState<StudentCoordinatorItem | undefined>(undefined);
   const [deletingCoord, setDeletingCoord] = useState<StudentCoordinatorItem | null>(null);
 
+  // Ambassadors
+  const [showAmbForm, setShowAmbForm] = useState(false);
+  const [editingAmb, setEditingAmb] = useState<StudentAmbassador | undefined>(undefined);
+  const [deletingAmb, setDeletingAmb] = useState<StudentAmbassador | null>(null);
+
   const notify = useCallback((type: 'success' | 'error', message: string) => setToast({ type, message }), []);
 
   const { data: teamMembers = [], isLoading: teamLoading } = useQuery({
@@ -504,6 +650,12 @@ const AlumniTeamManagementTab: React.FC<AlumniTeamManagementTabProps> = ({ userR
   const { data: coordinators = [], isLoading: coordLoading } = useQuery({
     queryKey: ['studentCoordinators'],
     queryFn: fetchStudentCoordinators,
+    staleTime: 1000 * 60 * 2,
+  });
+
+  const { data: ambassadors = [], isLoading: ambLoading } = useQuery({
+    queryKey: ['studentAmbassadors'],
+    queryFn: fetchStudentAmbassadors,
     staleTime: 1000 * 60 * 2,
   });
 
@@ -595,6 +747,40 @@ const AlumniTeamManagementTab: React.FC<AlumniTeamManagementTabProps> = ({ userR
     }
   };
 
+  // ── Ambassador CRUD ───────────────────────────────────────────────────────
+  const handleSaveAmb = async (data: StudentAmbassador, photoFile?: File) => {
+    setSaving(true);
+    try {
+      let photoUrl = data.photoUrl;
+      if (photoFile) photoUrl = await uploadImageToDrive(photoFile, 'student_ambassador');
+      const payload = { ...data, photoUrl };
+      if (editingAmb?.id) {
+        const res = await updateStudentAmbassador(editingAmb.id, payload);
+        if (res.success) notify('success', 'Ambassador updated');
+        else notify('error', res.message);
+      } else {
+        const res = await createStudentAmbassador(payload);
+        if (res.success) notify('success', 'Ambassador added');
+        else notify('error', res.message);
+      }
+      qc.invalidateQueries({ queryKey: ['studentAmbassadors'] });
+      setShowAmbForm(false);
+      setEditingAmb(undefined);
+    } catch { notify('error', 'Operation failed'); }
+    finally { setSaving(false); }
+  };
+
+  const handleDeleteAmb = async () => {
+    if (!deletingAmb?.id) return;
+    setSaving(true);
+    try {
+      const res = await deleteStudentAmbassador(deletingAmb.id);
+      if (res.success) { notify('success', 'Ambassador deleted'); qc.invalidateQueries({ queryKey: ['studentAmbassadors'] }); }
+      else notify('error', res.message);
+    } catch { notify('error', 'Delete failed'); }
+    finally { setSaving(false); setDeletingAmb(null); }
+  };
+
   // ── Row renderers ──────────────────────────────────────────────────────────
   const renderTeamRow = (m: AlumniTeamMember) => (
     <tr key={m.id} className="border-b border-gray-100 hover:bg-red-50/30 transition-colors">
@@ -672,7 +858,43 @@ const AlumniTeamManagementTab: React.FC<AlumniTeamManagementTabProps> = ({ userR
     </tr>
   );
 
-  const isLoading = subTab === 'team' ? teamLoading : coordLoading;
+  const renderAmbRow = (a: StudentAmbassador) => (
+    <tr key={a.id} className="border-b border-gray-100 hover:bg-violet-50/30 transition-colors">
+      <td className="px-4 py-3">
+        <div className="flex items-center gap-3">
+          <AvatarPreview url={a.photoUrl} name={a.name} size={40} />
+          <span className="font-medium text-gray-900 text-sm">{a.name}</span>
+        </div>
+      </td>
+      <td className="px-4 py-3 text-sm text-gray-500 hidden sm:table-cell">
+        <div className="flex items-center gap-1"><Building2 className="w-3.5 h-3.5" />{a.school || '—'}</div>
+      </td>
+      <td className="px-4 py-3 text-sm text-gray-500 hidden md:table-cell">
+        <div className="flex items-center gap-1"><BookOpen className="w-3.5 h-3.5" />{a.department || '—'}</div>
+      </td>
+      <td className="px-4 py-3 text-sm text-gray-500 hidden lg:table-cell">{a.phone || '—'}</td>
+      <td className="px-4 py-3 hidden xl:table-cell">
+        <div className="flex items-center gap-2">
+          {a.linkedinId && <Linkedin className="w-3.5 h-3.5 text-blue-500" />}
+          {a.instagramId && <Instagram className="w-3.5 h-3.5 text-pink-500" />}
+        </div>
+      </td>
+      <td className="px-4 py-3">
+        <div className="flex items-center gap-1 justify-end">
+          <button onClick={() => { setEditingAmb(a); setShowAmbForm(true); }}
+            className="w-8 h-8 rounded-lg bg-blue-50 hover:bg-blue-100 flex items-center justify-center text-blue-600 transition-colors" title="Edit">
+            <Pencil className="w-3.5 h-3.5" />
+          </button>
+          <button onClick={() => setDeletingAmb(a)}
+            className="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 flex items-center justify-center text-red-600 transition-colors" title="Delete">
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </td>
+    </tr>
+  );
+
+  const isLoading = subTab === 'team' ? teamLoading : subTab === 'coordinators' ? coordLoading : ambLoading;
 
   return (
     <div className="space-y-6">
@@ -680,23 +902,19 @@ const AlumniTeamManagementTab: React.FC<AlumniTeamManagementTabProps> = ({ userR
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-bold text-gray-900">Alumni Team Management</h2>
-          <p className="text-sm text-gray-500 mt-0.5">Add, edit, and remove team members and student coordinators.</p>
+          <p className="text-sm text-gray-500 mt-0.5">Manage team members, coordinators, and ambassadors.</p>
         </div>
         <Button
           onClick={() => {
-            if (subTab === 'team') {
-              setEditingMember(undefined);
-              setShowTeamForm(true);
-            } else {
-              setEditingCoord(undefined);
-              setShowCoordForm(true);
-            }
+            if (subTab === 'team') { setEditingMember(undefined); setShowTeamForm(true); }
+            else if (subTab === 'coordinators') { setEditingCoord(undefined); setShowCoordForm(true); }
+            else { setEditingAmb(undefined); setShowAmbForm(true); }
           }}
           className="bg-gradient-to-r from-red-500 to-rose-600 text-white hover:from-red-600 hover:to-rose-700 shadow-md"
           id="add-alumni-team-btn"
         >
           <Plus className="w-4 h-4 mr-2" />
-          Add {subTab === 'team' ? 'Team Member' : 'Coordinator'}
+          Add {subTab === 'team' ? 'Team Member' : subTab === 'coordinators' ? 'Coordinator' : 'Ambassador'}
         </Button>
       </div>
 
@@ -733,6 +951,21 @@ const AlumniTeamManagementTab: React.FC<AlumniTeamManagementTabProps> = ({ userR
               {coordinators.length}
             </span>
           </button>
+          <button
+            id="management-ambassadors-tab"
+            onClick={() => setSubTab('ambassadors')}
+            className={`flex items-center gap-2 px-5 py-3 text-sm font-semibold border-b-2 transition-colors ${
+              subTab === 'ambassadors'
+                ? 'border-violet-500 text-violet-600'
+                : 'border-transparent text-gray-500 hover:text-violet-500'
+            }`}
+          >
+            <Users className="w-4 h-4" />
+            Student Ambassadors
+            <span className={`text-xs rounded-full px-2 py-0.5 ${subTab === 'ambassadors' ? 'bg-violet-100 text-violet-600' : 'bg-gray-100 text-gray-500'}`}>
+              {ambassadors.length}
+            </span>
+          </button>
         </nav>
       </div>
 
@@ -763,7 +996,7 @@ const AlumniTeamManagementTab: React.FC<AlumniTeamManagementTabProps> = ({ userR
             </div>
           </div>
         )
-      ) : (
+      ) : subTab === 'coordinators' ? (
         coordinators.length === 0 ? (
           <EmptyState label="Student Coordinator" onAdd={() => { setEditingCoord(undefined); setShowCoordForm(true); }} />
         ) : (
@@ -781,6 +1014,28 @@ const AlumniTeamManagementTab: React.FC<AlumniTeamManagementTabProps> = ({ userR
                   </tr>
                 </thead>
                 <tbody>{coordinators.map(renderCoordRow)}</tbody>
+              </table>
+            </div>
+          </div>
+        )
+      ) : (
+        ambassadors.length === 0 ? (
+          <EmptyState label="Student Ambassador" onAdd={() => { setEditingAmb(undefined); setShowAmbForm(true); }} />
+        ) : (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-200">
+                    <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Ambassador</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden sm:table-cell">School</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Department</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Phone</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden xl:table-cell">Social</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>{ambassadors.map(renderAmbRow)}</tbody>
               </table>
             </div>
           </div>
@@ -819,6 +1074,23 @@ const AlumniTeamManagementTab: React.FC<AlumniTeamManagementTabProps> = ({ userR
           message={`Are you sure you want to delete "${deletingCoord.name}"? This cannot be undone.`}
           onConfirm={handleDeleteCoord}
           onCancel={() => setDeletingCoord(null)}
+        />
+      )}
+
+      {showAmbForm && (
+        <AmbassadorForm
+          initial={editingAmb}
+          onSave={handleSaveAmb}
+          onClose={() => { setShowAmbForm(false); setEditingAmb(undefined); }}
+          saving={saving}
+        />
+      )}
+
+      {deletingAmb && (
+        <ConfirmDialog
+          message={`Are you sure you want to delete "${deletingAmb.name}"? This cannot be undone.`}
+          onConfirm={handleDeleteAmb}
+          onCancel={() => setDeletingAmb(null)}
         />
       )}
 

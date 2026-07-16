@@ -56,7 +56,7 @@ const UniversalNav = ({
   }, []);
 
   // Determine active tab based on path
-  const getActiveTab = (): "home" | "alumni" | "news" | "alumni-talks" | "alumni-meets" | "alumni-spotlight" | "alumni-team" | "youtube" | "profile" | "analytics" | "detailed-analytics" | "alumni-management" | "approval" | "feedback" | "dashboard" | "academic" | "student-strength" | "users" => {
+  const getActiveTab = (): "home" | "alumni" | "news" | "alumni-talks" | "alumni-meets" | "alumni-spotlight" | "alumni-team" | "student-ambassador" | "youtube" | "profile" | "analytics" | "detailed-analytics" | "alumni-management" | "approval" | "feedback" | "dashboard" | "academic" | "student-strength" | "users" => {
     if (pathname === "/") return "home";
     if (pathname === "/alumni-directory") return "alumni";
     if (pathname === "/news") return "news";
@@ -64,6 +64,7 @@ const UniversalNav = ({
     if (pathname === "/alumni-meets") return "alumni-meets";
     if (pathname === "/alumni-spotlight") return "alumni-spotlight";
     if (pathname.startsWith("/alumni-team")) return "alumni-team";
+    if (pathname.startsWith("/student-ambassador")) return "student-ambassador";
     if (pathname === "/youtube") return "youtube";
     if (pathname === "/profile") return "profile";
     
@@ -665,6 +666,16 @@ const UniversalNav = ({
                 >
                   Alumni Team
                 </button>
+                <button
+                  className={`block w-full text-left px-4 py-2 text-sm ${
+                    activeTab === "student-ambassador" 
+                      ? "bg-red-600 text-white" 
+                      : "text-gray-700 hover:bg-gray-100"
+                  }`}
+                  onClick={() => handleNavigation("/student-ambassador")}
+                >
+                  Student Ambassadors
+                </button>
               </div>
             )}
           </div>
@@ -782,6 +793,16 @@ const UniversalNav = ({
                   onClick={() => handleNavigation("/alumni-team")}
                 >
                   Alumni Team
+                </button>
+                <button
+                  className={`block w-full text-left px-4 py-2 text-sm ${
+                    activeTab === "student-ambassador" 
+                      ? "bg-red-600 text-white" 
+                      : "text-gray-700 hover:bg-gray-100"
+                  }`}
+                  onClick={() => handleNavigation("/student-ambassador")}
+                >
+                  Student Ambassadors
                 </button>
               </div>
             )}
@@ -949,6 +970,21 @@ const UniversalNav = ({
               >
                 <Users className={iconClass} />
                 {isSidebarExpanded && <span>Alumni Team</span>}
+              </button>
+            )}
+            {(userRole === "admin" || userRole === "alumni-manager") && (
+              <button
+                title="Student Ambassadors"
+                data-sidebar-active={activeTab === "student-ambassador" ? "true" : "false"}
+                className={`flex items-center w-full p-3 rounded-lg transition-colors ${
+                  activeTab === "student-ambassador" 
+                    ? "bg-red-600 text-white shadow-lg" 
+                    : "hover:bg-secondary/50"
+                } ${!isSidebarExpanded ? 'justify-center' : ''}`}
+                onClick={() => handleNavigation("/student-ambassador")}
+              >
+                <Users className={iconClass} />
+                {isSidebarExpanded && <span>Student Ambassadors</span>}
               </button>
             )}
             {(userRole === "admin" || userRole === "alumni-manager") && (
@@ -1201,6 +1237,30 @@ const UniversalNav = ({
               <Star className="w-5 h-5 mr-3" />
               <span>Alumni Spotlight</span>
             </button>
+            <button
+              data-sidebar-active={activeTab === "alumni-team" ? "true" : "false"}
+              className={`flex items-center w-full p-3 rounded-lg transition-colors ${
+                activeTab === "alumni-team" 
+                  ? "bg-red-600 text-white shadow-lg" 
+                  : "hover:bg-secondary/50"
+              }`}
+              onClick={() => handleNavigation("/alumni-team")}
+            >
+              <Users className="w-5 h-5 mr-3" />
+              <span>Alumni Team</span>
+            </button>
+            <button
+              data-sidebar-active={activeTab === "student-ambassador" ? "true" : "false"}
+              className={`flex items-center w-full p-3 rounded-lg transition-colors ${
+                activeTab === "student-ambassador" 
+                  ? "bg-red-600 text-white shadow-lg" 
+                  : "hover:bg-secondary/50"
+              }`}
+              onClick={() => handleNavigation("/student-ambassador")}
+            >
+              <Users className="w-5 h-5 mr-3" />
+              <span>Student Ambassadors</span>
+            </button>
           </div>
           
           <button
@@ -1292,6 +1352,28 @@ const UniversalNav = ({
             >
               <Star className="w-5 h-5 mr-3" />
               <span>Alumni Spotlight</span>
+            </button>
+            <button
+              className={`flex items-center w-full p-3 rounded-lg transition-colors ${
+                activeTab === "alumni-team" 
+                  ? "bg-red-600 text-white" 
+                  : "hover:bg-secondary/50"
+              }`}
+              onClick={() => handleNavigation("/alumni-team")}
+            >
+              <Users className="w-5 h-5 mr-3" />
+              <span>Alumni Team</span>
+            </button>
+            <button
+              className={`flex items-center w-full p-3 rounded-lg transition-colors ${
+                activeTab === "student-ambassador" 
+                  ? "bg-red-600 text-white" 
+                  : "hover:bg-secondary/50"
+              }`}
+              onClick={() => handleNavigation("/student-ambassador")}
+            >
+              <Users className="w-5 h-5 mr-3" />
+              <span>Student Ambassadors</span>
             </button>
           </div>
           

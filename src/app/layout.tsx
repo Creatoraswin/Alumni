@@ -11,7 +11,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || "https://alumni.sparvixainnovations.com"),
   title: "CUTMAP Alumni Dashboard",
   description: "CUTMAP Alumni Dashboard - Connect with alumni from CUTMAP institutions",
   openGraph: {

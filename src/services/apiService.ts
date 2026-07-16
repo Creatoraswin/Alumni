@@ -1113,3 +1113,113 @@ export const deleteStudentCoordinator = async (id: number): Promise<{ success: b
     return { success: false, message: 'Failed to delete student coordinator' };
   }
 };
+
+// ─── Student Ambassadors ─────────────────────────────────────────────────────
+
+export interface StudentAmbassador {
+  id?: number;
+  photoUrl: string;
+  name: string;
+  school: string;
+  department: string;
+  phone: string;
+  linkedinId: string;
+  instagramId: string;
+  sortOrder?: number;
+}
+
+export const fetchStudentAmbassadors = async (): Promise<StudentAmbassador[]> => {
+  try {
+    const response = await fetchWithAuth(`${API_URL}/student-ambassadors/index.php?t=${Date.now()}`);
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    const data = await response.json();
+    if (data.success && data.data) {
+      return data.data.map((item: any): StudentAmbassador => ({
+        id: item.id,
+        photoUrl: item.photo_url || '',
+        name: item.name || '',
+        school: item.school || '',
+        department: item.department || '',
+        phone: item.phone || '',
+        linkedinId: item.linkedin_id || '',
+        instagramId: item.instagram_id || '',
+        sortOrder: item.sort_order ?? 0,
+      }));
+    }
+    return [];
+  } catch (error) {
+    console.error('Error fetching student ambassadors:', error);
+    return [];
+  }
+};
+
+export const createStudentAmbassador = async (
+  ambassador: StudentAmbassador
+): Promise<{ success: boolean; id?: number; message: string }> => {
+  try {
+    const response = await fetchWithAuth(`${API_URL}/student-ambassadors/index.php`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'create',
+        ambassador: {
+          photo_url:    ambassador.photoUrl,
+          name:         ambassador.name,
+          school:       ambassador.school,
+          department:   ambassador.department,
+          phone:        ambassador.phone,
+          linkedin_id:  ambassador.linkedinId,
+          instagram_id: ambassador.instagramId,
+          sort_order:   ambassador.sortOrder ?? 0,
+        },
+      }),
+    });
+    const data = await response.json();
+    return { success: data.success, id: data.data?.id, message: data.message };
+  } catch (error) {
+    return { success: false, message: 'Failed to create ambassador' };
+  }
+};
+
+export const updateStudentAmbassador = async (
+  id: number,
+  updates: Partial<StudentAmbassador>
+): Promise<{ success: boolean; message: string }> => {
+  try {
+    const mapped: any = {};
+    if (updates.photoUrl    !== undefined) mapped.photo_url    = updates.photoUrl;
+    if (updates.name        !== undefined) mapped.name         = updates.name;
+    if (updates.school      !== undefined) mapped.school       = updates.school;
+    if (updates.department  !== undefined) mapped.department   = updates.department;
+    if (updates.phone       !== undefined) mapped.phone        = updates.phone;
+    if (updates.linkedinId  !== undefined) mapped.linkedin_id  = updates.linkedinId;
+    if (updates.instagramId !== undefined) mapped.instagram_id = updates.instagramId;
+    if (updates.sortOrder   !== undefined) mapped.sort_order   = updates.sortOrder;
+
+    const response = await fetchWithAuth(`${API_URL}/student-ambassadors/index.php`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'update', id, updates: mapped }),
+    });
+    const data = await response.json();
+    return { success: data.success, message: data.message };
+  } catch (error) {
+    return { success: false, message: 'Failed to update ambassador' };
+  }
+};
+
+export const deleteStudentAmbassador = async (
+  id: number
+): Promise<{ success: boolean; message: string }> => {
+  try {
+    const response = await fetchWithAuth(`${API_URL}/student-ambassadors/index.php`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'delete', id }),
+    });
+    const data = await response.json();
+    return { success: data.success, message: data.message };
+  } catch (error) {
+    return { success: false, message: 'Failed to delete ambassador' };
+  }
+};

@@ -5,13 +5,21 @@ import StudentProfileView from '@/components/pages/StudentProfileView';
 import UniversalNav from '@/components/UniversalNav';
 import { useAuth } from '@/contexts/useAuth';
 
-function StudentProfileWrapper({ registrationNo }: { registrationNo: string }) {
+import { Student } from '@/services/apiService';
+
+interface AlumniProfileClientProps {
+  registrationNo: string;
+  initialStudent?: Student | null;
+}
+
+function StudentProfileWrapper({ registrationNo, initialStudent }: AlumniProfileClientProps) {
   const { students, isLoggedIn, userRole, currentStudent, currentDepartmentUser, logout } = useAuth();
 
   const student = useMemo(() => {
+    if (initialStudent) return initialStudent;
     if (!registrationNo) return null;
     return students.find(s => s.registrationNo === registrationNo);
-  }, [registrationNo, students]);
+  }, [registrationNo, students, initialStudent]);
 
   if (!registrationNo || (!student && students.length > 0)) {
     return (
@@ -43,10 +51,10 @@ function StudentProfileWrapper({ registrationNo }: { registrationNo: string }) {
   return <StudentProfileView student={student} />;
 }
 
-export default function AlumniProfileClient({ registrationNo }: { registrationNo: string }) {
+export default function AlumniProfileClient({ registrationNo, initialStudent }: AlumniProfileClientProps) {
   return (
     <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
-      <StudentProfileWrapper registrationNo={registrationNo} />
+      <StudentProfileWrapper registrationNo={registrationNo} initialStudent={initialStudent} />
     </Suspense>
   );
 }
